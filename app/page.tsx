@@ -6,15 +6,18 @@ import { useEffect, useRef } from "react";
 
 export default function Home() {
     const router = useRouter();
-    const canvasRef = useRef(null);
+    const canvasRef = useRef<HTMLCanvasElement>(null);
 
     useEffect(() => {
         const canvas = canvasRef.current;
+        if (!canvas) return;
+
         const ctx = canvas.getContext("2d");
+        if (!ctx) return;
+
         const text = "Group 37";
-        let particles = [];
-        let mouse = { x: null, y: null };
-        let animId;
+        const particles: { x: number; y: number; tx: number; ty: number; vx: number; vy: number; color: string }[] = [];
+        const mouse: { x: number | null; y: number | null } = { x: null, y: null };
 
         canvas.width = canvas.offsetWidth;
         canvas.height = canvas.offsetHeight;
@@ -49,17 +52,24 @@ export default function Home() {
             }
         }
 
-        canvas.addEventListener("mousemove", (e) => {
+        const onMouseMove = (e: MouseEvent) => {
             const rect = canvas.getBoundingClientRect();
             mouse.x = e.clientX - rect.left;
             mouse.y = e.clientY - rect.top;
-        });
-        canvas.addEventListener("mouseleave", () => {
+        };
+
+        const onMouseLeave = () => {
             mouse.x = null;
             mouse.y = null;
-        });
+        };
+
+        canvas.addEventListener("mousemove", onMouseMove);
+        canvas.addEventListener("mouseleave", onMouseLeave);
+
+        let animId: number;
 
         function animate() {
+            if (!ctx) return;
             ctx.clearRect(0, 0, W, H);
             for (const p of particles) {
                 const dx = p.tx - p.x;
@@ -67,7 +77,7 @@ export default function Home() {
                 let ax = dx * 0.08;
                 let ay = dy * 0.08;
 
-                if (mouse.x !== null) {
+                if (mouse.x !== null && mouse.y !== null) {
                     const mx = p.x - mouse.x;
                     const my = p.y - mouse.y;
                     const dist = Math.sqrt(mx * mx + my * my);
@@ -88,9 +98,14 @@ export default function Home() {
             }
             animId = requestAnimationFrame(animate);
         }
+
         animate();
 
-        return () => cancelAnimationFrame(animId);
+        return () => {
+            cancelAnimationFrame(animId);
+            canvas.removeEventListener("mousemove", onMouseMove);
+            canvas.removeEventListener("mouseleave", onMouseLeave);
+        };
     }, []);
 
     return (
