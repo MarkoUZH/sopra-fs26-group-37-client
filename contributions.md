@@ -34,8 +34,8 @@ reason).
 
 | **Student**        | **Date** | **Link to Commit** | **Description**                 | **Relevance**                       |
 | ------------------ | -------- | ------------------ | ------------------------------- | ----------------------------------- |
-| **[@githubUser1]** | [date]   | [Link to Commit 1] | [Brief description of the task] | [Why this contribution is relevant] |
-|                    | [date]   | [Link to Commit 2] | [Brief description of the task] | [Why this contribution is relevant] |
+| **joazariah**      | 24.03.26 | https://github.com/MarkoUZH/sopra-fs26-group-37-client/commit/e0c131a92596fbd0baf9e21728f8fb6a34575385 | login form creation | relevant as users must be able to access member-only spaces |
+|                    | 24.03.26 | https://github.com/MarkoUZH/sopra-fs26-group-37-client/commit/e0c131a92596fbd0baf9e21728f8fb6a34575385 | registration form creation | same as login. especially important because user choses language here |
 | **[@githubUser2]** | [date]   | [Link to Commit 1] | [Brief description of the task] | [Why this contribution is relevant] |
 |                    | [date]   | [Link to Commit 2] | [Brief description of the task] | [Why this contribution is relevant] |
 | **[@githubUser3]** | [date]   | [Link to Commit 1] | [Brief description of the task] | [Why this contribution is relevant] |
