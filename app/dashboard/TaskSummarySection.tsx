@@ -4,6 +4,7 @@ import {
   PlusOutlined,
 } from "@ant-design/icons";
 import { Button, Card, Col, Flex, Progress, Row, Typography } from "antd";
+import React from "react";
 
 const { Title, Text } = Typography;
 

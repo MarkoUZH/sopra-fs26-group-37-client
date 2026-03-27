@@ -7,6 +7,7 @@ import {
   UnorderedListOutlined,
 } from "@ant-design/icons";
 import { Card, Col, Layout, Row, Typography } from "antd";
+import React from "react";
 
 import ProjectListSection from "./ProjectListSection";
 import SideBarSection from "./SideBarSection";

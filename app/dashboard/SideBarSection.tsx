@@ -5,6 +5,7 @@ import {
   SettingOutlined,
 } from "@ant-design/icons";
 import { Divider, Menu } from "antd";
+import React from "react";
 
 const SideBarSection = (): JSX.Element => {
   return (
