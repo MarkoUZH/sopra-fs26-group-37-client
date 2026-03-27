@@ -49,7 +49,7 @@ const statsData = [
   },
 ];
 
-const Dashboard = (): JSX.Element => {
+const Dashboard = (): React.JSX.Element => {
   return (
     <Layout style={{ minHeight: "100vh", background: "#f5f5f5" }}>
           <Sider

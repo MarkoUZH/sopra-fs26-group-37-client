@@ -4,7 +4,7 @@ import React from "react";
 
 const { Title, Text } = Typography;
 
-export default function ProjectListSection(): JSX.Element {
+export default function ProjectListSection(): React.JSX.Element {
   return (
     <Card style={{ borderRadius: 12, width: "100%", marginTop: 16, boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.03), 0 1px 6px -1px rgba(0, 0, 0, 0.02), 0 2px 4px 0 rgba(0, 0, 0, 0.02)' }}>
       <Flex vertical gap={16}>

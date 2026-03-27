@@ -38,7 +38,7 @@ const projects = [
   },
 ];
 
-const TaskSummarySection = (): JSX.Element => {
+const TaskSummarySection = (): React.JSX.Element => {
   return (
     <Card style={{ borderRadius: 12, width: "100%", background: "#ffffff", boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.03), 0 1px 6px -1px rgba(0, 0, 0, 0.02), 0 2px 4px 0 rgba(0, 0, 0, 0.02)' }}>
       <Flex justify="space-between" align="center" style={{ marginBottom: 16 }}>

@@ -7,7 +7,7 @@ import {
 import { Divider, Menu } from "antd";
 import React from "react";
 
-const SideBarSection = (): JSX.Element => {
+const SideBarSection = (): React.JSX.Element => {
   return (
       <div style={{ height: "100%", display: "flex", flexDirection: "column", marginTop: 12 }}>
       <div style={{ display: "flex", flexDirection: "column", gap: 4, padding: "0 12px 12px 12px" }}>
