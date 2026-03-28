@@ -10,7 +10,7 @@ import { useRouter } from "next/navigation";
 import useLocalStorage from "@/hooks/useLocalStorage";
 import { useApi } from "@/hooks/useApi";
 import { User } from "@/types/user";
-
+import ISO6391 from "iso-639-1"; // Importing the ISO 639-1 library for language code handling
 
 
 const SideBarSection = (): React.JSX.Element => {
@@ -18,7 +18,7 @@ const SideBarSection = (): React.JSX.Element => {
   const { clear: clearToken } = useLocalStorage<string>("token", "");
 
   const api = useApi();
-  const { clear: clearLanguage } = useLocalStorage<string>("language", "");  
+  const { value: language, clear: clearLanguage } = useLocalStorage<string>("language", "");  
   const { value: id , clear: clearId } = useLocalStorage<string>("id", ""); // This was missing!
   // 1. Define the state for the logged-in user
   const [user, setUser] = useState<User | null>(null);
@@ -44,6 +44,15 @@ const SideBarSection = (): React.JSX.Element => {
     router.push("/login");
   };
 
+  const getFlagEmoji = (countryCode: string) => {
+  // Most ISO language codes match the country code, 
+  // though some need manual mapping (e.g., 'en' -> 'GB' or 'US')
+  const codePoints = countryCode
+    .toUpperCase()
+    .split('')
+    .map(char =>  127397 + char.charCodeAt(0));
+  return String.fromCodePoint(...codePoints);
+};
   // Centralized click handler for the menus
   const onMenuClick = (info: { key: string }) => {
     if (info.key === "logout") {
@@ -61,8 +70,15 @@ const SideBarSection = (): React.JSX.Element => {
           {user?.manager ? "Manager" : "Member"}
         </span>
         <span style={{ fontSize: 18, fontWeight: 700 }}>
-         {user ? user.username : "Loading..."}
+         {user ? user.username : "Loading..."}{" "}{user?.language ? ` ${getFlagEmoji(user.language)}` : ""}
         </span>
+
+        <span style={{ fontSize: 18, fontWeight: 700 }}>
+        {user?.language ? ISO6391.getNativeName(user.language) : ""}
+
+        </span>
+
+
       </div>
 
       <Divider style={{ margin: "0 0 8px 0" }} />
