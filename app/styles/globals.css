@@ -35,7 +35,9 @@ a {
   justify-content: center;
   align-items: center;
   min-height: 100vh;
-  background-color: rgb(41, 44, 59);
+  z-index: 10;
+  background-color: rgb(255, 255, 255);
+  color:  rgb(0, 0, 0);
 }
 
 .login-button {
@@ -86,4 +88,45 @@ a {
 .project-card:hover {
   transform: translateY(-2px);
   box-shadow: 0 8px 13px rgba(0, 0, 0, 0.08);
+}
+
+.login-container .ant-form-item-label > label {
+  color: #000000 !important; /* Force text to black */
+  font-weight: 500;
+}
+
+.login-container .ant-checkbox-wrapper {
+  color: #000000 !important;
+}
+
+.ant-checkbox-wrapper {
+  pointer-events: auto !important;
+  cursor: pointer;
+  z-index: 11; /* Ensure it's above any container backgrounds */
+}
+
+/* Also ensure the text next to it is clickable */
+.ant-checkbox-wrapper span {
+  color: #000000 !important;
+}
+
+/* 1. Force the checkmark icon to be black or a primary color */
+.ant-checkbox-checked .ant-checkbox-inner::after {
+  border-color: #000000 !important; /* The checkmark itself */
+}
+
+/* 2. Ensure the box background doesn't blend into your container */
+.ant-checkbox-checked .ant-checkbox-inner {
+  background-color: #1890ff !important; /* Standard blue, or your theme color */
+  border-color: #1890ff !important;
+}
+
+/* 3. If the checkbox disappears entirely, it might be an opacity issue */
+.ant-checkbox-input {
+  opacity: 0 !important; /* Ant Design hides the real input to show the styled one */
+}
+
+.ant-checkbox-inner {
+  visibility: visible !important;
+  display: block !important;
 }

@@ -61,7 +61,7 @@ const Register: React.FC = () => {
       }
 
       // Navigate to the user overview
-      router.push("/users");
+      router.push("/dashboard");
     } catch (error) {
       if (error instanceof Error) {
         alert(`Something went wrong during registration:\n${error.message}`);
@@ -123,13 +123,13 @@ const Register: React.FC = () => {
           <Input.Password placeholder="Enter password" />
         </Form.Item>
       
-      <Form.Item 
-      name="manager" 
-      valuePropName="checked"
-      initialValue={false} // Default to not being a manager
-> 
-  <Checkbox>Register as a Manager</Checkbox>
-</Form.Item>
+        <Form.Item 
+          name="manager" 
+          valuePropName="checked"
+          initialValue={false}
+        > 
+          <Checkbox>Register as a Manager</Checkbox>
+        </Form.Item>
 
 
         <Form.Item>
