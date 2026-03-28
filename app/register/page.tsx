@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation"; // use NextJS router for navigation
 import { useApi } from "@/hooks/useApi";
 import useLocalStorage from "@/hooks/useLocalStorage";
 import { User } from "@/types/user";
-import { Button, Form, Input, Select } from "antd"; //added select for dropdown
+import { Button, Checkbox, Form, Input, Select } from "antd"; //added select for dropdown
 // Optionally, you can import a CSS module or file for additional styling:
 // import styles from "@/styles/page.module.css";
 import ISO6391 from 'iso-639-1'; // for the languages
@@ -28,6 +28,7 @@ interface RegisterFormValues {
   email: string;
   language: string;
   password: string;
+  manager: boolean;
 }
 
 const Register: React.FC = () => {
@@ -121,7 +122,14 @@ const Register: React.FC = () => {
         >
           <Input.Password placeholder="Enter password" />
         </Form.Item>
-
+      
+      <Form.Item 
+      name="manager" 
+      valuePropName="checked"
+      initialValue={false} // Default to not being a manager
+> 
+  <Checkbox>Register as a Manager</Checkbox>
+</Form.Item>
 
 
         <Form.Item>
