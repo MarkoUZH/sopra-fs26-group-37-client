@@ -5,6 +5,7 @@ import { useApi } from "@/hooks/useApi";
 import useLocalStorage from "@/hooks/useLocalStorage";
 import { User } from "@/types/user";
 import { Button, Form, Input } from "antd";
+import { isUtf8 } from "buffer";
 // Optionally, you can import a CSS module or file for additional styling:
 // import styles from "@/styles/page.module.css";
 
@@ -26,7 +27,7 @@ const Login: React.FC = () => {
     // clear: clearToken, // is commented out because we do not need to clear the token when logging in
   } = useLocalStorage<string>("token", ""); // note that the key we are selecting is "token" and the default value we are setting is an empty string
   // if you want to pick a different token, i.e "usertoken", the line above would look as follows: } = useLocalStorage<string>("usertoken", "");
-
+  const { set: setUserId } = useLocalStorage<string>("id", "");
   const handleLogin = async (values: FormFieldProps) => {
     try {
       // Call the API service and let it handle JSON serialization and error handling
@@ -35,6 +36,13 @@ const Login: React.FC = () => {
       // Use the useLocalStorage hook that returned a setter function (setToken in line 41) to store the token if available
       if (response.token) {
         setToken(response.token);
+      }
+      if (response.id) {
+        setUserId(response.id);
+      }
+
+      if(response.language) { 
+        localStorage.setItem("language", JSON.stringify(response.language));
       }
 
       // Navigate to the user overview
