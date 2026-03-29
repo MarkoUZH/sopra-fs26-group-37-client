@@ -37,12 +37,28 @@ const SideBarSection = (): React.JSX.Element => {
     if (id) fetchUser();
   }, [id, api]);
 
-  const handleLogout = (): void => {
+const handleLogout = async (): Promise<void> => {
+  try {
+    const userId = localStorage.getItem("id"); // Or wherever you store the ID
+
+    if (userId) {
+      // 1. Call the backend to set status to OFFLINE
+      // Note: We use an empty body {} because the ID is in the URL
+      await api.put(`/logout/${userId}`, {});
+    }
+  } catch (error) {
+    console.error("Failed to logout safely:", error);
+    // Even if the backend call fails, we usually want to clear the local state
+  } finally {
+    // 2. Clear local storage regardless of API success
     clearToken();
     clearLanguage();
     clearId();
+    
+    // 3. Redirect to login
     router.push("/login");
-  };
+  }
+};
 
   const getFlagEmoji = (countryCode: string) => {
   // Most ISO language codes match the country code, 
