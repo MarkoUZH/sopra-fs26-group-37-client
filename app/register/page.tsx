@@ -7,21 +7,7 @@ import { User } from "@/types/user";
 import { Button, Checkbox, Form, Input, Select } from "antd"; //added select for dropdown
 // Optionally, you can import a CSS module or file for additional styling:
 // import styles from "@/styles/page.module.css";
-import ISO6391 from 'iso-639-1'; // for the languages
-
-//fetching all the language options
-export const getLanguageOptions = () => {
-  // Get all language codes (en, es, fr, etc.)
-  const codes = ISO6391.getAllCodes();
-
-  return codes.map(code => ({
-    // Use the Native name (e.g., "Español") for better UX
-    label: ISO6391.getNativeName(code), 
-    value: code,
-  })).sort((a, b) => a.label.localeCompare(b.label)); // Sort alphabetically
-};
-
-
+import { getLanguageOptions } from "@/utils/languageOptions";
 
 interface RegisterFormValues {
   username: string;
@@ -46,8 +32,6 @@ const Register: React.FC = () => {
   } = useLocalStorage<string>("token", ""); // note that the key we are selecting is "token" and the default value we are setting is an empty string
   // if you want to pick a different token, i.e "usertoken", the line above would look as follows: } = useLocalStorage<string>("usertoken", "");
   const { set: setUserId } = useLocalStorage<string>("id", "");
-
-
 
 
   const handleRegister = async (values: RegisterFormValues) => {
