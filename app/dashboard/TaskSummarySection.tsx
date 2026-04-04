@@ -27,7 +27,7 @@ const TaskSummarySection = (): React.JSX.Element => {
       try {
         // 3. Use api.get instead of fetch
         // Note: We use the endpoint string, the service adds the baseURL
-        const data = await api.get<ProjectDTO[]>(`/projects?userId=${userId}`);
+        const data = await api.get<ProjectDTO[]>(`/projects/users/${userId}`);
         setProjects(data);
       } catch (error) {
         // processResponse in your ApiService throws detailed errors
