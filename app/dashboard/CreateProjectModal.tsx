@@ -1,25 +1,80 @@
 "use client";
+import { ApiService } from "@/api/apiService";
 import { DeleteOutlined, PlusOutlined, UserOutlined } from "@ant-design/icons";
 import { Avatar, Button, Flex, Input, Select, Typography } from "antd";
-import React, {useState} from "react";
+import React, {useEffect, useState} from "react";
 
 const { Title } = Typography;
 
 // to test the look of the member section, needs to be removed later
-const initialMembers = [
-  { key: "plain-harry", initial: "H", name: "Plain Harry" },
-  { key: "ordinary-jane", initial: "J", name: "Ordinary Jane" },
-  { key: "average-joe", initial: "J", name: "Average Joe" },
-];
+
 
 interface Props {
   open: boolean;
   onClose: () => void;
 }
+interface User {
+  id: number;
+  username: string; 
+}
+
+interface SelectedMember {
+  key: string;
+  initial: string;
+  name: string;
+}
 
 const CreateProjectModal = ({ open, onClose }: Props): React.JSX.Element | null => {
-  const [members, setMembers] = useState(initialMembers);
+  const [projectName, setProjectName] = useState("");
+  const [description, setDescription] = useState("");
+  const [members, setMembers] = useState<SelectedMember[]>([]);
+  const [availableUsers, setAvailableUsers] = useState<User[]>([]);
+  const api = new ApiService();
+ 
+ 
+  const handleAddProject = async () => {
+     const storedId = localStorage.getItem("id");
+    try {
+      // 1. Prepare the DTO for the backend
+      // Your backend Project entity likely expects a list of IDs for members
+      const projectData = {
+        name: projectName,
+        description: description,
+        memberIds: members.map(m => parseInt(m.key)),
+        ownerId: parseInt(storedId || "0"),
 
+      };
+
+      // 2. Call your backend POST /projects
+      await api.post("/projects", projectData);
+      
+      // 3. Reset form and close
+      setProjectName("");
+      setDescription("");
+      setMembers([]);
+      onClose();
+      
+      // Optional: Refresh the page or trigger a refresh in the parent
+      window.location.reload(); 
+    } catch (error) {
+      console.error("Failed to create project:", error);
+      alert("Error creating project. Please try again.");
+    }
+  };
+
+  useEffect(() => {
+    if (open) {
+      const fetchUsers = async () => {
+        try {
+          const data = await api.get<User[]>("/users");
+          setAvailableUsers(data);
+        } catch (error) {
+          console.error("Failed to fetch users:", error);
+        }
+      };
+      fetchUsers();
+    }
+  }, [open]);
   if (!open) return null;
 
   const removeMember = (key: string) => {
@@ -34,6 +89,7 @@ const CreateProjectModal = ({ open, onClose }: Props): React.JSX.Element | null 
         inset: 0,
         backgroundColor: "#00000099",
         display: "flex",
+
         alignItems: "center",
         justifyContent: "center",
       }}
@@ -63,7 +119,8 @@ const CreateProjectModal = ({ open, onClose }: Props): React.JSX.Element | null 
 
           <Flex vertical gap={6}>
             <span style={{ fontSize: 13, color: "#555" }}>Project Name</span>
-            <Input placeholder="Add a project name..." style={{ borderRadius: 8 }} />
+            <Input placeholder="Add a project name..." style={{ borderRadius: 8 }} value={projectName}
+              onChange={(e) => setProjectName(e.target.value)}/>
           </Flex>
 
           <Flex vertical gap={6}>
@@ -72,6 +129,8 @@ const CreateProjectModal = ({ open, onClose }: Props): React.JSX.Element | null 
               placeholder="Add a description..."
               rows={4}
               style={{ borderRadius: 8, resize: "none", maxHeight: 120 }}
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
             />
           </Flex>
 
@@ -81,14 +140,32 @@ const CreateProjectModal = ({ open, onClose }: Props): React.JSX.Element | null 
               <span style={{ fontSize: 13, color: "#555" }}>Members</span>
             </Flex>
             <Select
-              placeholder=""
-              style={{ width: "100%" }}
-              suffixIcon={
-                <span style={{ color: "#888", display: "inline-block", transform: "rotate(90deg)", fontSize: 16 }}>
-                  ›
-                </span>
-              }
-            />
+          showSearch // Allows typing to filter users
+          placeholder="Select members to add"
+          style={{ width: "100%" }}
+          filterOption={(input, option) =>
+            (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
+          }
+          // Map your API data to the Select options format
+          options={availableUsers.map((user) => ({
+            label: user.username,
+            value: user.id,
+          }))}
+          onChange={(value, option) => {
+            // Logic to add the selected user to your 'members' list
+            const selectedUser = option as { label: string; value: number };
+            const newMember = {
+              key: selectedUser.value.toString(),
+              initial: selectedUser.label.charAt(0).toUpperCase(),
+              name: selectedUser.label,
+            };
+            
+            // Prevent duplicates
+            if (!members.find(m => m.key === newMember.key)) {
+              setMembers([...members, newMember]);
+            }
+          }}
+        />
           </Flex>
 
           <Flex vertical gap={8}>
@@ -127,7 +204,7 @@ const CreateProjectModal = ({ open, onClose }: Props): React.JSX.Element | null 
               type="primary"
               size="middle"
               icon={<PlusOutlined />}
-              onClick={onClose}
+              onClick={handleAddProject}
               style={{ background: "#4f46e5", borderRadius: 8 }}
             >
               Add Project

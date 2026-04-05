@@ -2,6 +2,8 @@ import { ArrowRightOutlined, FolderOutlined, PlusOutlined } from "@ant-design/ic
 import { Button, Card, Col, Flex, Progress, Row, Typography } from "antd";
 import React, { useEffect, useState } from "react";
 import { ApiService } from "@/api/apiService"; // 1. Adjust this path to your file location
+import CreateProjectModal from "./CreateProjectModal";
+
 
 const { Title, Text } = Typography;
 
@@ -18,7 +20,8 @@ const [isManager, setIsManager] = useState<boolean>(false);
   
   const [projects, setProjects] = useState<ProjectDTO[]>([]);
   
-  // 2. Instantiate the service
+  
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const api = new ApiService();
 
   useEffect(() => {
@@ -50,8 +53,10 @@ const [isManager, setIsManager] = useState<boolean>(false);
           <Title level={4} style={{ margin: 0 }}>Projects</Title>
         </Flex>
         {isManager && (
-          <Button type="primary" icon={<PlusOutlined />}>
+          <Button type="primary" icon={<PlusOutlined />}
+          onClick={() => setIsModalOpen(true)}>
             Create Project
+            
           </Button>
         )}
       </Flex>
@@ -91,6 +96,10 @@ const [isManager, setIsManager] = useState<boolean>(false);
           <Text type="secondary">No projects found.</Text>
         </Flex>
       )}
+      <CreateProjectModal 
+        open={isModalOpen} 
+        onClose={() => setIsModalOpen(false)} 
+      />
     </Card>
   );
 };

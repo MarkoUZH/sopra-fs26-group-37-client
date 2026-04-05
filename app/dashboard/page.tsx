@@ -1,4 +1,5 @@
 "use client";
+import { useState } from "react";
 import {
   CheckCircleOutlined,
   ClockCircleOutlined,
@@ -7,12 +8,12 @@ import {
   UnorderedListOutlined,
 } from "@ant-design/icons";
 import { Card, Col, Layout, Row, Typography } from "antd";
-import React, { useState } from "react";
+import React from "react";
 
-import CreateProjectModal from "./CreateProjectModal";
 import ProjectListSection from "./ProjectListSection";
 import SideBarSection from "./SideBarSection";
 import TaskSummarySection from "./TaskSummarySection";
+import CreateProjectModal from "./CreateProjectModal";
 
 const { Content, Sider } = Layout;
 const { Title, Text } = Typography;
@@ -51,36 +52,32 @@ const statsData = [
 ];
 
 const Dashboard = (): React.JSX.Element => {
-  const [modalOpen, setModalOpen] = useState(false);
-
+  const [isModalOpen, setIsModalOpen] = useState(false);
   return (
     <Layout style={{ minHeight: "100vh", background: "#f5f5f5" }}>
-      <Sider
-        width={220}
-        theme="light"
-        style={{
-          position: "fixed",
-          left: 0,
-          top: 0,
-          bottom: 0,
-          height: "100vh",
-          boxShadow: "2px 0 6px rgba(0, 0, 0, 0.03)",
-        }}
-      >
-        <SideBarSection />
-      </Sider>
+          <Sider
+            width={220}
+            theme="light"
+            style={{
+              position: "fixed",
+              left: 0,
+              top: 0,
+              bottom: 0,
+              height: "100vh",
+              boxShadow: "2px 0 6px rgba(0, 0, 0, 0.03)",
+            }}
+          >
+            <SideBarSection />
+          </Sider>
 
-      <Layout style={{ marginLeft: 220 }}>
-        <Content style={{ padding: "24px", background: "#f5f5f5" }}>
-          <Title level={1}>My Dashboard</Title>
+          <Layout style={{ marginLeft: 220 }}>
+            <Content style={{ padding: "24px", background: "#f5f5f5" }}>
+              <Title level={1}>My Dashboard</Title>
           <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
             {statsData.map((stat, index) => (
               <Col key={index} flex="1 1 20%">
                 <Card
-                  style={{
-                    boxShadow:
-                      "0 1px 2px 0 rgba(0, 0, 0, 0.03), 0 1px 6px -1px rgba(0, 0, 0, 0.02), 0 2px 4px 0 rgba(0, 0, 0, 0.02)",
-                  }}
+                  style={{ boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.03), 0 1px 6px -1px rgba(0, 0, 0, 0.02), 0 2px 4px 0 rgba(0, 0, 0, 0.02)' }}
                 >
                   <div
                     style={{
@@ -106,17 +103,17 @@ const Dashboard = (): React.JSX.Element => {
               </Col>
             ))}
           </Row>
-
-          <TaskSummarySection onCreateProject={() => setModalOpen(true)} />
+          <div style={{ position: "relative", order: 3 }}>
+            
+          </div>
           <ProjectListSection />
+          <TaskSummarySection />
+          <CreateProjectModal 
+          open={isModalOpen} 
+          onClose={() => setIsModalOpen(false)} 
+        />
         </Content>
       </Layout>
-
-      <CreateProjectModal
-        key={modalOpen ? "open" : "closed"}
-        open={modalOpen}
-        onClose={() => setModalOpen(false)}
-      />
     </Layout>
   );
 };
