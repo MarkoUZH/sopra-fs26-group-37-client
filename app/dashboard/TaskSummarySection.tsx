@@ -8,6 +8,10 @@ import React from "react";
 
 const { Title, Text } = Typography;
 
+interface Props {
+  onCreateProject: () => void;
+}
+
 const projects = [
   {
     name: "Multilingual Scrum Board",
@@ -38,7 +42,7 @@ const projects = [
   },
 ];
 
-const TaskSummarySection = (): React.JSX.Element => {
+const TaskSummarySection = ({ onCreateProject }: Props): React.JSX.Element => {
   return (
     <Card style={{ borderRadius: 12, width: "100%", background: "#ffffff", boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.03), 0 1px 6px -1px rgba(0, 0, 0, 0.02), 0 2px 4px 0 rgba(0, 0, 0, 0.02)' }}>
       <Flex justify="space-between" align="center" style={{ marginBottom: 16 }}>
@@ -48,7 +52,7 @@ const TaskSummarySection = (): React.JSX.Element => {
             Projects
           </Title>
         </Flex>
-        <Button type="primary" icon={<PlusOutlined />}>
+        <Button type="primary" icon={<PlusOutlined />} onClick={onCreateProject}>
           Create Project
         </Button>
       </Flex>
