@@ -1,130 +1,114 @@
 "use client";
+import {
+  AppstoreOutlined,
+  ProjectOutlined,
+  TableOutlined,
+} from "@ant-design/icons";
+import { Button, Col, Flex, Row, Typography } from "antd";
 import { useRouter } from "next/navigation";
-import { Button } from "antd";
-import styles from "@/styles/page.module.css";
-import { useEffect, useRef } from "react";
+
+const { Title, Paragraph } = Typography;
+
+const features = [
+  {
+    icon: <AppstoreOutlined style={{ fontSize: 36, color: "#7c3aed" }} />,
+    iconBg: "#f3f0ff",
+    title: "Dashboard Analytics",
+    description: "Track project progress and team performance",
+  },
+  {
+    icon: <ProjectOutlined style={{ fontSize: 36, color: "#a855f7" }} />,
+    iconBg: "#fdf4ff",
+    title: "Project Management",
+    description: "Organize sprints, epics, and user stories",
+  },
+  {
+    icon: <TableOutlined style={{ fontSize: 36, color: "#ec4899" }} />,
+    iconBg: "#fff0f6",
+    title: "Kanban Board",
+    description: "Drag & drop tasks across workflow stages",
+  },
+];
 
 export default function Home() {
-    const router = useRouter();
-    const canvasRef = useRef<HTMLCanvasElement>(null);
+  const router = useRouter();
 
-    useEffect(() => {
-        const canvas = canvasRef.current;
-        if (!canvas) return;
+  return (
+    <Flex
+      vertical
+      align="center"
+      justify="center"
+      style={{ minHeight: "100vh", padding: "40px 24px", background: "#fff" }}
+    >
+      <Title style={{ textAlign: "center", marginBottom: 8, fontSize: 52 }}>
+        Agile Project Manager
+      </Title>
+      <Paragraph
+        style={{
+          textAlign: "center",
+          fontSize: 16,
+          maxWidth: 480,
+          marginBottom: 32,
+          color: "#555",
+        }}
+      >
+        Streamline your workflow with powerful sprint planning, kanban boards,
+        and team collaboration tools
+      </Paragraph>
 
-        const ctx = canvas.getContext("2d");
-        if (!ctx) return;
+      <Flex gap={16} justify="center" style={{ marginBottom: 56 }}>
+        <Button
+          type="primary"
+          style={{ minWidth: 130, height: 40, fontSize: 18 }}
+          onClick={() => router.push("/login")}
+        >
+          Login
+        </Button>
+        <Button
+          type="primary"
+          style={{ minWidth: 130, height: 40, fontSize: 18, background: "#9665FFE5" }}
+          onClick={() => router.push("/register")}
+        >
+          Register
+        </Button>
+      </Flex>
 
-        const text = "Group 37";
-        const particles: { x: number; y: number; tx: number; ty: number; vx: number; vy: number; color: string }[] = [];
-        const mouse: { x: number | null; y: number | null } = { x: null, y: null };
-
-        canvas.width = canvas.offsetWidth;
-        canvas.height = canvas.offsetHeight;
-
-        const W = canvas.width;
-        const H = canvas.height;
-
-        ctx.font = `bold ${W / 5}px sans-serif`;
-        ctx.fillStyle = "white";
-        ctx.textAlign = "center";
-        ctx.textBaseline = "middle";
-        ctx.fillText(text, W / 2, H / 2);
-
-        const imageData = ctx.getImageData(0, 0, W, H);
-        ctx.clearRect(0, 0, W, H);
-
-        const gap = 5;
-        for (let y = 0; y < H; y += gap) {
-            for (let x = 0; x < W; x += gap) {
-                const i = (y * W + x) * 4;
-                if (imageData.data[i + 3] > 128) {
-                    particles.push({
-                        x: Math.random() * W,
-                        y: Math.random() * H,
-                        tx: x,
-                        ty: y,
-                        vx: 0,
-                        vy: 0,
-                        color: `hsl(${200 + Math.random() * 60}, 80%, 65%)`,
-                    });
-                }
-            }
-        }
-
-        const onMouseMove = (e: MouseEvent) => {
-            const rect = canvas.getBoundingClientRect();
-            mouse.x = e.clientX - rect.left;
-            mouse.y = e.clientY - rect.top;
-        };
-
-        const onMouseLeave = () => {
-            mouse.x = null;
-            mouse.y = null;
-        };
-
-        canvas.addEventListener("mousemove", onMouseMove);
-        canvas.addEventListener("mouseleave", onMouseLeave);
-
-        let animId: number;
-
-        function animate() {
-            if (!ctx) return;
-            ctx.clearRect(0, 0, W, H);
-            for (const p of particles) {
-                const dx = p.tx - p.x;
-                const dy = p.ty - p.y;
-                let ax = dx * 0.08;
-                let ay = dy * 0.08;
-
-                if (mouse.x !== null && mouse.y !== null) {
-                    const mx = p.x - mouse.x;
-                    const my = p.y - mouse.y;
-                    const dist = Math.sqrt(mx * mx + my * my);
-                    if (dist < 80) {
-                        const force = (80 - dist) / 80;
-                        ax += (mx / dist) * force * 8;
-                        ay += (my / dist) * force * 8;
-                    }
-                }
-
-                p.vx = (p.vx + ax) * 0.85;
-                p.vy = (p.vy + ay) * 0.85;
-                p.x += p.vx;
-                p.y += p.vy;
-
-                ctx.fillStyle = p.color;
-                ctx.fillRect(p.x, p.y, 3, 3);
-            }
-            animId = requestAnimationFrame(animate);
-        }
-
-        animate();
-
-        return () => {
-            cancelAnimationFrame(animId);
-            canvas.removeEventListener("mousemove", onMouseMove);
-            canvas.removeEventListener("mouseleave", onMouseLeave);
-        };
-    }, []);
-
-    return (
-        <div className={styles.page}>
-            <main className={styles.main}>
-                <canvas
-                    ref={canvasRef}
-                    style={{ width: "100%", height: "200px", cursor: "none" }}
-                />
-                <div className={styles.ctas}>
-                    <Button
-                        type="primary"
-                        variant="solid"
-                        onClick={() => router.push("/login")}
-                    >
-                        Go to login
-                    </Button>
-                </div>
-            </main>
-        </div>
-    );
+      <Row
+        gutter={[48, 32]}
+        justify="center"
+        style={{ maxWidth: 900, width: "100%", }}
+      >
+        {features.map((feature) => (
+          <Col key={feature.title} xs={24} sm={12} md={8}>
+            <Flex vertical align="center" gap={12}>
+              <Flex
+                align="center"
+                justify="center"
+                style={{
+                  width: 70,
+                  height: 70,
+                  borderRadius: 16,
+                  background: feature.iconBg,
+                }}
+              >
+                {feature.icon}
+              </Flex>
+              <Title level={4} style={{ textAlign: "center", marginBottom: 0 }}>
+                {feature.title}
+              </Title>
+              <Paragraph
+                style={{
+                  textAlign: "center",
+                  marginBottom: 0,
+                  color: "#666",
+                }}
+              >
+                {feature.description}
+              </Paragraph>
+            </Flex>
+          </Col>
+        ))}
+      </Row>
+    </Flex>
+  );
 }
