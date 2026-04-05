@@ -14,19 +14,23 @@ interface ProjectDTO {
 }
 
 const TaskSummarySection = (): React.JSX.Element => {
+const [isManager, setIsManager] = useState<boolean>(false);
+  
   const [projects, setProjects] = useState<ProjectDTO[]>([]);
   
   // 2. Instantiate the service
   const api = new ApiService();
 
   useEffect(() => {
+
+    
     const fetchProjects = async () => {
       const userId = localStorage.getItem("id");
       if (!userId) return;
 
       try {
-        // 3. Use api.get instead of fetch
-        // Note: We use the endpoint string, the service adds the baseURL
+        const userData = await api.get<{ manager: boolean }>(`/users/${userId}`);
+        setIsManager(userData.manager);
         const data = await api.get<ProjectDTO[]>(`/projects/users/${userId}`);
         setProjects(data);
       } catch (error) {
@@ -45,7 +49,11 @@ const TaskSummarySection = (): React.JSX.Element => {
           <FolderOutlined style={{ fontSize: 20 }} />
           <Title level={4} style={{ margin: 0 }}>Projects</Title>
         </Flex>
-        <Button type="primary" icon={<PlusOutlined />}>Create Project</Button>
+        {isManager && (
+          <Button type="primary" icon={<PlusOutlined />}>
+            Create Project
+          </Button>
+        )}
       </Flex>
 
       <Row gutter={[16, 16]}>
