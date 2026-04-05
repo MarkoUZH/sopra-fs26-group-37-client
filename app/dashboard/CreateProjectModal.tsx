@@ -1,7 +1,7 @@
 "use client";
 import { DeleteOutlined, PlusOutlined, UserOutlined } from "@ant-design/icons";
 import { Avatar, Button, Flex, Input, Select, Typography } from "antd";
-import React, { useState } from "react";
+import React, {useState} from "react";
 
 const { Title } = Typography;
 
@@ -17,7 +17,7 @@ interface Props {
   onClose: () => void;
 }
 
-const CreateProjectModal = ({ open, onClose }: Props): JSX.Element | null => {
+const CreateProjectModal = ({ open, onClose }: Props): React.JSX.Element | null => {
   const [members, setMembers] = useState(initialMembers);
 
   if (!open) return null;
