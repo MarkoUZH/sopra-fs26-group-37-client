@@ -32,7 +32,7 @@ export default function RootLayout({
             algorithm: theme.defaultAlgorithm,
             token: {
               // general theme options are set in token, meaning all primary elements (button, menu, ...) will have this color
-              colorPrimary: "#fff", // selected input field boarder will have this color as well
+              colorPrimary: "#E0E0E0", // selected input field boarder will have this color as well
               borderRadius: 8,
               colorText: "#101828",
               fontSize: 16,
