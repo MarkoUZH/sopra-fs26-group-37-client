@@ -120,12 +120,12 @@ const CreateProjectModal = ({ open, onClose }: Props): React.JSX.Element | null 
           </Flex>
 
           <Flex justify="flex-end" gap={8} style={{ marginTop: 8 }}>
-            <Button size="medium" onClick={onClose} style={{ borderRadius: 8 }}>
+            <Button size="middle" onClick={onClose} style={{ borderRadius: 8 }}>
               Cancel
             </Button>
             <Button
               type="primary"
-              size="medium"
+              size="middle"
               icon={<PlusOutlined />}
               onClick={onClose}
               style={{ background: "#4f46e5", borderRadius: 8 }}
