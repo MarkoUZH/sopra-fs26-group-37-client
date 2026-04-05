@@ -7,12 +7,22 @@ import CreateProjectModal from "./CreateProjectModal";
 
 const { Title, Text } = Typography;
 
+interface Task {
+  id: number;
+  // add other task fields here later if needed
+}
+
+interface Member {
+  id: number;
+  username: string;
+}
+
 interface ProjectDTO {
   id: number;
   name: string;
   description: string;
-  tasks: any[]; 
-  members: any[];
+  tasks: Task[];
+  members: Member[];
 }
 
 const TaskSummarySection = (): React.JSX.Element => {
