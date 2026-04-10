@@ -10,6 +10,7 @@ import { Button, Checkbox, Form, Input, Select } from "antd"; //added select for
 import { getLanguageOptions } from "@/utils/languageOptions";
 
 interface RegisterFormValues {
+  name: string;
   username: string;
   email: string;
   language: string;
@@ -72,6 +73,16 @@ const Register: React.FC = () => {
         onFinish={handleRegister}
         layout="vertical"
       >
+
+
+      <Form.Item
+        name="name" 
+        label="Full Name"
+        rules={[{ required: true, message: "Please input your full name!" }]}
+      >
+        <Input placeholder="Enter your full name" />
+      </Form.Item>
+
         <Form.Item
           name="username"
           label="Username"
