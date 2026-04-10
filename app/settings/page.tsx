@@ -67,6 +67,10 @@ const [user, setUser] = useState<User | null>(null);
   }
 };
 
+const handleCancel = () => {
+  router.push("/dashboard"); // Redirect to dashboard without saving
+}
+
   return (
     <Flex
       vertical
@@ -133,7 +137,9 @@ const [user, setUser] = useState<User | null>(null);
         </Card>
 
         <Flex justify="flex-end" gap={12}>
-          <Button>Cancel</Button>
+          <Button onClick={handleCancel}>
+            Cancel</Button>
+
                       <Button 
               type="primary" 
               icon={<SaveOutlined />} 
