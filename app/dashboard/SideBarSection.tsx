@@ -106,6 +106,7 @@ const handleLogout = async (): Promise<void> => {
         <Menu
           mode="inline"
           selectable={false}
+          onClick={onMenuClick}
           style={{ border: "none", background: "transparent" }}
           items={[
             { key: "dashboard", icon: <DashboardOutlined />, label: <span className="menu-item">Dashboard</span>},
