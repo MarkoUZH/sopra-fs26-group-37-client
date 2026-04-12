@@ -67,14 +67,14 @@ reason).
 
 ---
 
-## Contributions Week 3 - [Begin Date] to [End Date]
+## Contributions Week 3 - 06.04.2026 to 12.04.2026 (Spring Break Week)
 
 | **Student**        | **Date** | **Link to Commit** | **Description**                 | **Relevance**                       |
 | ------------------ | -------- | ------------------ | ------------------------------- | ----------------------------------- |
 | **joazariah**      | 12.04.26 | [link](https://github.com/MarkoUZH/sopra-fs26-group-37-server/commit/f9dd47473751d89de301c22811b5ab04188e3d1d) [frontend link](https://github.com/MarkoUZH/sopra-fs26-group-37-client/commit/e05382e28caa6a2cfcf4cb3b39888f266f53247e) | setup token for authentication | added checks to most REST endpoints to authenticate the token and a guard in the frontend|
 | **joazariah**      | 12.04.26 | link | description | update once error codes done |
-| **[@githubUser2]** | [date]   | [Link to Commit 1] | [Brief description of the task] | [Why this contribution is relevant] |
-|                    | [date]   | [Link to Commit 2] | [Brief description of the task] | [Why this contribution is relevant] |
+| **leodant03** | 05.04.26    | https://github.com/MarkoUZH/sopra-fs26-group-37-server/commit/5f1b9978a67365f6abb1736ec9feaff90b7bd824, https://github.com/MarkoUZH/sopra-fs26-group-37-client/commit/e45d5d51d5b350ef67bdefa92942b9ad8311baf5,https://github.com/MarkoUZH/sopra-fs26-group-37-client/commit/b90e7ec82c3a6fc822fc00c1239ac9d8253c10b9 + ADD TESTING| Ensures settings page functionality and User entity update logic| By defining and connecting the relevant PUT methods for the User entity, it is ensured that users can update their usernames and passwords. |
+|      **leodant03**    | 10.04.2026  + 12.04.2026| https://github.com/MarkoUZH/sopra-fs26-group-37-client/commit/28714e96a8865cfb1ebf786cb0b8aa11181a211a, https://github.com/MarkoUZH/sopra-fs26-group-37-server/commit/750e025085a69eb24874b88485680174475c645a | Added full name field in registration and create project page | After discussion with the team, we decided it was important for the full name of users to also be a core pare of the User entity in order to not rely solely on usernames for identification. This was added in relevant sections. |
 | **[@githubUser3]** | [date]   | [Link to Commit 1] | [Brief description of the task] | [Why this contribution is relevant] |
 |                    | [date]   | [Link to Commit 2] | [Brief description of the task] | [Why this contribution is relevant] |
 | **[@githubUser4]** | [date]   | [Link to Commit 1] | [Brief description of the task] | [Why this contribution is relevant] |
