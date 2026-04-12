@@ -69,7 +69,16 @@ reason).
 
 ## Contributions Week 3 - [Begin Date] to [End Date]
 
-_Continue with the same table format as above._
+| **Student**        | **Date** | **Link to Commit** | **Description**                 | **Relevance**                       |
+| ------------------ | -------- | ------------------ | ------------------------------- | ----------------------------------- |
+| **joazariah**      | 12.04.26 | [link](https://github.com/MarkoUZH/sopra-fs26-group-37-server/commit/f9dd47473751d89de301c22811b5ab04188e3d1d) [frontend link](https://github.com/MarkoUZH/sopra-fs26-group-37-client/commit/e05382e28caa6a2cfcf4cb3b39888f266f53247e) | setup token for authentication | added checks to most REST endpoints to authenticate the token and a guard in the frontend|
+| **joazariah**      | 12.04.26 | link | description | update once error codes done |
+| **[@githubUser2]** | [date]   | [Link to Commit 1] | [Brief description of the task] | [Why this contribution is relevant] |
+|                    | [date]   | [Link to Commit 2] | [Brief description of the task] | [Why this contribution is relevant] |
+| **[@githubUser3]** | [date]   | [Link to Commit 1] | [Brief description of the task] | [Why this contribution is relevant] |
+|                    | [date]   | [Link to Commit 2] | [Brief description of the task] | [Why this contribution is relevant] |
+| **[@githubUser4]** | [date]   | [Link to Commit 1] | [Brief description of the task] | [Why this contribution is relevant] |
+|                    | [date]   | [Link to Commit 2] | [Brief description of the task] | [Why this contribution is relevant] |
 
 ---
 
