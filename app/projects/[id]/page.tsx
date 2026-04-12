@@ -10,7 +10,7 @@ import { Card, Col, Layout, Row, Typography } from "antd";
 import React, { useState } from "react";
 import {useParams, useRouter} from "next/navigation";
 import SideBarSection from "@/projects/SideBarSection";
-
+import ProjectDetailPage from "@/projects/ProjectDetailPage";
 const { Content, Sider } = Layout;
 const { Title, Text } = Typography;
 
@@ -68,11 +68,12 @@ const Project = (): React.JSX.Element => {
         <SideBarSection />
       </Sider>
 
-      <Layout style={{ marginLeft: 220 }}>
+      <Layout>
         <Content style={{ padding: "24px", background: "#f5f5f5" }}>
-          <Title level={1}>Project {params.id}</Title>
+            <ProjectDetailPage/>
         </Content>
       </Layout>
+
     </Layout>
   );
 };
