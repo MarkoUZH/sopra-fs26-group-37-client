@@ -16,6 +16,7 @@ interface Props {
 interface User {
   id: number;
   username: string; 
+  name: string
 }
 
 interface SelectedMember {
@@ -30,6 +31,7 @@ const CreateProjectModal = ({ open, onClose }: Props): React.JSX.Element | null 
   const [members, setMembers] = useState<SelectedMember[]>([]);
   const [availableUsers, setAvailableUsers] = useState<User[]>([]);
   const api = new ApiService();
+  const [selectValue, setSelectValue] = useState<number | null>(null);
  
  
   const handleAddProject = async () => {
@@ -143,13 +145,16 @@ const CreateProjectModal = ({ open, onClose }: Props): React.JSX.Element | null 
           showSearch // Allows typing to filter users
           placeholder="Select members to add"
           style={{ width: "100%" }}
+          value={selectValue}
           filterOption={(input, option) =>
             (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
           }
           // Map your API data to the Select options format
           options={availableUsers.map((user) => ({
-            label: user.username,
+            label: `${user.name} (${user.username})`,
             value: user.id,
+            username: user.username, 
+            name: user.name // Keep the username for later use when adding members
           }))}
           onChange={(value, option) => {
             // Logic to add the selected user to your 'members' list
@@ -164,6 +169,9 @@ const CreateProjectModal = ({ open, onClose }: Props): React.JSX.Element | null 
             if (!members.find(m => m.key === newMember.key)) {
               setMembers([...members, newMember]);
             }
+
+            
+        setSelectValue(null);
           }}
         />
           </Flex>
