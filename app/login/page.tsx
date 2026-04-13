@@ -6,6 +6,10 @@ import useLocalStorage from "@/hooks/useLocalStorage";
 import { User } from "@/types/user";
 import { Button, Form, Input } from "antd";
 import { isUtf8 } from "buffer";
+
+import { message } from "antd";
+import { useEffect } from "react"; // From React core
+import { useSearchParams } from "next/navigation"; // From Next.js navigation
 // Optionally, you can import a CSS module or file for additional styling:
 // import styles from "@/styles/page.module.css";
 
@@ -18,6 +22,15 @@ const Login: React.FC = () => {
   const router = useRouter();
   const apiService = useApi();
   const [form] = Form.useForm();
+
+  const searchParams = useSearchParams();
+  const error = searchParams.get("error");
+
+  useEffect(() => {
+    if (error === "unauthorized") {
+      message.error("Please log in to access this page.");
+    }
+  }, [error]);
   // useLocalStorage hook example use
   // The hook returns an object with the value and two functions
   // Simply choose what you need from the hook:

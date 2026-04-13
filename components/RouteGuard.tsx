@@ -16,7 +16,7 @@ export default function RouteGuard({ children }: { children: React.ReactNode }) 
 
     // 3. Logic: If no token and not on a public page, redirect to login
     if (!token && !publicPaths.includes(pathname)) {
-      router.push("/login");
+      router.push("/login?error=unauthorized");
     } else {
       // 4. If everything is fine, stop showing the loading state
       setIsChecking(false);
