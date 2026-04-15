@@ -24,7 +24,7 @@ export class ApiService {
       const rawToken = localStorage.getItem("token");
       if (rawToken) {
         const cleanToken = rawToken.replace(/"/g, "");
-        headers["Authorization"] = `Bearer ${cleanToken}`; 
+        headers["Authorization"] = cleanToken; 
       }
     }
     return headers;
