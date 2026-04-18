@@ -69,7 +69,7 @@ export default function ProjectListSection(): React.JSX.Element {
           sprints.map((sprint) => (
             <Flex vertical gap={4} key={sprint.id}>
               <Title level={5} style={{ margin: 0 }}>
-                {sprint.name}
+                { sprint.name}
               </Title>
 
               <Row justify="space-between" align="middle">

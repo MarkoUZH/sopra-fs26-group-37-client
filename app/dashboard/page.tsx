@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect, useMemo } from "react";
 import {
   CheckCircleOutlined,
   ClockCircleOutlined,
@@ -7,40 +7,63 @@ import {
   ThunderboltOutlined,
   UnorderedListOutlined,
 } from "@ant-design/icons";
-import { Card, Col, Layout, Row, Typography } from "antd";
+import { Card, Col, Layout, Row, Typography } from "antd"
 import React from "react";
 
 import ProjectListSection from "./ProjectListSection";
 import SideBarSection from "./SideBarSection";
 import TaskSummarySection from "./TaskSummarySection";
 import CreateProjectModal from "./CreateProjectModal";
+import { ApiService } from "@/api/apiService";
+
 
 const { Content, Sider } = Layout;
 const { Title, Text } = Typography;
+
+const Dashboard = (): React.JSX.Element => {
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [tasks, setTasks] = useState<any[]>([]);
+  const apiService = useMemo(() => new ApiService(), []);
+
+  // 1. Fetch tasks on component mount
+  useEffect(() => {
+    const fetchTasks = async () => {
+      try {
+        const data = await apiService.get<any[]>("/tasks");
+        setTasks(data);
+      } catch (error) {
+        console.error("Failed to fetch tasks:", error);
+        
+      }
+    };
+
+    fetchTasks();
+  }, [apiService]);
+
 
 const statsData = [
   {
     icon: <UnorderedListOutlined style={{ fontSize: 24, color: "#fff" }} />,
     iconBg: "#2b7fff",
-    value: "18",
+    value: tasks.length.toString(),
     label: "Total Tasks",
   },
   {
     icon: <FlagOutlined style={{ fontSize: 24, color: "#fff" }} />,
     iconBg: "#f04000",
-    value: "9",
+    value: tasks.filter(t => t.status === "TODO").length.toString(),
     label: "To-Do",
   },
   {
     icon: <ClockCircleOutlined style={{ fontSize: 24, color: "#fff" }} />,
     iconBg: "#f0b100",
-    value: "5",
+    value: tasks.filter(t => t.status === "IN_PROGRESS").length.toString(),
     label: "In Progress",
   },
   {
     icon: <CheckCircleOutlined style={{ fontSize: 24, color: "#fff" }} />,
     iconBg: "#00c950",
-    value: "4",
+    value: tasks.filter(t => t.status === "DONE").length.toString(),
     label: "Completed",
   },
   {
@@ -51,28 +74,26 @@ const statsData = [
   },
 ];
 
-const Dashboard = (): React.JSX.Element => {
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  return (
+return (
     <Layout style={{ minHeight: "100vh", background: "#f5f5f5" }}>
-          <Sider
-            width={220}
-            theme="light"
-            style={{
-              position: "fixed",
-              left: 0,
-              top: 0,
-              bottom: 0,
-              height: "100vh",
-              boxShadow: "2px 0 6px rgba(0, 0, 0, 0.03)",
-            }}
-          >
-            <SideBarSection />
-          </Sider>
+      <Sider
+        width={220}
+        theme="light"
+        style={{
+          position: "fixed",
+          left: 0,
+          top: 0,
+          bottom: 0,
+          height: "100vh",
+          boxShadow: "2px 0 6px rgba(0, 0, 0, 0.03)",
+        }}
+      >
+        <SideBarSection />
+      </Sider>
 
-          <Layout style={{ marginLeft: 220 }}>
-            <Content style={{ padding: "24px", background: "#f5f5f5" }}>
-              <Title level={1}>My Dashboard</Title>
+      <Layout style={{ marginLeft: 220 }}>
+        <Content style={{ padding: "24px", background: "#f5f5f5" }}>
+          <Title level={1}>My Dashboard</Title>
           <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
             {statsData.map((stat, index) => (
               <Col key={index} flex="1 1 20%">
@@ -103,15 +124,12 @@ const Dashboard = (): React.JSX.Element => {
               </Col>
             ))}
           </Row>
-          <div style={{ position: "relative", order: 3 }}>
-            
-          </div>
           <ProjectListSection />
           <TaskSummarySection />
           <CreateProjectModal 
-          open={isModalOpen} 
-          onClose={() => setIsModalOpen(false)} 
-        />
+            open={isModalOpen} 
+            onClose={() => setIsModalOpen(false)} 
+          />
         </Content>
       </Layout>
     </Layout>
