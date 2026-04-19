@@ -78,6 +78,9 @@ const handleLogout = async (): Promise<void> => {
     } else if (info.key === "settings") {
       router.push("/settings");
     }
+    else if (info.key === "projects") {
+      router.push("/projects");
+    }
   };
   return (
       <div style={{ height: "100%", display: "flex", flexDirection: "column", marginTop: 12 }}>

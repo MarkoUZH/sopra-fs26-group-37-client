@@ -3,7 +3,7 @@ import { Button, Card, Col, Flex, Progress, Row, Typography } from "antd";
 import React, { useEffect, useState } from "react";
 import { ApiService } from "@/api/apiService"; // 1. Adjust this path to your file location
 import CreateProjectModal from "./CreateProjectModal";
-
+import { useRouter } from "next/navigation";
 
 const { Title, Text } = Typography;
 
@@ -32,7 +32,7 @@ const [isManager, setIsManager] = useState<boolean>(false);
   
   const [projects, setProjects] = useState<ProjectDTO[]>([]);
   
-  
+  const router = useRouter();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const api = new ApiService();
 
@@ -89,7 +89,10 @@ const [isManager, setIsManager] = useState<boolean>(false);
               <Card size="small" style={{ borderRadius: 12, width: "100%", display: "flex", flexDirection: "column" }}>
                 <Flex justify="space-between" align="center">
                   <Title level={5} style={{ margin: 0 }}>{project.name}</Title>
-                  <ArrowRightOutlined />
+                  <ArrowRightOutlined 
+                style={{ cursor: "pointer", fontSize: 18 }} 
+                onClick={() => router.push(`/projects/${project.id}`)} 
+/>
                 </Flex>
 
                 <Text style={{ display: "block", margin: "8px 0", color: "#4A5565", minHeight: "40px" }}>
