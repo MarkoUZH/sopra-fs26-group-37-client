@@ -7,47 +7,70 @@ import {
   UnorderedListOutlined,
 } from "@ant-design/icons";
 import { Card, Col, Layout, Row, Typography } from "antd";
-import React, { useState } from "react";
+import { useState, useEffect, useMemo } from "react";
 import ProjectListSection from "@/projects/ProjectListSection";
 import SideBarSection from "@/projects/SideBarSection";
+import { ApiService } from "@/api/apiService";
+
 
 const { Content, Sider } = Layout;
 const { Title, Text } = Typography;
 
-const statsData = [
-  {
-    icon: <UnorderedListOutlined style={{ fontSize: 24, color: "#fff" }} />,
-    iconBg: "#2b7fff",
-    value: "18",
-    label: "Total Tasks",
-  },
-  {
-    icon: <FlagOutlined style={{ fontSize: 24, color: "#fff" }} />,
-    iconBg: "#f04000",
-    value: "9",
-    label: "To-Do",
-  },
-  {
-    icon: <ClockCircleOutlined style={{ fontSize: 24, color: "#fff" }} />,
-    iconBg: "#f0b100",
-    value: "5",
-    label: "In Progress",
-  },
-  {
-    icon: <CheckCircleOutlined style={{ fontSize: 24, color: "#fff" }} />,
-    iconBg: "#00c950",
-    value: "4",
-    label: "Completed",
-  },
-  {
-    icon: <ThunderboltOutlined style={{ fontSize: 24, color: "#fff" }} />,
-    iconBg: "#ad46ff",
-    value: "1",
-    label: "Active Sprints",
-  },
-];
-
 const Projects = (): React.JSX.Element => {
+  const [isModalOpen, setIsModalOpen] = useState(false);
+    const [tasks, setTasks] = useState<any[]>([]);
+    const apiService = useMemo(() => new ApiService(), []);
+  
+    // 1. Fetch tasks on component mount
+    useEffect(() => {
+      const fetchTasks = async () => {
+        try {
+          const data = await apiService.get<any[]>("/tasks");
+          setTasks(data);
+        } catch (error) {
+          console.error("Failed to fetch tasks:", error);
+          
+        }
+      };
+  
+      fetchTasks();
+    }, [apiService]);
+  
+  
+  const statsData = [
+    {
+      icon: <UnorderedListOutlined style={{ fontSize: 24, color: "#fff" }} />,
+      iconBg: "#2b7fff",
+      value: tasks.length.toString(),
+      label: "Total Tasks",
+    },
+    {
+      icon: <FlagOutlined style={{ fontSize: 24, color: "#fff" }} />,
+      iconBg: "#f04000",
+      value: tasks.filter(t => t.status === "TODO").length.toString(),
+      label: "To-Do",
+    },
+    {
+      icon: <ClockCircleOutlined style={{ fontSize: 24, color: "#fff" }} />,
+      iconBg: "#f0b100",
+      value: tasks.filter(t => t.status === "IN_PROGRESS").length.toString(),
+      label: "In Progress",
+    },
+    {
+      icon: <CheckCircleOutlined style={{ fontSize: 24, color: "#fff" }} />,
+      iconBg: "#00c950",
+      value: tasks.filter(t => t.status === "DONE").length.toString(),
+      label: "Completed",
+    },
+    {
+      icon: <ThunderboltOutlined style={{ fontSize: 24, color: "#fff" }} />,
+      iconBg: "#ad46ff",
+      value: "1",
+      label: "Active Sprints",
+    },
+  ];
+  
+
   const [modalOpen, setModalOpen] = useState(false);
 
   return (

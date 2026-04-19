@@ -1,16 +1,13 @@
-import { ArrowRightOutlined, FolderOutlined, PlusOutlined } from "@ant-design/icons";
-import { Button, Card, Col, Flex, Progress, Row, Typography } from "antd";
+"use client";
+import { MoreOutlined, ArrowRightOutlined, FolderOutlined, PlusOutlined } from "@ant-design/icons";
+import { Button, Card, Col, Dropdown, Flex, Progress, Row, Typography } from "antd";
 import React, { useEffect, useState } from "react";
-import { ApiService } from "@/api/apiService"; // 1. Adjust this path to your file location
+import { ApiService } from "@/api/apiService"; 
 import CreateProjectModal from "./CreateProjectModal";
-
+import EditProjectModal from "./EditProjectModal";
+import { useRouter } from "next/navigation";
 
 const { Title, Text } = Typography;
-
-interface Task {
-  id: number;
-  // add other task fields here later if needed
-}
 
 interface Member {
   id: number;
@@ -25,18 +22,27 @@ interface ProjectDTO {
   members: Member[];
 }
 
+interface Task {
+  id: number;
+  status: "TODO" | "IN_PROGRESS" | "DONE";
+}
+
 const TaskSummarySection = (): React.JSX.Element => {
-const [isManager, setIsManager] = useState<boolean>(false);
-  
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [selectedProject, setSelectedProject] = useState<ProjectDTO | null>(null);
+  const [isManager, setIsManager] = useState<boolean>(false);
   const [projects, setProjects] = useState<ProjectDTO[]>([]);
-  
-  
   const [isModalOpen, setIsModalOpen] = useState(false);
+  
+  const router = useRouter();
   const api = new ApiService();
 
-  useEffect(() => {
+  const handleEditClick = (project: ProjectDTO) => {
+    setSelectedProject(project);
+    setIsEditModalOpen(true);
+  };
 
-    
+  useEffect(() => {
     const fetchProjects = async () => {
       const userId = localStorage.getItem("id");
       if (!userId) return;
@@ -47,7 +53,6 @@ const [isManager, setIsManager] = useState<boolean>(false);
         const data = await api.get<ProjectDTO[]>(`/projects/users/${userId}`);
         setProjects(data);
       } catch (error) {
-        // processResponse in your ApiService throws detailed errors
         console.error("Project Fetch Error:", error);
       }
     };
@@ -63,42 +68,67 @@ const [isManager, setIsManager] = useState<boolean>(false);
           <Title level={4} style={{ margin: 0 }}>Projects</Title>
         </Flex>
         {isManager && (
-          <Button type="primary" icon={<PlusOutlined />}
-          onClick={() => setIsModalOpen(true)}>
+          <Button type="primary" icon={<PlusOutlined />} onClick={() => setIsModalOpen(true)}>
             Create Project
-            
           </Button>
         )}
       </Flex>
 
       <Row gutter={[16, 16]}>
-        {projects.map((project) => (
-          <Col xs={24} sm={12} lg={8} key={project.id} style={{ display: "flex" }}>
-            <Card size="small" style={{ borderRadius: 12, background: "#ffffff", width: "100%", display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
-              <Flex justify="space-between" align="center">
-                <Title level={5} style={{ margin: 0 }}>{project.name}</Title>
-                <ArrowRightOutlined />
-              </Flex>
+        {projects.map((project) => {
+          const totalTasks = project.tasks?.length || 0;
+          const completedTasks = project.tasks?.filter(t => t.status === "DONE").length || 0;
+          const inProgressTasks = project.tasks?.filter(t => t.status === "IN_PROGRESS" || (t.status as any) === 1).length || 0;
+          const percentage = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
 
-              <Text style={{ display: "block", margin: "8px 0", color: "#4A5565", minHeight: "40px" }}>
-                {project.description}
-              </Text>
+          return (
+            <Col xs={24} sm={12} lg={8} key={project.id} style={{ display: "flex" }}>
+              <Card size="small" style={{ borderRadius: 12, width: "100%", display: "flex", flexDirection: "column" }}>
+                <Flex justify="space-between" align="center">
+                  <Title level={5} style={{ margin: 0 }}>{project.name}</Title>
+                  <Flex gap={8} align="center">
+                    {isManager && (
+                      <Dropdown
+                        menu={{
+                          items: [{
+                            key: 'edit',
+                            label: 'Edit Project',
+                            onClick: () => handleEditClick(project),
+                          }],
+                        }}
+                        trigger={['click']}
+                      >
+                        <MoreOutlined style={{ cursor: "pointer", fontSize: 18, color: "#8c8c8c" }} />
+                      </Dropdown>
+                    )}
+                    
+                    <ArrowRightOutlined 
+                      style={{ cursor: "pointer", fontSize: 18 }} 
+                      onClick={() => router.push(`/projects/${project.id}`)} 
+                    />
+                  </Flex>
+                </Flex>
 
-              <Flex justify="space-between" align="center">
-                <Text style={{ color: "#4A5565" }}>0/0 tasks</Text>
-                <Text style={{ color: "#4A5565" }}>0%</Text>
-              </Flex>
+                <Text style={{ display: "block", margin: "8px 0", color: "#4A5565", minHeight: "40px" }}>
+                  {project.description}
+                </Text>
 
-              <Progress percent={0} showInfo={false} size="small" />
+                <Flex justify="space-between" align="center">
+                  <Text style={{ color: "#4A5565" }}>{completedTasks}/{totalTasks} tasks</Text>
+                  <Text style={{ color: "#4A5565" }}>{percentage}%</Text>
+                </Flex>
 
-              <Flex gap={8} align="center" style={{ marginTop: 8 }}>
-                <Text style={{ color: "#4A5565" }}>0 in progress</Text>
-                <Text style={{ color: "#4A5565" }}>•</Text>
-                <Text style={{ color: "#4A5565" }}>{project.members?.length || 0} members</Text>
-              </Flex>
-            </Card>
-          </Col>
-        ))}
+                <Progress percent={percentage} showInfo={false} size="small" strokeColor="#00c950" />
+
+                <Flex gap={8} align="center" style={{ marginTop: 8 }}>
+                  <Text style={{ color: "#4A5565" }}>{inProgressTasks} in progress</Text>
+                  <Text style={{ color: "#4A5565" }}>•</Text>
+                  <Text style={{ color: "#4A5565" }}>{project.members?.length || 0} members</Text>
+                </Flex>
+              </Card>
+            </Col>
+          );
+        })}
       </Row>
 
       {projects.length === 0 && (
@@ -106,10 +136,22 @@ const [isManager, setIsManager] = useState<boolean>(false);
           <Text type="secondary">No projects found.</Text>
         </Flex>
       )}
+      
       <CreateProjectModal 
         open={isModalOpen} 
         onClose={() => setIsModalOpen(false)} 
       />
+
+      {selectedProject && (
+        <EditProjectModal 
+          open={isEditModalOpen} 
+          project={selectedProject}
+          onClose={() => {
+            setIsEditModalOpen(false);
+            setSelectedProject(null);
+          }} 
+        />
+      )}
     </Card>
   );
 };
