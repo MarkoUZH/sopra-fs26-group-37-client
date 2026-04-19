@@ -56,7 +56,7 @@ const [isManager, setIsManager] = useState<boolean>(false);
   }, []);
 
   return (
-    <Card style={{ borderRadius: 12, width: "100%", background: "#ffffff", boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.03), 0 1px 6px -1px rgba(0, 0, 0, 0.02), 0 2px 4px 0 rgba(0, 0, 0, 0.02)' }}>
+    <Card style={{ borderRadius: 12, width: "100%", background: "#ffffff", boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.03), 0 1px 6px -1px rgba(0, 0, 0, 0.02), 0 2px 4px 0 rgba(0, 0, 0, 0.02)', marginTop: 16 }}>
       <Flex justify="space-between" align="center" style={{ marginBottom: 16 }}>
         <Flex align="center" gap={8}>
           <FolderOutlined style={{ fontSize: 20 }} />
