@@ -81,10 +81,16 @@ reason).
 
 ---
 
-## Contributions Week 4 - [Begin Date] to [End Date]
+## Contributions Week 4 - 13.04.2026 to 19.04.2026
 
-_Continue with the same table format as above._
-
+| **Student**      | **Date**          | **Link to Commit** | **Description**                 | **Relevance**                                                                                                                                                                                                                       |
+| ---------------- |-------------------| ------------------ | ------------------------------- |-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **joazariah**    |   |  | |                               |
+| **leodant03**    | 17.04.26   |https://github.com/MarkoUZH/sopra-fs26-group-37-server/commit/dd1445365dc17320c31b00347d530afa4137a590, https://github.com/MarkoUZH/sopra-fs26-group-37-client/commit/c5ef13fec6b6a79cb8fe15932ff117b8e186a7c5 | Implemented Sprint Creation and Management and finalised CRUD architecture for Sprints | Ensures that active sprints  status shows correctly on dashboard. Dynamically makes API calls to the backend to obtain this information. Also includes refined backend architecture for Sprint creation.                            |
+| **leodant03**    | 17.04.26   |https://github.com/MarkoUZH/sopra-fs26-group-37-client/commit/c5ef13fec6b6a79cb8fe15932ff117b8e186a7c5, https://github.com/MarkoUZH/sopra-fs26-group-37-client/commit/e521b6e706b4899a6c84df016583fefa026e6c3e | Implemented logic for task showing on the dashboard | Refined Task entity in the backend to ensure flawless connection to User and Project entities, and ensured dashboard functionality showing amount of tasks for each status.               |
+| **leodant03**    | 19.04.26   |https://github.com/MarkoUZH/sopra-fs26-group-37-client/commit/d6340277d03b55266873d3ed2762e139c0860c34, https://github.com/MarkoUZH/sopra-fs26-group-37-server/commit/68c6ca441bb64dea222a9b3b2baeaac3e99a73fd, https://github.com/MarkoUZH/sopra-fs26-group-37-server/commit/68c6ca441bb64dea222a9b3b2baeaac3e99a73fd| Implemented PUT logic for Project entity and refined "My Projects" page | Ensures Project members, name and description can only be edited by managers, and also ensures a dynamic and working "My Projects" page.       |
+| **[@githubUser4]** | [date]            | [Link to Commit 1] | [Brief description of the task] | [Why this contribution is relevant]                                                                                                                                                                                                 |
+|                  | [date]            | [Link to Commit 2] | [Brief description of the task] | [Why this contribution is relevant]                                                                                                                      
 ---
 
 ## Contributions Week 5 - [Begin Date] to [End Date]
