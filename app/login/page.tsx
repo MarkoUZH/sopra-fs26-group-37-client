@@ -1,22 +1,65 @@
 "use client"; // For components that need React hooks and browser APIs, SSR (server side rendering) has to be disabled. Read more here: https://nextjs.org/docs/pages/building-your-application/rendering/server-side-rendering
 
-import { useRouter } from "next/navigation"; // use NextJS router for navigation
-import { useApi } from "@/hooks/useApi";
-import useLocalStorage from "@/hooks/useLocalStorage";
-import { User } from "@/types/user";
-import { Button, Form, Input } from "antd";
-import { isUtf8 } from "buffer";
+import { Button, Form, Input, message, Select } from "antd"; // Added Select for language dropdown
+import { useEffect, useState } from "react"; // Added useState
 
-import { message } from "antd";
-import { useEffect } from "react"; // From React core
-import { useSearchParams } from "next/navigation"; // From Next.js navigation
-// Optionally, you can import a CSS module or file for additional styling:
-// import styles from "@/styles/page.module.css";
+// --- INLINE DEPENDENCIES FOR PREVIEW ENVIRONMENT ---
+// These replace the Next.js and custom hooks so the code compiles in the browser,
+// while STILL making real network requests to your local Spring Boot backend 
+const useRouter = () => ({ push: (url: string) => console.log("Navigating to:", url) });
+const useSearchParams = () => ({ get: (param: string) => null });
+
+function useLocalStorage<T>(key: string, initialValue: T) {
+  const [storedValue, setStoredValue] = useState<T>(initialValue);
+  const setValue = (value: T) => {
+    setStoredValue(value);
+    if (typeof window !== "undefined") window.localStorage.setItem(key, JSON.stringify(value));
+  };
+  return { set: setValue, value: storedValue };
+}
+
+const useApi = () => {
+  return {
+    post: async <T = any>(endpoint: string, data: any): Promise<T> => {
+      // Pointing to the typical local Spring Boot port for real translation tests
+      const baseUrl = "http://localhost:8080";
+      const response = await fetch(`${baseUrl}${endpoint}`, {
+        method: 'POST',
+        headers: { 
+            'Content-Type': 'application/json', 
+            'Authorization': localStorage.getItem('token') || '' 
+        },
+        body: JSON.stringify(data),
+      });
+      if (!response.ok) throw new Error(`API Error: ${response.status}`);
+      const contentType = response.headers.get("Content-Type");
+      if (contentType && contentType.includes("application/json")) {
+        return response.json() as Promise<T>;
+      }
+      return response.text() as unknown as Promise<T>;
+    }
+  };
+};
+
+interface User { token?: string; id?: string; language?: string; }
+// --------------------------------------------------
 
 interface FormFieldProps {
   label: string;
   value: string;
 }
+
+// 1. Define your base English text outside the component to avoid recreation
+const baseText = {
+  usernameLabel: "Username",
+  usernamePlaceholder: "Enter username",
+  usernameError: "Please input your username!",
+  passwordLabel: "Password",
+  passwordPlaceholder: "Enter password",
+  passwordError: "Please input your password!",
+  loginButton: "Login",
+  registerButton: "No account yet? Register here"
+};
 
 const Login: React.FC = () => {
   const router = useRouter();
@@ -26,27 +69,76 @@ const Login: React.FC = () => {
   const searchParams = useSearchParams();
   const error = searchParams.get("error");
 
+  // 2. State for the UI text and the selected language
+  const [uiText, setUiText] = useState(baseText);
+  const [targetLanguage, setTargetLanguage] = useState('en');
+
+  // 3. Translation Effect
+  useEffect(() => {
+    const translatePage = async () => {
+      // If English, just use the base text
+      if (targetLanguage === 'en') {
+        setUiText(baseText);
+        return;
+      }
+
+      // Helper function to call your API Service for a single string
+      const translate = async (text: string) => {
+        try {
+          return await apiService.post<string>('/translate', {
+            text: text,
+            sourceLanguage: 'en',
+            language: targetLanguage
+          });
+        } catch (err) {
+          console.error("Translation failed for text:", text, err);
+          return text; // Fallback to English if the translation fails
+        }
+      };
+
+      // 4. Use Promise.all to fetch all translations simultaneously! 
+      // Doing this one by one with await would make the page incredibly slow.
+      const [
+        usernameLabel, usernamePlaceholder, usernameError,
+        passwordLabel, passwordPlaceholder, passwordError,
+        loginButton, registerButton
+      ] = await Promise.all([
+        translate(baseText.usernameLabel),
+        translate(baseText.usernamePlaceholder),
+        translate(baseText.usernameError),
+        translate(baseText.passwordLabel),
+        translate(baseText.passwordPlaceholder),
+        translate(baseText.passwordError),
+        translate(baseText.loginButton),
+        translate(baseText.registerButton)
+      ]);
+
+      // Update the UI state with the translated strings
+      setUiText({
+        usernameLabel, usernamePlaceholder, usernameError,
+        passwordLabel, passwordPlaceholder, passwordError,
+        loginButton, registerButton
+      });
+    };
+
+    translatePage();
+  }, [targetLanguage, apiService]); // Re-run whenever targetLanguage changes
+
   useEffect(() => {
     if (error === "unauthorized") {
       message.error("Please log in to access this page.");
     }
   }, [error]);
-  // useLocalStorage hook example use
-  // The hook returns an object with the value and two functions
-  // Simply choose what you need from the hook:
+
   const {
-    // value: token, // is commented out because we do not need the token value
-    set: setToken, // we need this method to set the value of the token to the one we receive from the POST request to the backend server API
-    // clear: clearToken, // is commented out because we do not need to clear the token when logging in
-  } = useLocalStorage<string>("token", ""); // note that the key we are selecting is "token" and the default value we are setting is an empty string
-  // if you want to pick a different token, i.e "usertoken", the line above would look as follows: } = useLocalStorage<string>("usertoken", "");
+    set: setToken, 
+  } = useLocalStorage<string>("token", ""); 
   const { set: setUserId } = useLocalStorage<string>("id", "");
+  
   const handleLogin = async (values: FormFieldProps) => {
     try {
-      // Call the API service and let it handle JSON serialization and error handling
       const response = await apiService.post<User>("/login", values);
 
-      // Use the useLocalStorage hook that returned a setter function (setToken in line 41) to store the token if available
       if (response.token) {
         setToken(response.token);
       }
@@ -55,10 +147,11 @@ const Login: React.FC = () => {
       }
 
       if(response.language) { 
+        // Important: If your user object returns their preferred language, 
+        // you might want to use this to set `targetLanguage` globally later!
         localStorage.setItem("language", JSON.stringify(response.language));
       }
 
-      // Navigate to the user overview
       router.push("/dashboard");
     } catch (error) {
       if (error instanceof Error) {
@@ -71,6 +164,22 @@ const Login: React.FC = () => {
 
   return (
     <div className="login-container">
+      {/* Language Dropdown Selector aligned to the right */}
+      <div style={{ marginBottom: 24, display: 'flex', justifyContent: 'flex-end' }}>
+        <Select
+          value={targetLanguage}
+          onChange={(value) => setTargetLanguage(value)}
+          style={{ width: 120 }}
+          options={[
+            { value: 'en', label: 'English' },
+            { value: 'fr', label: 'Français' },
+            { value: 'de', label: 'Deutsch' },
+            { value: 'it', label: 'Italiano' },
+            // Add more languages as needed
+          ]}
+        />
+      </div>
+
       <Form
         form={form}
         name="login"
@@ -81,22 +190,23 @@ const Login: React.FC = () => {
       >
         <Form.Item
           name="username"
-          label="Username"
-          rules={[{ required: true, message: "Please input your username!" }]}
+          label={uiText.usernameLabel}
+          rules={[{ required: true, message: uiText.usernameError }]}
         >
-          <Input placeholder="Enter username" />
+          <Input placeholder={uiText.usernamePlaceholder} />
         </Form.Item>
+        
         <Form.Item
           name="password"
-          label="Password"
-          rules={[{ required: true, message: "Please input your password!" }]}
+          label={uiText.passwordLabel}
+          rules={[{ required: true, message: uiText.passwordError }]}
         >
-          <Input.Password placeholder="Enter password" />
+          <Input.Password placeholder={uiText.passwordPlaceholder} />
         </Form.Item>
 
         <Form.Item>
           <Button type="primary" htmlType="submit" className="login-button">
-            Login
+            {uiText.loginButton}
           </Button>
         </Form.Item>
       
@@ -105,13 +215,11 @@ const Login: React.FC = () => {
             type="primary" 
             block 
             className="register-button"
-            onClick={() => router.push("/register")} // Redirect logic here
+            onClick={() => router.push("/register")} 
           >
-            No account yet? Register here
+            {uiText.registerButton}
           </Button>
         </Form.Item>
-
-
       </Form>
     </div>
   );

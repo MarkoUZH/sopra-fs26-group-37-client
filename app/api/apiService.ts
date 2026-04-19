@@ -66,9 +66,15 @@ export class ApiService {
       error.status = res.status;
       throw error;
     }
-    return res.headers.get("Content-Type")?.includes("application/json")
-      ? (res.json() as Promise<T>)
-      : Promise.resolve(res as T);
+    
+    const contentType = res.headers.get("Content-Type");
+    if (contentType && contentType.includes("application/json")) {
+      return res.json() as Promise<T>;
+    } else {
+      // Correctly parse endpoints that return raw strings (like /translate)
+      return res.text() as unknown as Promise<T>;
+    }
+
   }
 
   /**

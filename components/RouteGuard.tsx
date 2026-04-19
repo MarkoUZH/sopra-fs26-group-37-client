@@ -12,7 +12,7 @@ export default function RouteGuard({ children }: { children: React.ReactNode }) 
     const token = localStorage.getItem("token");
     
     // 2. Define which pages don't need a token
-    const publicPaths = ["/login", "/register"];
+    const publicPaths = ["/login", "/register", "/translate"];
 
     // 3. Logic: If no token and not on a public page, redirect to login
     if (!token && !publicPaths.includes(pathname)) {
@@ -25,7 +25,7 @@ export default function RouteGuard({ children }: { children: React.ReactNode }) 
 
   // While checking, return a blank screen or spinner to prevent "flickering"
   // of protected content before the redirect happens.
-  if (isChecking && !["/login", "/register"].includes(pathname)) {
+  if (isChecking && !["/login", "/register", "/translate"].includes(pathname)) {
     return null; 
   }
 

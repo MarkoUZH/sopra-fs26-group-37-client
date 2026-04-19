@@ -139,3 +139,6 @@ yarn-error.log*
 
 # idea IntelliJ
 .idea/*
+
+#hugging face
+local.properties
