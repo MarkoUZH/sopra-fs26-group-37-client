@@ -3,6 +3,8 @@ import {
   LogoutOutlined,
   ProjectOutlined,
   SettingOutlined,
+  TagsOutlined,
+  RocketOutlined,
 } from "@ant-design/icons";
 import { Divider, Menu } from "antd";
 import React, { useEffect, useState } from "react";
@@ -11,10 +13,13 @@ import useLocalStorage from "@/hooks/useLocalStorage";
 import { useApi } from "@/hooks/useApi";
 import { User } from "@/types/user";
 import ISO6391 from "iso-639-1"; // Importing the ISO 639-1 library for language code handling
-
+import ManageTagsModal from "./ManageTagsModal";
+import ManageSprintsModal from "./ManageSprintsModal";
 
 const SideBarSection = (): React.JSX.Element => {
   const router = useRouter();
+  const [tagsModalOpen, setTagsModalOpen] = useState(false);
+  const [sprintsModalOpen, setSprintsModalOpen] = useState(false);
   const { clear: clearToken } = useLocalStorage<string>("token", "");
 
   const api = useApi();
@@ -77,6 +82,10 @@ const handleLogout = async (): Promise<void> => {
       router.push("/dashboard");
     } else if (info.key === "settings") {
       router.push("/settings");
+    } else if (info.key === "tags") {
+      setTagsModalOpen(true);
+    } else if (info.key == "sprints") {
+        setSprintsModalOpen(true);
     }
   };
   return (
@@ -111,6 +120,8 @@ const handleLogout = async (): Promise<void> => {
           items={[
             { key: "dashboard", icon: <DashboardOutlined />, label: <span className="menu-item">Dashboard</span>},
             { key: "projects", icon: <ProjectOutlined />, label: <span className="menu-item dropdown">Projects<span className="chevron">›</span></span> },
+            { key: "tags", icon: <TagsOutlined />, label: <span className="menu-item">Tags</span> },
+            { key: "sprints", icon: <RocketOutlined />, label: <span className="menu-item">Sprints</span> },
           ]}
         />
       </div>
@@ -134,6 +145,8 @@ const handleLogout = async (): Promise<void> => {
           ]}
         />
       </div>
+      <ManageTagsModal open={tagsModalOpen} onClose={() => setTagsModalOpen(false)} />
+      <ManageSprintsModal open={sprintsModalOpen} onClose={() => setSprintsModalOpen(false)} />
     </div>
   );
 };
