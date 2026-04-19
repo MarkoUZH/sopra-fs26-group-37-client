@@ -1,13 +1,13 @@
-import { ArrowRightOutlined, FolderOutlined, PlusOutlined } from "@ant-design/icons";
-import { Button, Card, Col, Flex, Progress, Row, Typography } from "antd";
+"use client";
+import { MoreOutlined, ArrowRightOutlined, FolderOutlined, PlusOutlined } from "@ant-design/icons";
+import { Button, Card, Col, Dropdown, Flex, Progress, Row, Typography } from "antd";
 import React, { useEffect, useState } from "react";
-import { ApiService } from "@/api/apiService"; // 1. Adjust this path to your file location
+import { ApiService } from "@/api/apiService"; 
 import CreateProjectModal from "./CreateProjectModal";
+import EditProjectModal from "./EditProjectModal";
 import { useRouter } from "next/navigation";
 
 const { Title, Text } = Typography;
-
-
 
 interface Member {
   id: number;
@@ -24,21 +24,25 @@ interface ProjectDTO {
 
 interface Task {
   id: number;
-  status: "TODO" | "IN_PROGRESS" | "DONE"; // Match your TaskStatus enum
+  status: "TODO" | "IN_PROGRESS" | "DONE";
 }
 
 const TaskSummarySection = (): React.JSX.Element => {
-const [isManager, setIsManager] = useState<boolean>(false);
-  
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [selectedProject, setSelectedProject] = useState<ProjectDTO | null>(null);
+  const [isManager, setIsManager] = useState<boolean>(false);
   const [projects, setProjects] = useState<ProjectDTO[]>([]);
+  const [isModalOpen, setIsModalOpen] = useState(false);
   
   const router = useRouter();
-  const [isModalOpen, setIsModalOpen] = useState(false);
   const api = new ApiService();
 
-  useEffect(() => {
+  const handleEditClick = (project: ProjectDTO) => {
+    setSelectedProject(project);
+    setIsEditModalOpen(true);
+  };
 
-    
+  useEffect(() => {
     const fetchProjects = async () => {
       const userId = localStorage.getItem("id");
       if (!userId) return;
@@ -49,7 +53,6 @@ const [isManager, setIsManager] = useState<boolean>(false);
         const data = await api.get<ProjectDTO[]>(`/projects/users/${userId}`);
         setProjects(data);
       } catch (error) {
-        // processResponse in your ApiService throws detailed errors
         console.error("Project Fetch Error:", error);
       }
     };
@@ -65,23 +68,17 @@ const [isManager, setIsManager] = useState<boolean>(false);
           <Title level={4} style={{ margin: 0 }}>Projects</Title>
         </Flex>
         {isManager && (
-          <Button type="primary" icon={<PlusOutlined />}
-          onClick={() => setIsModalOpen(true)}>
+          <Button type="primary" icon={<PlusOutlined />} onClick={() => setIsModalOpen(true)}>
             Create Project
-            
           </Button>
         )}
       </Flex>
 
-<Row gutter={[16, 16]}>
+      <Row gutter={[16, 16]}>
         {projects.map((project) => {
-          console.log(`Project ${project.name} tasks:`, project )
-          // 2. Logic to calculate stats for THIS specific project
           const totalTasks = project.tasks?.length || 0;
           const completedTasks = project.tasks?.filter(t => t.status === "DONE").length || 0;
           const inProgressTasks = project.tasks?.filter(t => t.status === "IN_PROGRESS" || (t.status as any) === 1).length || 0;
-          
-          // Calculate percentage (avoid division by zero)
           const percentage = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
 
           return (
@@ -89,10 +86,27 @@ const [isManager, setIsManager] = useState<boolean>(false);
               <Card size="small" style={{ borderRadius: 12, width: "100%", display: "flex", flexDirection: "column" }}>
                 <Flex justify="space-between" align="center">
                   <Title level={5} style={{ margin: 0 }}>{project.name}</Title>
-                  <ArrowRightOutlined 
-                style={{ cursor: "pointer", fontSize: 18 }} 
-                onClick={() => router.push(`/projects/${project.id}`)} 
-/>
+                  <Flex gap={8} align="center">
+                    {isManager && (
+                      <Dropdown
+                        menu={{
+                          items: [{
+                            key: 'edit',
+                            label: 'Edit Project',
+                            onClick: () => handleEditClick(project),
+                          }],
+                        }}
+                        trigger={['click']}
+                      >
+                        <MoreOutlined style={{ cursor: "pointer", fontSize: 18, color: "#8c8c8c" }} />
+                      </Dropdown>
+                    )}
+                    
+                    <ArrowRightOutlined 
+                      style={{ cursor: "pointer", fontSize: 18 }} 
+                      onClick={() => router.push(`/projects/${project.id}`)} 
+                    />
+                  </Flex>
                 </Flex>
 
                 <Text style={{ display: "block", margin: "8px 0", color: "#4A5565", minHeight: "40px" }}>
@@ -104,7 +118,6 @@ const [isManager, setIsManager] = useState<boolean>(false);
                   <Text style={{ color: "#4A5565" }}>{percentage}%</Text>
                 </Flex>
 
-                {/* 3. Update Progress Bar */}
                 <Progress percent={percentage} showInfo={false} size="small" strokeColor="#00c950" />
 
                 <Flex gap={8} align="center" style={{ marginTop: 8 }}>
@@ -128,6 +141,17 @@ const [isManager, setIsManager] = useState<boolean>(false);
         open={isModalOpen} 
         onClose={() => setIsModalOpen(false)} 
       />
+
+      {selectedProject && (
+        <EditProjectModal 
+          open={isEditModalOpen} 
+          project={selectedProject}
+          onClose={() => {
+            setIsEditModalOpen(false);
+            setSelectedProject(null);
+          }} 
+        />
+      )}
     </Card>
   );
 };
