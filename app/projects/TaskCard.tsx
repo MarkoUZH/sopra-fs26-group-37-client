@@ -6,7 +6,7 @@ import {
   MoreOutlined,
   UserOutlined
 } from "@ant-design/icons";
-import { Avatar, Button, Dropdown, MenuProps, Switch, Typography } from "antd";
+import { Avatar, Button, Dropdown, MenuProps, Switch, Tooltip, Typography } from "antd";
 import React, { useState } from "react";
 import { Task } from "@/projects/taskTypes";
 import { useTags } from "@/dashboard/TagsContext";
@@ -24,6 +24,20 @@ const COLOR_PALETTE = [
   { bg: "#ffedd5", text: "#c2410c" },
 ];
 
+const getAvatarColor = (userId: number) => {
+  const color = COLOR_PALETTE[userId % COLOR_PALETTE.length];
+  return {
+    backgroundColor: color.bg,
+    color: color.text,
+    border: `1px solid ${color.text}40`,
+    fontSize: '11px',    // Explicitly set font size for the name initial
+    fontWeight: '700',   // Make it bold so it stands out against the color
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center'
+  };
+};
+
 export interface TaskCardProps {
   task: Task;
   onDragStart: (e: React.DragEvent, taskId: number) => void;
@@ -37,13 +51,13 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onDragStart, onEdit, onDelete
   const { getTagsForProject } = useTags();
   
   // Logic to handle status vs column toggle
-  const isDone = task.status === "DONE";
-  const [toggled, setToggled] = useState(isDone);
+  //const isDone = task.status === "DONE";
+  //const [toggled, setToggled] = useState(isDone);
 
   // Get the first user from the assignedUsers array (matching Java DTO)
-  const primaryAssignee = task.assignedUsers && task.assignedUsers.length > 0 
-    ? task.assignedUsers[0] 
-    : null;
+  //const primaryAssignee = task.assignedUsers && task.assignedUsers.length > 0 
+  //  ? task.assignedUsers[0] 
+  //  : null;
 
   const menuItems: MenuProps["items"] = [
     { key: "edit", label: "Edit task", icon: <EditOutlined /> },
@@ -108,7 +122,7 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onDragStart, onEdit, onDelete
       </div>
 
       {/* Title Section (Priority dot removed) */}
-      <div style={{ marginBottom: 6 }}>
+      <div style={{ marginBottom: 1 }}>
         <Text strong style={{ color: "#1f2937", fontSize: 14, lineHeight: 1.4 }}>
           {task.name}
         </Text>
@@ -121,35 +135,37 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onDragStart, onEdit, onDelete
         </Text>
       )}
 
-      {/* Footer */}
-      <div style={{ 
-        display: "flex", 
-        justifyContent: "space-between", 
-        alignItems: "center", 
-        borderTop: "1px solid #f9f9f9", 
-        paddingTop: 12 
-      }}>
+      {/* 4. FOOTER */}
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderTop: "1px solid #f9f9f9", paddingTop: 12 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          
-          
           {task.dueDate && (
             <Text style={{ fontSize: 11, color: "#9ca3af", display: "flex", alignItems: "center" }}>
               <CalendarOutlined style={{ marginRight: 4 }} />
-              {/* Basic date formatting */}
               {new Date(task.dueDate).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
             </Text>
           )}
         </div>
         
-        <Switch
-          size="small"
-          checked={toggled}
-          onChange={setToggled}
-          style={{ backgroundColor: toggled ? "#6066FF" : undefined }}
-        />
-      </div>
+        {/* AVATAR GROUP WITH FALLBACK CHECK */}
+        <div style={{ minWidth: 32, display: 'flex', justifyContent: 'flex-end' }}>
+            {task.assignedUsers && task.assignedUsers.length > 0 ? (
+                <Avatar.Group maxCount={3} size="small">
+                    {task.assignedUsers.map((user) => (
+                        <Tooltip key={user.id} title={user.username}>
+                          <Avatar size="small" style={{ backgroundColor: "#87d068" }}>
+                            {"BORAT"}
+                          </Avatar>
+                        </Tooltip>
+                    ))}
+                </Avatar.Group>
+            ) : (
+                /* This will show if the array is empty - helping you debug! */
+                <Avatar size="small" icon={<UserOutlined />} style={{ opacity: 0.5 }} />
+            )}
+        </div>
     </div>
-  );
+  </div>
+  ); 
 };
 
 export default TaskCard;
