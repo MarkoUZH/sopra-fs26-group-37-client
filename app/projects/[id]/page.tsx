@@ -71,16 +71,44 @@ setTasks(mappedTasks);
   e.dataTransfer.effectAllowed = "move";
 };
 
-const handleDrop = (e: React.DragEvent, targetStatus: TaskColumn) => {
+const handleDrop = async (e: React.DragEvent, targetStatus: TaskColumn) => {
   e.preventDefault();
   if (!dragTaskId.current) return;
   
   const numericId = Number(dragTaskId.current);
-  
+  dragTaskId.current = null; // Clear ref immediately for safety
+
+  // 1. Find the task in your local state
+  const taskToUpdate = tasks.find(t => t.id === numericId);
+  if (!taskToUpdate || taskToUpdate.status === targetStatus) return;
+
+  // 2. Optimistic Update: Update UI immediately for a "snappy" feel
+  const originalTasks = [...tasks];
   setTasks((prev) =>
     prev.map((t) => (t.id === numericId ? { ...t, status: targetStatus } : t))
   );
-  dragTaskId.current = null;
+
+  try {
+    // 3. Prepare the DTO for the backend
+    // Note: Your TaskPostDTO likely requires the full object details even for a status change
+    const postBody = {
+      name: taskToUpdate.name,
+      description: taskToUpdate.description,
+      priority: taskToUpdate.priority,
+      status: targetStatus, // Updated status
+      dueDate: taskToUpdate.dueDate ? dayjs(taskToUpdate.dueDate).format("YYYY-MM-DDTHH:mm:ss") : null,
+      timeEstimate: taskToUpdate.timeEstimate,
+      tagIds: taskToUpdate.tags?.map(t => t.id) || [],
+      assignedUserIds: taskToUpdate.assignedUsers?.map(u => u.id) || [],
+      projectId: Number(projectId),
+    };
+
+    // 4. PUT call to update the task in the database
+    await apiService.put(`/tasks/${numericId}`, postBody);
+    
+  } catch (error) {
+    console.error("Failed to update task status on backend:", error);
+  }
 };
 
   const handleAddTask = (column: TaskColumn) => {

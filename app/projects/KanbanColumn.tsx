@@ -113,36 +113,7 @@ const KanbanColumn: React.FC<KanbanColumnProps> = ({
       </div>
 
       {/* Add task button */}
-      <button
-        onClick={() => onAddTask(column.key)}
-        style={{
-          width: "100%",
-          padding: "8px",
-          borderRadius: 8,
-          border: "1px dashed #e5e7eb",
-          background: "transparent",
-          color: "#9ca3af",
-          fontSize: 13,
-          cursor: "pointer",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          gap: 6,
-          transition: "background 0.15s, color 0.15s",
-          marginTop: 4,
-        }}
-        onMouseEnter={(e) => {
-          (e.currentTarget as HTMLButtonElement).style.background = "#fff";
-          (e.currentTarget as HTMLButtonElement).style.color = "#4b5563";
-        }}
-        onMouseLeave={(e) => {
-          (e.currentTarget as HTMLButtonElement).style.background = "transparent";
-          (e.currentTarget as HTMLButtonElement).style.color = "#9ca3af";
-        }}
-      >
-        <PlusOutlined style={{ fontSize: 11 }} /> Add task
-      </button>
-    </div>
+          </div>
   );
 };
 

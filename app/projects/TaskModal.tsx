@@ -161,19 +161,6 @@ const TaskModal: React.FC<TaskModalProps> = ({
           {/* Tags + Members Section */}
           <Flex gap={12}>
             <Flex vertical gap={4} style={{ flex: 1 }}>
-              <Flex align="center" gap={4}>
-                <TagOutlined style={{ fontSize: 12, color: "#555" }} />
-                <span style={{ fontSize: 13, color: "#555" }}>Tags</span>
-              </Flex>
-              <Select
-                mode="multiple"
-                placeholder="Select tags"
-                value={form.tags}
-                onChange={(val) => setForm({ ...form, tags: val })}
-                style={{ width: "100%" }}
-                options={projectTags.map((t) => ({ label: t.name, value: t.name }))}
-                getPopupContainer={(trigger) => trigger.parentElement!}
-              />
             </Flex>
 
             <Flex vertical gap={4} style={{ flex: 1 }}>
