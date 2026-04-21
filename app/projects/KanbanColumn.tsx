@@ -13,20 +13,20 @@ import { KanbanColumnConfig, Task, TaskColumn } from "@/projects/taskTypes";
 const { Text } = Typography;
 
 const columnIcon: Record<TaskColumn, React.ReactNode> = {
-  todo:       <FlagOutlined />,
-  inprogress: <ClockCircleOutlined />,
-  done:       <CheckCircleOutlined />,
+  TODO:       <FlagOutlined />,
+  IN_PROGRESS: <ClockCircleOutlined />,
+  DONE:       <CheckCircleOutlined />,
 };
 
 export interface KanbanColumnProps {
   column: KanbanColumnConfig;
   tasks: Task[];
-  onDragStart: (e: React.DragEvent, taskId: string) => void;
+  onDragStart: (e: React.DragEvent, taskId: number) => void;
   onDrop: (e: React.DragEvent, column: TaskColumn) => void;
   onEdit: (task: Task) => void;
-  onDelete: (taskId: string) => void;
+  onDelete: (taskId: number) => void;
   onAddTask: (column: TaskColumn) => void;
-  projectId: string;
+  projectId: number;
 }
 
 const KanbanColumn: React.FC<KanbanColumnProps> = ({

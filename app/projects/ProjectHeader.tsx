@@ -2,15 +2,16 @@
 import { CalendarOutlined, TeamOutlined } from "@ant-design/icons";
 import { Avatar, Card, Col, Progress, Row, Tooltip, Typography } from "antd";
 import React from "react";
-
 const { Title, Text, Paragraph } = Typography;
 
 export interface ProjectHeaderProps {
   project: {
     name: string;
     description: string;
-    color: string;
-    team: { name: string; initials: string; color: string }[];
+    // Mapping Java's List<UserGetDTO> members
+    members: { id: number; username: string; name?: string }[];
+    // Mapping Java's UserGetDTO owner
+    owner?: { id: number; username: string };
   };
   totalTasks: number;
   doneTasks: number;
@@ -38,7 +39,7 @@ const ProjectHeader: React.FC<ProjectHeaderProps> = ({ project, totalTasks, done
       }}
       bodyStyle={{ padding: 0 }}
     >
-      <div style={{ height: 5, background: project.color }} />
+      <div style={{ height: 5,  }} />
 
       <div style={{ padding: "20px 24px" }}>
         <Row gutter={[24, 16]} align="middle" justify="space-between">
@@ -50,13 +51,12 @@ const ProjectHeader: React.FC<ProjectHeaderProps> = ({ project, totalTasks, done
                   width: 44,
                   height: 44,
                   borderRadius: 10,
-                  background: `${project.color}18`,
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
                 }}
               >
-                <TeamOutlined style={{ fontSize: 22, color: project.color }} />
+                <TeamOutlined style={{ fontSize: 22}} />
               </div>
               <Title level={3} style={{ margin: 0 }}>{project.name}</Title>
             </div>
@@ -70,14 +70,13 @@ const ProjectHeader: React.FC<ProjectHeaderProps> = ({ project, totalTasks, done
             <Row gutter={[32, 0]} align="top">
               {/* Progress */}
               <Col style={columnStyle}>
-                <Text strong style={{ fontSize: 22, color: project.color, lineHeight: "28px" }}>
+                <Text strong style={{ fontSize: 22, lineHeight: "28px" }}>
                   {progress}%
                 </Text>
                 <Text style={{ fontSize: 12, color: "#9ca3af", marginBottom: 6 }}>Complete</Text>
                 <Progress
                   percent={progress}
                   showInfo={false}
-                  strokeColor={project.color}
                   trailColor="#f0f0f0"
                   strokeWidth={5}
                   style={{ width: 80, margin: 0 }}
@@ -94,13 +93,13 @@ const ProjectHeader: React.FC<ProjectHeaderProps> = ({ project, totalTasks, done
               <Col style={columnStyle}>
                 <Text style={{ fontSize: 12, color: "#9ca3af", marginBottom: 6 }}>Team</Text>
                 <Avatar.Group maxCount={4} size="small">
-                  {project.team.map((m) => (
-                    <Tooltip key={m.name} title={m.name}>
-                      <Avatar size="small" style={{ backgroundColor: m.color, fontSize: 9 }}>
-                        {m.initials}
-                      </Avatar>
-                    </Tooltip>
-                  ))}
+                  {project.members?.map((member) => (
+                        <Tooltip key={member.id} title={member.username}>
+                          <Avatar size="small" style={{ backgroundColor: "#87d068" }}>
+                            {"BORAT"}
+                          </Avatar>
+                        </Tooltip>
+                      ))}
                 </Avatar.Group>
               </Col>
             </Row>

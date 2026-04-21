@@ -1,4 +1,6 @@
 "use client";
+import React, { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import {
   CalendarOutlined,
   ClockCircleOutlined,
@@ -8,11 +10,9 @@ import {
   UserOutlined,
 } from "@ant-design/icons";
 import { Avatar, Button, DatePicker, Flex, Input, Select, Typography } from "antd";
-import React, { useState } from "react";
-import { createPortal } from "react-dom";
+import dayjs from "dayjs";
 import { TeamMember } from "@/projects/projectTypes";
 import { Task, TaskColumn } from "@/projects/taskTypes";
-import dayjs from "dayjs";
 import { useTags } from "@/dashboard/TagsContext";
 
 const { Title } = Typography;
@@ -27,18 +27,6 @@ export interface TaskModalProps {
   onSave: (task: Omit<Task, "id">) => void;
 }
 
-
-const EMPTY_FORM = {
-  title: "",
-  description: "",
-  priority: "medium" as Task["priority"],
-  column: "todo" as TaskColumn,
-  assigneeIndex: -1,
-  dueDate: "",
-  hours: "",
-  tags: [] as string[],
-};
-
 const TaskModal: React.FC<TaskModalProps> = ({
   open,
   initialColumn,
@@ -48,42 +36,66 @@ const TaskModal: React.FC<TaskModalProps> = ({
   onSave,
   projectId,
 }) => {
-  const [form, setForm] = useState(EMPTY_FORM);
   const { getTagsForProject } = useTags();
   const projectTags = getTagsForProject(projectId);
 
-  React.useEffect(() => {
+  const [form, setForm] = useState({
+    name: "",
+    description: "",
+    priority: "MEDIUM" as Task["priority"],
+    status: "TODO" as TaskColumn,
+    assigneeIndex: -1, // UI uses index for selection
+    dueDate: null as dayjs.Dayjs | null,
+    timeEstimate: "" as string, // Labelled as "Hours"
+    tags: [] as string[], // UI uses tag names
+  });
+
+  useEffect(() => {
     if (open) {
       if (editingTask) {
         setForm({
-          title: editingTask.title,
+          name: editingTask.name,
           description: editingTask.description ?? "",
           priority: editingTask.priority,
-          column: editingTask.column,
-          assigneeIndex: team.findIndex((m) => m.name === editingTask.assignee?.name),
-          dueDate: editingTask.dueDate ?? "",
-          hours: (editingTask as any).hours ?? "",
-          tags: editingTask.tags ?? [],
+          status: editingTask.status,
+          assigneeIndex: team.findIndex((m) => m.id === editingTask.assignedUsers?.[0]?.id),
+          dueDate: editingTask.dueDate ? dayjs(editingTask.dueDate) : null,
+          timeEstimate: editingTask.timeEstimate?.toString() ?? "",
+          tags: editingTask.tags?.map((t) => t.name) ?? [],
         });
       } else {
-        setForm({ ...EMPTY_FORM, column: initialColumn });
+        setForm({
+          name: "",
+          description: "",
+          priority: "MEDIUM",
+          status: initialColumn,
+          assigneeIndex: -1,
+          dueDate: null,
+          timeEstimate: "",
+          tags: [],
+        });
       }
     }
-  }, [open, editingTask, initialColumn]);
+  }, [open, editingTask, initialColumn, team]);
 
   if (!open) return null;
 
   const handleSave = () => {
-    if (!form.title.trim()) return;
-    const assignee = form.assigneeIndex >= 0 ? team[form.assigneeIndex] : undefined;
+    if (!form.name.trim()) return;
+
+    // Convert UI names/indices back to objects with IDs for the backend
+    const selectedAssignees = form.assigneeIndex >= 0 ? [team[form.assigneeIndex]] : [];
+    const selectedTags = projectTags.filter((t) => form.tags.includes(t.name));
+
     onSave({
-      title: form.title,
+      name: form.name,
       description: form.description,
       priority: form.priority,
-      column: form.column,
-      assignee,
-      dueDate: form.dueDate,
-      tags: form.tags,
+      status: form.status,
+      dueDate: form.dueDate ? form.dueDate.toISOString() : undefined,
+      timeEstimate: parseFloat(form.timeEstimate) || 0,
+      assignedUsers: selectedAssignees,
+      tags: selectedTags,
     });
     onClose();
   };
@@ -113,27 +125,23 @@ const TaskModal: React.FC<TaskModalProps> = ({
           zIndex: 10000,
         }}
       >
-        {/* Header */}
         <Flex justify="space-between" align="center" style={{ padding: "20px 24px 16px 24px" }}>
           <Title level={3} style={{ margin: 0 }}>
             {editingTask ? "Edit Task" : "Create Task"}
           </Title>
-          <Button type="text" onClick={onClose} style={{ color: "#888", fontSize: 16, marginRight: -8 }}>
-            ✕
-          </Button>
+          <Button type="text" onClick={onClose} style={{ color: "#888", fontSize: 16 }}>✕</Button>
         </Flex>
 
-        <div style={{ height: 1, background: "#e5e7eb", margin: "0 0 15px 0", marginTop: -5 }} />
+        <div style={{ height: 1, background: "#e5e7eb", marginBottom: 15 }} />
 
         <Flex vertical gap={14} style={{ padding: "0 24px 24px 24px" }}>
-
           {/* Title */}
           <Flex vertical gap={4}>
             <span style={{ fontSize: 13, color: "#555" }}>Title</span>
             <Input
               placeholder="Add a task title..."
-              value={form.title}
-              onChange={(e) => setForm({ ...form, title: e.target.value })}
+              value={form.name}
+              onChange={(e) => setForm({ ...form, name: e.target.value })}
               style={{ borderRadius: 8 }}
             />
           </Flex>
@@ -150,7 +158,7 @@ const TaskModal: React.FC<TaskModalProps> = ({
             />
           </Flex>
 
-          {/* Tags + Members */}
+          {/* Tags + Members Section */}
           <Flex gap={12}>
             <Flex vertical gap={4} style={{ flex: 1 }}>
               <Flex align="center" gap={4}>
@@ -181,14 +189,7 @@ const TaskModal: React.FC<TaskModalProps> = ({
                 style={{ width: "100%" }}
                 getPopupContainer={(trigger) => trigger.parentElement!}
                 options={team.map((member, i) => ({
-                  label: (
-                    <Flex align="center" gap={8}>
-                      <Avatar size={18} style={{ backgroundColor: member.color, fontSize: 9, fontWeight: 700 }}>
-                        {member.initials}
-                      </Avatar>
-                      {member.name}
-                    </Flex>
-                  ),
+                  label: <Flex align="center" gap={8}>{member.username}</Flex>,
                   value: i,
                 }))}
               />
@@ -208,9 +209,9 @@ const TaskModal: React.FC<TaskModalProps> = ({
                 style={{ width: "100%" }}
                 getPopupContainer={(trigger) => trigger.parentElement!}
                 options={[
-                  { label: "High", value: "high" },
-                  { label: "Medium", value: "medium" },
-                  { label: "Low", value: "low" },
+                  { label: "High", value: "HIGH" },
+                  { label: "Medium", value: "MEDIUM" },
+                  { label: "Low", value: "LOW" },
                 ]}
               />
             </Flex>
@@ -223,39 +224,40 @@ const TaskModal: React.FC<TaskModalProps> = ({
               <DatePicker
                 style={{ width: "100%", borderRadius: 8 }}
                 format="DD.MM.YYYY"
-                value={form.dueDate ? dayjs(form.dueDate, "DD.MM.YYYY") : null}
-                onChange={(_, dateStr) => setForm({ ...form, dueDate: dateStr as string })}
+                value={form.dueDate}
+                onChange={(date) => setForm({ ...form, dueDate: date })}
                 getPopupContainer={(trigger) => trigger.parentElement!}
               />
             </Flex>
           </Flex>
 
-          {/* Hours + Column */}
+          {/* Time Estimate (Hours) + Status */}
           <Flex gap={12}>
             <Flex vertical gap={4} style={{ flex: 1 }}>
               <Flex align="center" gap={4}>
                 <ClockCircleOutlined style={{ fontSize: 12, color: "#555" }} />
-                <span style={{ fontSize: 13, color: "#555" }}>Time Estimate</span>
+                <span style={{ fontSize: 13, color: "#555" }}>Time Estimate (Hours)</span>
               </Flex>
               <Input
-                placeholder="e.g. 4h"
-                value={form.hours}
-                onChange={(e) => setForm({ ...form, hours: e.target.value })}
+                type="number"
+                placeholder="e.g. 8"
+                value={form.timeEstimate}
+                onChange={(e) => setForm({ ...form, timeEstimate: e.target.value })}
                 style={{ borderRadius: 8 }}
               />
             </Flex>
 
             <Flex vertical gap={4} style={{ flex: 1 }}>
-              <span style={{ fontSize: 13, color: "#555" }}>Column</span>
+              <span style={{ fontSize: 13, color: "#555" }}>Status</span>
               <Select
-                value={form.column}
-                onChange={(val) => setForm({ ...form, column: val })}
+                value={form.status}
+                onChange={(val) => setForm({ ...form, status: val })}
                 style={{ width: "100%" }}
                 getPopupContainer={(trigger) => trigger.parentElement!}
                 options={[
-                  { label: "To Do", value: "todo" },
-                  { label: "In Progress", value: "inprogress" },
-                  { label: "Done", value: "done" },
+                  { label: "To Do", value: "TODO" },
+                  { label: "In Progress", value: "IN_PROGRESS" },
+                  { label: "Done", value: "DONE" },
                 ]}
               />
             </Flex>
@@ -268,12 +270,11 @@ const TaskModal: React.FC<TaskModalProps> = ({
               type="primary"
               icon={<PlusOutlined />}
               onClick={handleSave}
-              style={{ background: "#4f46e5", borderRadius: 8 }}
+              style={{ background: "#4f46e5", borderRadius: 8, border: "none" }}
             >
               {editingTask ? "Save Changes" : "Add Task"}
             </Button>
           </Flex>
-
         </Flex>
       </div>
     </div>,

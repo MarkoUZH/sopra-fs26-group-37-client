@@ -152,7 +152,6 @@ const handleLogout = async (): Promise<void> => {
           ]}
         />
       </div>
-      <ManageTagsModal open={tagsModalOpen} onClose={() => setTagsModalOpen(false)} />
       <ManageSprintsModal open={sprintsModalOpen} onClose={() => setSprintsModalOpen(false)} />
     </div>
   );

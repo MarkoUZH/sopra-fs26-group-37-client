@@ -6,9 +6,9 @@ import {
   MoreOutlined,
   UserOutlined
 } from "@ant-design/icons";
-import { Avatar, Button, Dropdown, MenuProps, Switch, Tooltip, Typography } from "antd";
+import { Avatar, Button, Dropdown, MenuProps, Switch, Typography } from "antd";
 import React, { useState } from "react";
-import { PRIORITY_DOT_COLOR, Task } from "@/projects/taskTypes";
+import { Task } from "@/projects/taskTypes";
 import { useTags } from "@/dashboard/TagsContext";
 
 const { Text } = Typography;
@@ -26,17 +26,24 @@ const COLOR_PALETTE = [
 
 export interface TaskCardProps {
   task: Task;
-  onDragStart: (e: React.DragEvent, taskId: string) => void;
+  onDragStart: (e: React.DragEvent, taskId: number) => void;
   onEdit: (task: Task) => void;
-  onDelete: (taskId: string) => void;
-  projectId: string;
+  onDelete: (taskId: number) => void;
+  projectId: number;
 }
 
 const TaskCard: React.FC<TaskCardProps> = ({ task, onDragStart, onEdit, onDelete, projectId }) => {
   const [dragging, setDragging] = useState(false);
   const { getTagsForProject } = useTags();
-  const allTags = getTagsForProject(projectId);
-  const [toggled, setToggled] = useState(task.column === "done");
+  
+  // Logic to handle status vs column toggle
+  const isDone = task.status === "DONE";
+  const [toggled, setToggled] = useState(isDone);
+
+  // Get the first user from the assignedUsers array (matching Java DTO)
+  const primaryAssignee = task.assignedUsers && task.assignedUsers.length > 0 
+    ? task.assignedUsers[0] 
+    : null;
 
   const menuItems: MenuProps["items"] = [
     { key: "edit", label: "Edit task", icon: <EditOutlined /> },
@@ -46,7 +53,10 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onDragStart, onEdit, onDelete
   return (
     <div
       draggable
-      onDragStart={(e) => { setDragging(true); onDragStart(e, task.id); }}
+      onDragStart={(e) => { 
+        setDragging(true); 
+        onDragStart(e, task.id); 
+      }}
       onDragEnd={() => setDragging(false)}
       style={{
         background: "#fff",
@@ -60,60 +70,77 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onDragStart, onEdit, onDelete
         transition: "all 0.2s ease",
       }}
     >
-      {/* Top Section: Tags + Menu Button */}
+      {/* Top Section: Tags + Menu */}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 8 }}>
         <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
-          {task.tags?.map((tag) => {
-             const tagIndex = allTags.findIndex((t) => t.name === tag);
-             const color = COLOR_PALETTE[(tagIndex >= 0 ? tagIndex : tag.charCodeAt(0)) % COLOR_PALETTE.length];
+          {task.tags?.map((tag, index) => {
+             const color = COLOR_PALETTE[index % COLOR_PALETTE.length];
              return (
-               <span key={tag} style={{ fontSize: 10, padding: "2px 8px", borderRadius: 4, background: color.bg, color: color.text, fontWeight: 600 }}>
-                 {tag}
+               <span 
+                key={tag.id || index} 
+                style={{ 
+                  fontSize: 10, 
+                  padding: "2px 8px", 
+                  borderRadius: 4, 
+                  background: color.bg, 
+                  color: color.text, 
+                  fontWeight: 600 
+                }}
+               >
+                 {tag.name}
                </span>
              );
            })}
         </div>
 
-        <Dropdown menu={{ items: menuItems, onClick: ({ key }) => { if (key === "edit") onEdit(task); if (key === "delete") onDelete(task.id); } }} trigger={["click"]}>
+        <Dropdown 
+          menu={{ 
+            items: menuItems, 
+            onClick: ({ key }) => { 
+              if (key === "edit") onEdit(task); 
+              if (key === "delete") onDelete(task.id); 
+            } 
+          }} 
+          trigger={["click"]}
+        >
           <Button type="text" size="small" icon={<MoreOutlined />} style={{ color: "#9ca3af", padding: 0, height: 24 }} />
         </Dropdown>
       </div>
 
-      {/* Title Section with Priority Dot */}
-      <div style={{ display: "flex", alignItems: "flex-start", gap: 8, marginBottom: 6 }}>
-        <span
-          style={{
-            width: 8,
-            height: 8,
-            borderRadius: "50%",
-            background: PRIORITY_DOT_COLOR[task.priority],
-            flexShrink: 0,
-            marginTop: 5,
-          }}
-        />
-        <Text strong style={{ fontSize: 14, lineHeight: 1.4 }}>{task.title}</Text>
+      {/* Title Section (Priority dot removed) */}
+      <div style={{ marginBottom: 6 }}>
+        <Text strong style={{ color: "#1f2937", fontSize: 14, lineHeight: 1.4 }}>
+          {task.name}
+        </Text>
       </div>
 
       {/* Description */}
       {task.description && (
-        <Text style={{ fontSize: 12, color: "#6b7280", display: "block", marginBottom: 12, lineHeight: 1.5, marginLeft: 16 }}>
+        <Text style={{ fontSize: 13, color: "#6b7280", display: "block", marginBottom: 12, lineHeight: 1.5 }}>
           {task.description}
         </Text>
       )}
 
       {/* Footer */}
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderTop: "1px solid #f9f9f9", paddingTop: 12, marginLeft: 16 }}>
+      <div style={{ 
+        display: "flex", 
+        justifyContent: "space-between", 
+        alignItems: "center", 
+        borderTop: "1px solid #f9f9f9", 
+        paddingTop: 12 
+      }}>
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          <Avatar size={24} style={{ backgroundColor: task.assignee?.color || "#e5e7eb", fontSize: 10 }}>
-            {task.assignee?.initials || <UserOutlined />}
-          </Avatar>
+          
+          
           {task.dueDate && (
             <Text style={{ fontSize: 11, color: "#9ca3af", display: "flex", alignItems: "center" }}>
               <CalendarOutlined style={{ marginRight: 4 }} />
-              {task.dueDate}
+              {/* Basic date formatting */}
+              {new Date(task.dueDate).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
             </Text>
           )}
         </div>
+        
         <Switch
           size="small"
           checked={toggled}

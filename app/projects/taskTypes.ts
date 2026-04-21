@@ -1,18 +1,24 @@
 import { ProjectPriority, TeamMember } from "@/projects/projectTypes";
 
-export type TaskColumn = "todo" | "inprogress" | "done";
+export type TaskColumn = "TODO" | "IN_PROGRESS" | "DONE";
 
-export interface Task {
-  id: string;
-  title: string;
-  description?: string;
-  priority: ProjectPriority;
-  assignee?: TeamMember;
-  dueDate?: string;
-  tags?: string[];
-  column: TaskColumn;
+export interface Tag {
+  id: number;
+  name: string;
 }
 
+export interface Task {
+  id: number;              // Changed from string to number
+  name: string;
+  description?: string;
+  priority: "LOW" | "MEDIUM" | "HIGH"; // Match backend Enum casing
+  assignedUsers: TeamMember[];         // Changed from assignee to array
+  dueDate?: string;
+  tags?: Tag[];                        // Changed from string[] to Tag[]
+  status: TaskColumn;                  // Backend uses 'status', frontend used 'column'
+  acceptanceCriteria?: string;         // Backend sends a single String, not an array
+  timeEstimate?: number;
+}
 export interface KanbanColumnConfig {
   key: TaskColumn;
   label: string;
@@ -21,9 +27,9 @@ export interface KanbanColumnConfig {
 }
 
 export const KANBAN_COLUMNS: KanbanColumnConfig[] = [
-  { key: "todo",       label: "To Do",       color: "#f04000", bg: "#fff5f2" },
-  { key: "inprogress", label: "In Progress", color: "#f0b100", bg: "#fffbeb" },
-  { key: "done",       label: "Done",        color: "#00c950", bg: "#f0fdf4" },
+  { key: "TODO",       label: "To Do",       color: "#f04000", bg: "#fff5f2" },
+  { key: "IN_PROGRESS", label: "In Progress", color: "#f0b100", bg: "#fffbeb" },
+  { key: "DONE",       label: "Done",        color: "#00c950", bg: "#f0fdf4" },
 ];
 
 export const PRIORITY_DOT_COLOR: Record<ProjectPriority, string> = {
