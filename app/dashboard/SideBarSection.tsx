@@ -8,7 +8,7 @@ import {
 } from "@ant-design/icons";
 import { Divider, Menu } from "antd";
 import React, { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import useLocalStorage from "@/hooks/useLocalStorage";
 import { useApi } from "@/hooks/useApi";
 import { User } from "@/types/user";
@@ -21,6 +21,8 @@ const SideBarSection = (): React.JSX.Element => {
   const [tagsModalOpen, setTagsModalOpen] = useState(false);
   const [sprintsModalOpen, setSprintsModalOpen] = useState(false);
   const { clear: clearToken } = useLocalStorage<string>("token", "");
+  const pathname = usePathname();
+  const isInProject = pathname?.includes("/projects/");
 
   const api = useApi();
   const { value: language, clear: clearLanguage } = useLocalStorage<string>("language", "");  
@@ -123,8 +125,10 @@ const handleLogout = async (): Promise<void> => {
           items={[
             { key: "dashboard", icon: <DashboardOutlined />, label: <span className="menu-item">Dashboard</span>},
             { key: "projects", icon: <ProjectOutlined />, label: <span className="menu-item dropdown">Projects<span className="chevron">›</span></span> },
-            { key: "tags", icon: <TagsOutlined />, label: <span className="menu-item">Tags</span> },
-            { key: "sprints", icon: <RocketOutlined />, label: <span className="menu-item">Sprints</span> },
+            ...(isInProject ? [
+              { key: "tags", icon: <TagsOutlined />, label: <span className="menu-item">Tags</span> },
+              { key: "sprints", icon: <RocketOutlined />, label: <span className="menu-item">Sprints</span> },
+            ] : []),
           ]}
         />
       </div>
