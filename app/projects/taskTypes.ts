@@ -28,6 +28,6 @@ export const KANBAN_COLUMNS: KanbanColumnConfig[] = [
 
 export const PRIORITY_DOT_COLOR: Record<ProjectPriority, string> = {
   high:   "#f04000",
-  medium: "#f0b100",
-  low:    "#2b7fff",
+  medium: "#f0a800",
+  low:    "#f0d400",
 };
