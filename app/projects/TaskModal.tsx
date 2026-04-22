@@ -227,6 +227,8 @@ const TaskModal: React.FC<TaskModalProps> = ({
               </Flex>
               <Input
                 type="number"
+                min="1"
+                max="999"
                 placeholder="e.g. 8"
                 value={form.timeEstimate}
                 onChange={(e) => setForm({ ...form, timeEstimate: e.target.value })}
@@ -234,20 +236,6 @@ const TaskModal: React.FC<TaskModalProps> = ({
               />
             </Flex>
 
-            <Flex vertical gap={4} style={{ flex: 1 }}>
-              <span style={{ fontSize: 13, color: "#555" }}>Status</span>
-              <Select
-                value={form.status}
-                onChange={(val) => setForm({ ...form, status: val })}
-                style={{ width: "100%" }}
-                getPopupContainer={(trigger) => trigger.parentElement!}
-                options={[
-                  { label: "To Do", value: "TODO" },
-                  { label: "In Progress", value: "IN_PROGRESS" },
-                  { label: "Done", value: "DONE" },
-                ]}
-              />
-            </Flex>
           </Flex>
 
           {/* Footer buttons */}

@@ -25,7 +25,6 @@ export interface KanbanColumnProps {
   onDrop: (e: React.DragEvent, column: TaskColumn) => void;
   onEdit: (task: Task) => void;
   onDelete: (taskId: number) => void;
-  onAddTask: (column: TaskColumn) => void;
   projectId: number;
 }
 
@@ -36,7 +35,6 @@ const KanbanColumn: React.FC<KanbanColumnProps> = ({
   onDrop,
   onEdit,
   onDelete,
-  onAddTask,
   projectId,
 }) => {
   const [isDragOver, setIsDragOver] = useState(false);
@@ -89,13 +87,6 @@ const KanbanColumn: React.FC<KanbanColumnProps> = ({
             {tasks.length}
           </span>
         </div>
-        <Button
-          type="text"
-          size="small"
-          icon={<PlusOutlined />}
-          style={{ color: "#9ca3af" }}
-          onClick={() => onAddTask(column.key)}
-        />
       </div>
 
       {/* Task cards */}
