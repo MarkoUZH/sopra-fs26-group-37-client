@@ -18,14 +18,15 @@ const columnIcon: Record<TaskColumn, React.ReactNode> = {
   DONE:       <CheckCircleOutlined />,
 };
 
-export interface KanbanColumnProps {
-  column: KanbanColumnConfig;
-  tasks: Task[];
-  onDragStart: (e: React.DragEvent, taskId: number) => void;
-  onDrop: (e: React.DragEvent, column: TaskColumn) => void;
-  onEdit: (task: Task) => void;
-  onDelete: (taskId: number) => void;
-  projectId: number;
+interface KanbanColumnProps {
+    column: KanbanColumnConfig;
+    tasks: Task[];
+    onDragStart: (e: React.DragEvent, taskId: number) => void;
+    onDrop: (e: React.DragEvent, targetStatus: TaskColumn) => void;
+    onEdit: (task: Task) => void;
+    onDelete: (taskId: number) => void;
+    onAddTask: (column: TaskColumn) => void;
+    projectId: number;
 }
 
 const KanbanColumn: React.FC<KanbanColumnProps> = ({
