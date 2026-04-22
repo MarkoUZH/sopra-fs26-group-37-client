@@ -15,6 +15,7 @@ import { useApi } from "@/hooks/useApi";
 import ISO6391 from "iso-639-1";
 import ManageTagsModal from "./ManageTagsModal";
 import ManageSprintsModal from "./ManageSprintsModal";
+import {User} from "@/types/user";
 // ----------------------------
 
 // 1. Extract base English text to avoid recreation on every render
