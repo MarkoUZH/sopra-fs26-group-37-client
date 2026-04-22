@@ -139,27 +139,27 @@ const Settings = (): React.JSX.Element => {
         return;
       }
 
-      const translate = async (text: string) => {
-        try {
-          const result = await api.post<any>("/translate", {
-            text: text,
-            sourceLanguage: "en",
-            language: dropdownLanguage,
-          });
+        const translate = async (text: string): Promise<string> => {
+            try {
+                const result = await api.post<{ text?: () => Promise<string> } | string>("/translate", {
+                    text: text,
+                    sourceLanguage: "en",
+                    language: dropdownLanguage,
+                });
 
-          const translated = (result && typeof result.text === 'function') 
-            ? await result.text() 
-            : result;
+                const translated = (result && typeof result === 'object' && typeof result.text === 'function')
+                    ? await result.text()
+                    : result;
 
-          return (typeof translated === 'string' && translated.trim() !== "") ? translated : text;
-        } catch (err) {
-          if (err instanceof Error && err.message.includes("401") && !authErrorShown) {
-            authErrorShown = true;
-            message.warning("Translation requires authorization.");
-          }
-          return text;
-        }
-      };
+                return (typeof translated === 'string' && translated.trim() !== "") ? translated : text;
+            } catch (err) {
+                if (err instanceof Error && err.message.includes("401") && !authErrorShown) {
+                    authErrorShown = true;
+                    message.warning("Translation requires authorization.");
+                }
+                return text;
+            }
+        };
 
       const keys = Object.keys(baseText) as Array<keyof typeof baseText>;
       const translations = await Promise.all(keys.map(key => translate(baseText[key])));

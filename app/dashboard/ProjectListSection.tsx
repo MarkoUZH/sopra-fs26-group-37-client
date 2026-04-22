@@ -63,15 +63,15 @@ export default function ProjectListSection(): React.JSX.Element {
 
       const translate = async (text: string) => {
         try {
-          const result = await api.post<any>("/translate", {
+            const result = await api.post<{ text?: () => Promise<string> } | string>("/translate", {
             text: text,
             sourceLanguage: "en",
             language: targetLanguage,
           });
 
           // Extract plain text if the API returns a raw Response object
-          if (result && typeof result.text === 'function') {
-            return await result.text();
+          if (result && typeof result === 'object' && typeof result.text === 'function') {
+              return await result.text();
           }
 
           return typeof result === 'string' ? result : text;

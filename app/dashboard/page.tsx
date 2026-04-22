@@ -16,6 +16,7 @@ import SideBarSection from "./SideBarSection";
 import TaskSummarySection from "./TaskSummarySection";
 import CreateProjectModal from "./CreateProjectModal";
 import { ApiService } from "@/api/apiService";
+import {Task} from "@/projects/taskTypes";
 // ------------------------------
 
 const { Content, Sider } = Layout;
@@ -33,7 +34,7 @@ const baseText = {
 
 const Dashboard = (): React.JSX.Element => {
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [tasks, setTasks] = useState<any[]>([]);
+  const [tasks, setTasks] = useState<Task[]>([]);
   const apiService = useMemo(() => new ApiService(), []);
 
   // Translation State
@@ -58,7 +59,7 @@ const Dashboard = (): React.JSX.Element => {
   useEffect(() => {
     const fetchTasks = async () => {
       try {
-        const data = await apiService.get<any[]>("/tasks");
+        const data = await apiService.get<Task[]>("/tasks");
         setTasks(data);
       } catch (error) {
         console.error("Failed to fetch tasks:", error);
@@ -80,17 +81,17 @@ const Dashboard = (): React.JSX.Element => {
       }
 
       const translate = async (text: string) => {
-        try {
-          const result = await apiService.post<any>("/translate", {
-            text: text,
-            sourceLanguage: "en",
-            language: targetLanguage,
-          });
+          try {
+            const result = await apiService.post<{ text?: () => Promise<string> } | string>("/translate", {
+                text: text,
+                sourceLanguage: "en",
+                language: targetLanguage,
+            });
 
-          // Extract plain text if the API returns a raw Response object
-          if (result && typeof result.text === 'function') {
-            return await result.text();
-          }
+            // Extract plain text if the API returns a raw Response object
+            if (result && typeof result === 'object' && typeof result.text === 'function') {
+                return await result.text();
+            }
 
           return typeof result === 'string' ? result : text;
         } catch (err) {

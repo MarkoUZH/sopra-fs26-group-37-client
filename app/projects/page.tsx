@@ -11,6 +11,7 @@ import { useState, useEffect, useMemo } from "react";
 import ProjectListSection from "@/projects/ProjectListSection";
 import SideBarSection from "@/projects/SideBarSection";
 import { ApiService } from "@/api/apiService";
+import {Task} from "@/projects/taskTypes";
 
 
 const { Content, Sider } = Layout;
@@ -18,14 +19,14 @@ const { Title, Text } = Typography;
 
 const Projects = (): React.JSX.Element => {
   const [isModalOpen, setIsModalOpen] = useState(false);
-    const [tasks, setTasks] = useState<any[]>([]);
+    const [tasks, setTasks] = useState<Task[]>([]);
     const apiService = useMemo(() => new ApiService(), []);
   
     // 1. Fetch tasks on component mount
     useEffect(() => {
       const fetchTasks = async () => {
         try {
-          const data = await apiService.get<any[]>("/tasks");
+          const data = await apiService.get<Task[]>("/tasks");
           setTasks(data);
         } catch (error) {
           console.error("Failed to fetch tasks:", error);

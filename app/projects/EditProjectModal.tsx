@@ -3,13 +3,14 @@ import { ApiService } from "@/api/apiService";
 import { DeleteOutlined, SaveOutlined, UserOutlined } from "@ant-design/icons";
 import { Avatar, Button, Flex, Input, Select, Typography } from "antd";
 import React, { useEffect, useState } from "react";
+import {Project} from "@/projects/projectTypes";
 
 const { Title } = Typography;
 
 interface Props {
   open: boolean;
   onClose: () => void;
-  project: any; // Use your ProjectDTO type here
+  project: Project; // Use your ProjectDTO type here
 }
 
 interface User {
@@ -28,7 +29,7 @@ const EditProjectModal = ({ open, onClose, project }: Props): React.JSX.Element 
   const [projectName, setProjectName] = useState("");
   const [description, setDescription] = useState("");
   const [members, setMembers] = useState<{key: string, initial: string, name: string}[]>([]);
-  const [availableUsers, setAvailableUsers] = useState<any[]>([]);
+  const [availableUsers, setAvailableUsers] = useState<User[]>([]);
   const api = new ApiService();
 const [selectValue, setSelectValue] = useState<number | null>(null);
 
@@ -37,7 +38,7 @@ const [selectValue, setSelectValue] = useState<number | null>(null);
     if (open && project) {
       setProjectName(project.name);
       setDescription(project.description);
-      const formattedMembers = project.members?.map((m: any) => ({
+      const formattedMembers = project.members?.map((m: User) => ({
         key: m.id.toString(),
         initial: m.username.charAt(0).toUpperCase(),
         name: m.username,

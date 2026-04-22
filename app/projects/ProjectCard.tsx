@@ -193,7 +193,7 @@ const ProjectCard: React.FC<ProjectCardProps> = ({ project, onMenuAction }) => {
         {/* Footer: team + due date + priority */}
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
           <Avatar.Group maxCount={3} size="small">
-            {project.team.map((member) => (
+            {project.members.map((member) => (
               <Tooltip key={member.name} title={member.name}>
                 <Avatar
                   size="small"

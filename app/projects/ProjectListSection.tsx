@@ -78,7 +78,7 @@ const TaskSummarySection = (): React.JSX.Element => {
         {projects.map((project) => {
           const totalTasks = project.tasks?.length || 0;
           const completedTasks = project.tasks?.filter(t => t.status === "DONE").length || 0;
-          const inProgressTasks = project.tasks?.filter(t => t.status === "IN_PROGRESS" || (t.status as any) === 1).length || 0;
+          const inProgressTasks = project.tasks?.filter(t => t.status === "IN_PROGRESS" || (t.status) === 1).length || 0;
           const percentage = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
 
           return (

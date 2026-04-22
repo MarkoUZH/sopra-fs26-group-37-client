@@ -78,17 +78,17 @@ const TaskSummarySection = (): React.JSX.Element => {
       }
 
       const translate = async (text: string) => {
-        try {
-          const result = await api.post<any>("/translate", {
-            text: text,
-            sourceLanguage: "en",
-            language: targetLanguage,
-          });
+          try {
+            const result = await api.post<{ text?: () => Promise<string> } | string>("/translate", {
+                text: text,
+                sourceLanguage: "en",
+                language: targetLanguage,
+            });
 
-          // Extract plain text if the API returns a raw Response object
-          if (result && typeof result.text === 'function') {
-            return await result.text();
-          }
+            // Extract plain text if the API returns a raw Response object
+            if (result && typeof result === 'object' && typeof result.text === 'function') {
+                return await result.text();
+            }
 
           return typeof result === 'string' ? result : text;
         } catch (err) {
@@ -169,7 +169,7 @@ const TaskSummarySection = (): React.JSX.Element => {
         {projects.map((project) => {
           const totalTasks = project.tasks?.length || 0;
           const completedTasks = project.tasks?.filter(t => t.status === "DONE").length || 0;
-          const inProgressTasks = project.tasks?.filter(t => t.status === "IN_PROGRESS" || (t.status as any) === 1).length || 0;
+          const inProgressTasks = project.tasks?.filter(t => t.status === "IN_PROGRESS" || (t.status) === 1).length || 0;
           const percentage = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
 
           return (

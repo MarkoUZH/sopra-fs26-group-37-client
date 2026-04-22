@@ -11,6 +11,7 @@ import { KANBAN_COLUMNS, Task, TaskColumn } from "@/projects/taskTypes";
 import { TagsProvider } from "@/dashboard/TagsContext";
 import { ApiService } from "@/api/apiService";
 import dayjs from "dayjs";
+import {Project, ProjectDTO} from "@/projects/projectTypes";
 
 const { Content, Sider } = Layout;
 const { Title } = Typography;
@@ -18,7 +19,7 @@ const { Title } = Typography;
 const ProjectPage: React.FC = () => {
   // 1. States initialized for dynamic data
   const [tasks, setTasks] = useState<Task[]>([]);
-  const [project, setProject] = useState<any | null>(null);
+  const [project, setProject] = useState<ProjectDTO | null>(null);
   const [loading, setLoading] = useState(true);
   
   const [modalOpen, setModalOpen] = useState(false);
@@ -37,13 +38,13 @@ const ProjectPage: React.FC = () => {
       setLoading(true);
       try {
         // Note: Using template literals `` for the URL
-        const data = await apiService.get<any>(`/projects/${projectId}`);
+        const data = await apiService.get<ProjectDTO>(`/projects/${projectId}`);
         
         setProject(data);
         
         // Map TaskDTO to your frontend Task interface
         if (data.tasks) {
-          const mappedTasks: Task[] = data.tasks.map((t: any) => ({
+          const mappedTasks: Task[] = data.tasks.map((t: Task) => ({
   ...t, 
   status: t.status, 
 }));
