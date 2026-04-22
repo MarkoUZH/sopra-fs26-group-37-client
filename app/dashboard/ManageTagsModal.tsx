@@ -3,12 +3,14 @@ import { DeleteOutlined, PlusOutlined, TagOutlined } from "@ant-design/icons";
 import { Button, Flex, Input, Tag, Typography } from "antd";
 import React, { useState } from "react";
 import { createPortal } from "react-dom";
+import { useTags } from "@/dashboard/TagsContext";
 
 const { Title } = Typography;
 
 interface Props {
   open: boolean;
   onClose: () => void;
+  projectId: string;
 }
 
 interface TagItem {
@@ -34,24 +36,21 @@ const INITIAL_TAGS: TagItem[] = [
   { id: 6, name: "Critical" },
 ];
 
-const ManageTagsModal = ({ open, onClose }: Props): React.JSX.Element | null => {
-  const [tags, setTags] = useState<TagItem[]>(INITIAL_TAGS);
+const ManageTagsModal = ({ open, onClose, projectId }: Props) => {
+  const { getTagsForProject, addTag, deleteTag } = useTags();
   const [newTagName, setNewTagName] = useState("");
+  const tags = getTagsForProject(projectId);
 
   if (!open) return null;
 
   const handleAddTag = () => {
     if (!newTagName.trim()) return;
-    const newTag: TagItem = {
-      id: Date.now(),
-      name: newTagName.trim(),
-    };
-    setTags([...tags, newTag]);
+    addTag(projectId, newTagName.trim());
     setNewTagName("");
   };
 
   const handleDeleteTag = (id: number) => {
-    setTags(tags.filter((t) => t.id !== id));
+    deleteTag(projectId, id);
   };
 
   return createPortal(

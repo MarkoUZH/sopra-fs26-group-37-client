@@ -34,6 +34,12 @@ const INITIAL_SPRINTS: SprintItem[] = [
   { id: 3, name: "Sprint 3 - Project Page", status: "Planned", startDate: "21.03.2026", endDate: "29.04.2026", project: "Project X" },
 ];
 
+const AVAILABLE_PROJECTS = [
+  { id: "1", name: "Project X" },
+  { id: "2", name: "Project Y" },
+  { id: "3", name: "Website Redesign" },
+];
+
 const EMPTY_FORM = { name: "", status: "", startDate: "", endDate: "", project: "" };
 
 const ManageSprintsModal = ({ open, onClose }: Props): React.JSX.Element | null => {
@@ -122,7 +128,7 @@ const ManageSprintsModal = ({ open, onClose }: Props): React.JSX.Element | null 
             <Flex align="center" gap={4}>
               <CalendarOutlined style={{ fontSize: 11, color: "#888" }} />
               <Text style={{ fontSize: 12, color: "#888" }}>
-                {sprint.startDate} - {sprint.endDate} • {sprint.project}
+                {sprint.startDate} - {sprint.endDate}{sprint.project ? ` • ${sprint.project}` : ""}
               </Text>
             </Flex>
           </Flex>
@@ -192,7 +198,17 @@ const ManageSprintsModal = ({ open, onClose }: Props): React.JSX.Element | null 
                   ]}
                 />
               </Flex>
-
+              <Flex vertical gap={4}>
+                <span style={{ fontSize: 13, color: "#555" }}>Project</span>
+                <Select
+                  placeholder="Assign to project"
+                  value={form.project || undefined}
+                  onChange={(val) => setForm({ ...form, project: val })}
+                  style={{ width: "100%" }}
+                  getPopupContainer={(trigger) => trigger.parentElement!}
+                  options={AVAILABLE_PROJECTS.map((p) => ({ label: p.name, value: p.name }))}
+                />
+              </Flex>
               <Flex gap={12}>
                 <Flex vertical gap={4} style={{ flex: 1 }}>
                   <Flex align="center" gap={4}>

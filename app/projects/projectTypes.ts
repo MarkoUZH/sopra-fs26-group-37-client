@@ -3,8 +3,9 @@ export type ProjectPriority = "high" | "medium" | "low";
 
 export interface TeamMember {
   name: string;
-  color: string;
+  username: string;
   initials: string;
+  id: number;
 }
 
 export interface Project {

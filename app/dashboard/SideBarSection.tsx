@@ -9,10 +9,7 @@ import {
 } from "@ant-design/icons";
 import { Divider, Menu, message } from "antd";
 import React, { useEffect, useState } from "react";
-import { User } from "@/types/user";
-
-// --- ACTUAL LOCAL IMPORTS ---
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import useLocalStorage from "@/hooks/useLocalStorage";
 import { useApi } from "@/hooks/useApi";
 import ISO6391 from "iso-639-1";
@@ -39,6 +36,8 @@ const SideBarSection = (): React.JSX.Element => {
   const [tagsModalOpen, setTagsModalOpen] = useState(false);
   const [sprintsModalOpen, setSprintsModalOpen] = useState(false);
   const { clear: clearToken } = useLocalStorage<string>("token", "");
+  const pathname = usePathname();
+  const isInProject = pathname?.includes("/projects/");
 
   const api = useApi();
   const { value: language, clear: clearLanguage } = useLocalStorage<string>("language", "");  
@@ -226,10 +225,12 @@ const SideBarSection = (): React.JSX.Element => {
           onClick={onMenuClick}
           style={{ border: "none", background: "transparent" }}
           items={[
-            { key: "dashboard", icon: <DashboardOutlined />, label: <span className="menu-item">{uiText.dashboard}</span>},
-            { key: "projects", icon: <ProjectOutlined />, label: <span className="menu-item dropdown">{uiText.projects}<span className="chevron">›</span></span> },
-            { key: "tags", icon: <TagsOutlined />, label: <span className="menu-item">{uiText.tags}</span> },
-            { key: "sprints", icon: <RocketOutlined />, label: <span className="menu-item">{uiText.sprints}</span> },
+            { key: "dashboard", icon: <DashboardOutlined />, label: <span className="menu-item">Dashboard</span>},
+            { key: "projects", icon: <ProjectOutlined />, label: <span className="menu-item dropdown">Projects<span className="chevron">›</span></span> },
+            ...(isInProject ? [
+              { key: "tags", icon: <TagsOutlined />, label: <span className="menu-item">Tags</span> },
+              { key: "sprints", icon: <RocketOutlined />, label: <span className="menu-item">Sprints</span> },
+            ] : []),
           ]}
         />
       </div>
@@ -251,7 +252,6 @@ const SideBarSection = (): React.JSX.Element => {
           ]}
         />
       </div>
-      <ManageTagsModal open={tagsModalOpen} onClose={() => setTagsModalOpen(false)} />
       <ManageSprintsModal open={sprintsModalOpen} onClose={() => setSprintsModalOpen(false)} />
     </div>
   );
