@@ -125,7 +125,7 @@ const handleDrop = async (e: React.DragEvent, targetStatus: TaskColumn) => {
 
   const handleDeleteTask = (taskId: number) => {
     setTasks((prev) => prev.filter((t) => t.id !== taskId));
-    // Optional: apiService.delete(`/tasks/${taskId}`)
+    apiService.delete(`/tasks/${taskId}`)
   };
 
 const handleSaveTask = async (taskData: Omit<Task, "id">) => {
@@ -145,9 +145,11 @@ const handleSaveTask = async (taskData: Omit<Task, "id">) => {
 
     if (editingTask) {
       const updatedTask = await apiService.put<Task>(`/tasks/${editingTask.id}`, postBody);
+      // Update existing
       setTasks((prev) => prev.map((t) => (t.id === editingTask.id ? updatedTask : t)));
     } else {
       const savedTask = await apiService.post<Task>(`/tasks`, postBody);
+      // Add new task - This triggers the instant refresh
       setTasks((prev) => [...prev, savedTask]);
     }
     

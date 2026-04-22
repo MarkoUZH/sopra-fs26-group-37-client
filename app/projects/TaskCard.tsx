@@ -8,7 +8,7 @@ import {
 } from "@ant-design/icons";
 import { Avatar, Button, Dropdown, MenuProps, Switch, Tooltip, Typography } from "antd";
 import React, { useState } from "react";
-import { Task } from "@/projects/taskTypes";
+import { PRIORITY_DOT_COLOR, Task } from "@/projects/taskTypes";
 import { useTags } from "@/dashboard/TagsContext";
 
 const { Text } = Typography;
@@ -63,6 +63,7 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onDragStart, onEdit, onDelete
     { key: "edit", label: "Edit task", icon: <EditOutlined /> },
     { key: "delete", label: "Delete task", icon: <DeleteOutlined />, danger: true },
   ];
+const SHOW_ORIGINAL_LANGUAGE = true;
 
   return (
     <div
@@ -86,27 +87,23 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onDragStart, onEdit, onDelete
     >
       {/* Top Section: Tags + Menu */}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 8 }}>
-        <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
-          {task.tags?.map((tag, index) => {
-             const color = COLOR_PALETTE[index % COLOR_PALETTE.length];
-             return (
-               <span 
-                key={tag.id || index} 
-                style={{ 
-                  fontSize: 10, 
-                  padding: "2px 8px", 
-                  borderRadius: 4, 
-                  background: color.bg, 
-                  color: color.text, 
-                  fontWeight: 600 
-                }}
-               >
-                 {tag.name}
-               </span>
-             );
-           })}
-        </div>
-
+        <div style={{ display: "flex", alignItems: "flex-start", gap: 8, marginBottom: 4 }}>
+            <span
+              style={{
+                display: "inline-block",
+                width: 8,
+                height: 8,
+                borderRadius: "50%",
+                // Access .color specifically from the mapping
+                background: PRIORITY_DOT_COLOR[task.priority]?.color || "#ccc", 
+                flexShrink: 0,
+                marginTop: 6, // Aligns the dot with the first line of text
+              }}
+            />
+            <Text strong style={{ color: "#1f2937", fontSize: 14, lineHeight: 1.4 }}>
+              {task.name}
+            </Text>
+          </div>
         <Dropdown 
           menu={{ 
             items: menuItems, 
@@ -117,21 +114,30 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onDragStart, onEdit, onDelete
           }} 
           trigger={["click"]}
         >
-          <Button type="text" size="small" icon={<MoreOutlined />} style={{ color: "#9ca3af", padding: 0, height: 24 }} />
+          <Button type="text" size="small" icon={<MoreOutlined />} style={{ color: "#9ca3af", padding: 0, height: 0 }} />
         </Dropdown>
       </div>
 
-      {/* Title Section (Priority dot removed) */}
-      <div style={{ marginBottom: 1 }}>
-        <Text strong style={{ color: "#1f2937", fontSize: 14, lineHeight: 1.4 }}>
-          {task.name}
-        </Text>
-      </div>
+
 
       {/* Description */}
       {task.description && (
         <Text style={{ fontSize: 13, color: "#6b7280", display: "block", marginBottom: 12, lineHeight: 1.5 }}>
           {task.description}
+        </Text>
+      )}
+
+      {task.assignedUsers && task.assignedUsers.length > 0 && (
+        <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 12 }}>
+          <UserOutlined style={{ fontSize: 12, color: "#555" }} />
+          <Text style={{ fontSize: 13, color: "#555" }}>Assigned to {task.assignedUsers[0].username} </Text>
+        </div>
+      )}
+
+            {/* Time estimate */}
+      {task.timeEstimate !== undefined && (
+        <Text style={{ fontSize: 13, color: "#6b7280", display: "block", marginBottom: 12, lineHeight: 1.5 }}>
+          Time estimate: {task.timeEstimate} hours
         </Text>
       )}
 
@@ -147,24 +153,15 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onDragStart, onEdit, onDelete
         </div>
         
         {/* AVATAR GROUP WITH FALLBACK CHECK */}
-        <div style={{ minWidth: 32, display: 'flex', justifyContent: 'flex-end' }}>
-            {task.assignedUsers && task.assignedUsers.length > 0 ? (
-                <Avatar.Group maxCount={3} size="small">
-                    {task.assignedUsers.map((user) => (
-                        <Tooltip key={user.id} title={user.username}>
-                          <Avatar size="small" style={{ backgroundColor: "#87d068" }}>
-                            {"BORAT"}
-                          </Avatar>
-                        </Tooltip>
-                    ))}
-                </Avatar.Group>
-            ) : (
-                /* This will show if the array is empty - helping you debug! */
-                <Avatar size="small" icon={<UserOutlined />} style={{ opacity: 0.5 }} />
-            )}
-        </div>
-    </div>
+        {/* THE TOGGLE */}
+    <Tooltip title={ SHOW_ORIGINAL_LANGUAGE ? "See original language" : "See translated language" } placement="top">
+      <Switch 
+        size="small" 
+        style={{ scale: '0.8' }} // Keeps it subtle
+      />
+    </Tooltip>
   </div>
+    </div>
   ); 
 };
 

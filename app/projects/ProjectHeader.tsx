@@ -1,6 +1,7 @@
 "use client";
 import { CalendarOutlined, TeamOutlined } from "@ant-design/icons";
 import { Avatar, Card, Col, Progress, Row, Tooltip, Typography } from "antd";
+import { userAgent } from "next/server";
 import React from "react";
 const { Title, Text, Paragraph } = Typography;
 
@@ -96,7 +97,7 @@ const ProjectHeader: React.FC<ProjectHeaderProps> = ({ project, totalTasks, done
                   {project.members?.map((member) => (
                         <Tooltip key={member.id} title={member.username}>
                           <Avatar size="small" style={{ backgroundColor: "#87d068" }}>
-                            {"BORAT"}
+                            {member.username.charAt(0).toUpperCase()}
                           </Avatar>
                         </Tooltip>
                       ))}
