@@ -37,7 +37,7 @@ const ProjectHeader: React.FC<ProjectHeaderProps> = ({ project, totalTasks, done
         overflow: "hidden",
         boxShadow: "0 1px 2px 0 rgba(0,0,0,0.03), 0 1px 6px -1px rgba(0,0,0,0.02)",
       }}
-      bodyStyle={{ padding: 0 }}
+      styles={{ body: { padding: 0 } }}
     >
       <div style={{ height: 5,  }} />
 
@@ -77,8 +77,8 @@ const ProjectHeader: React.FC<ProjectHeaderProps> = ({ project, totalTasks, done
                 <Progress
                   percent={progress}
                   showInfo={false}
-                  trailColor="#f0f0f0"
-                  strokeWidth={5}
+                  railColor="#f0f0f0"
+                  size={5}
                   style={{ width: 80, margin: 0 }}
                 />
               </Col>
@@ -92,7 +92,7 @@ const ProjectHeader: React.FC<ProjectHeaderProps> = ({ project, totalTasks, done
               {/* Team */}
               <Col style={columnStyle}>
                 <Text style={{ fontSize: 12, color: "#9ca3af", marginBottom: 6 }}>Team</Text>
-                <Avatar.Group maxCount={4} size="small">
+                <Avatar.Group max={{ count: 4 }} size="small">
                   {project.members?.map((member) => (
                         <Tooltip key={member.id} title={member.username}>
                           <Avatar size="small" style={{ backgroundColor: "#87d068" }}>
