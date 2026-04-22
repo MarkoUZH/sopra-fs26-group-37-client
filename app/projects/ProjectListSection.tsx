@@ -6,26 +6,9 @@ import { ApiService } from "@/api/apiService";
 import CreateProjectModal from "./CreateProjectModal";
 import EditProjectModal from "./EditProjectModal";
 import { useRouter } from "next/navigation";
+import {ProjectDTO} from "@/projects/projectTypes";
 
 const { Title, Text } = Typography;
-
-interface Member {
-  id: number;
-  username: string;
-}
-
-interface ProjectDTO {
-  id: number;
-  name: string;
-  description: string;
-  tasks: Task[];
-  members: Member[];
-}
-
-interface Task {
-  id: number;
-  status: "TODO" | "IN_PROGRESS" | "DONE";
-}
 
 const TaskSummarySection = (): React.JSX.Element => {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
