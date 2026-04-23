@@ -6,26 +6,9 @@ import { ApiService } from "@/api/apiService";
 import CreateProjectModal from "./CreateProjectModal";
 import EditProjectModal from "./EditProjectModal";
 import { useRouter } from "next/navigation";
+import {ProjectDTO} from "@/projects/projectTypes";
 
 const { Title, Text } = Typography;
-
-interface Member {
-  id: number;
-  username: string;
-}
-
-interface ProjectDTO {
-  id: number;
-  name: string;
-  description: string;
-  tasks: Task[];
-  members: Member[];
-}
-
-interface Task {
-  id: number;
-  status: "TODO" | "IN_PROGRESS" | "DONE";
-}
 
 const TaskSummarySection = (): React.JSX.Element => {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -78,7 +61,7 @@ const TaskSummarySection = (): React.JSX.Element => {
         {projects.map((project) => {
           const totalTasks = project.tasks?.length || 0;
           const completedTasks = project.tasks?.filter(t => t.status === "DONE").length || 0;
-          const inProgressTasks = project.tasks?.filter(t => t.status === "IN_PROGRESS" || (t.status as any) === 1).length || 0;
+          const inProgressTasks = project.tasks?.filter(t => t.status === "IN_PROGRESS").length || 0;
           const percentage = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
 
           return (

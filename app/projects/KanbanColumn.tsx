@@ -13,19 +13,20 @@ import { KanbanColumnConfig, Task, TaskColumn } from "@/projects/taskTypes";
 const { Text } = Typography;
 
 const columnIcon: Record<TaskColumn, React.ReactNode> = {
-  todo:       <FlagOutlined />,
-  inprogress: <ClockCircleOutlined />,
-  done:       <CheckCircleOutlined />,
+  TODO:       <FlagOutlined />,
+  IN_PROGRESS: <ClockCircleOutlined />,
+  DONE:       <CheckCircleOutlined />,
 };
 
-export interface KanbanColumnProps {
-  column: KanbanColumnConfig;
-  tasks: Task[];
-  onDragStart: (e: React.DragEvent, taskId: string) => void;
-  onDrop: (e: React.DragEvent, column: TaskColumn) => void;
-  onEdit: (task: Task) => void;
-  onDelete: (taskId: string) => void;
-  onAddTask: (column: TaskColumn) => void;
+interface KanbanColumnProps {
+    column: KanbanColumnConfig;
+    tasks: Task[];
+    onDragStart: (e: React.DragEvent, taskId: number) => void;
+    onDrop: (e: React.DragEvent, targetStatus: TaskColumn) => void;
+    onEdit: (task: Task) => void;
+    onDelete: (taskId: number) => void;
+    onAddTask: (column: TaskColumn) => void;
+    projectId: number;
 }
 
 const KanbanColumn: React.FC<KanbanColumnProps> = ({
@@ -35,7 +36,7 @@ const KanbanColumn: React.FC<KanbanColumnProps> = ({
   onDrop,
   onEdit,
   onDelete,
-  onAddTask,
+  projectId,
 }) => {
   const [isDragOver, setIsDragOver] = useState(false);
 
@@ -87,13 +88,6 @@ const KanbanColumn: React.FC<KanbanColumnProps> = ({
             {tasks.length}
           </span>
         </div>
-        <Button
-          type="text"
-          size="small"
-          icon={<PlusOutlined />}
-          style={{ color: "#9ca3af" }}
-          onClick={() => onAddTask(column.key)}
-        />
       </div>
 
       {/* Task cards */}
@@ -105,41 +99,13 @@ const KanbanColumn: React.FC<KanbanColumnProps> = ({
             onDragStart={onDragStart}
             onEdit={onEdit}
             onDelete={onDelete}
+            projectId={projectId}
           />
         ))}
       </div>
 
       {/* Add task button */}
-      <button
-        onClick={() => onAddTask(column.key)}
-        style={{
-          width: "100%",
-          padding: "8px",
-          borderRadius: 8,
-          border: "1px dashed #e5e7eb",
-          background: "transparent",
-          color: "#9ca3af",
-          fontSize: 13,
-          cursor: "pointer",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          gap: 6,
-          transition: "background 0.15s, color 0.15s",
-          marginTop: 4,
-        }}
-        onMouseEnter={(e) => {
-          (e.currentTarget as HTMLButtonElement).style.background = "#fff";
-          (e.currentTarget as HTMLButtonElement).style.color = "#4b5563";
-        }}
-        onMouseLeave={(e) => {
-          (e.currentTarget as HTMLButtonElement).style.background = "transparent";
-          (e.currentTarget as HTMLButtonElement).style.color = "#9ca3af";
-        }}
-      >
-        <PlusOutlined style={{ fontSize: 11 }} /> Add task
-      </button>
-    </div>
+          </div>
   );
 };
 

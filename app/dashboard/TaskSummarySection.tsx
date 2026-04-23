@@ -6,20 +6,13 @@ import { ApiService } from "@/api/apiService";
 import CreateProjectModal from "./CreateProjectModal";
 import EditProjectModal from "./EditProjectModal";
 import { useRouter } from "next/navigation";
+import {ProjectDTO} from "@/projects/projectTypes";
 
 const { Title, Text } = Typography;
 
 interface Member {
   id: number;
   username: string;
-}
-
-interface ProjectDTO {
-  id: number;
-  name: string;
-  description: string;
-  tasks: Task[];
-  members: Member[];
 }
 
 interface Task {
@@ -98,6 +91,33 @@ const TaskSummarySection = (): React.JSX.Element => {
         return;
       }
 
+      const translate = async (text: string) => {
+          try {
+            const result = await api.post<{ text?: () => Promise<string> } | string>("/translate", {
+                text: text,
+                sourceLanguage: "en",
+                language: targetLanguage,
+            });
+
+            // Extract plain text if the API returns a raw Response object
+            if (result && typeof result === 'object' && typeof result.text === 'function') {
+                return await result.text();
+            }
+
+          return typeof result === 'string' ? result : text;
+        } catch (err) {
+          // Gracefully catch any 401s without spamming the console
+          if (err instanceof Error && err.message.includes("401") && !authErrorShown) {
+            authErrorShown = true;
+            message.warning("Translation requires authorization. Please log in.");
+          } else if (!authErrorShown) {
+            console.error("Translation failed for text:", text, err);
+          }
+          return text; // Fallback to English on error
+        }
+      };
+
+      // Resolve all translations concurrently
       const keys = Object.keys(baseText) as Array<keyof typeof baseText>;
       const translations = await Promise.all(
         keys.map((key) => translateText(baseText[key], targetLanguage))
@@ -182,13 +202,10 @@ const TaskSummarySection = (): React.JSX.Element => {
       </Flex>
 
       <Row gutter={[16, 16]}>
-        {displayProjects.map((project) => {
-          // Find the original project data for logic (task counts, percentages)
-          const originalProject = projects.find(p => p.id === project.id) || project;
-          
-          const totalTasks = originalProject.tasks?.length || 0;
-          const completedTasks = originalProject.tasks?.filter(t => t.status === "DONE").length || 0;
-          const inProgressTasks = originalProject.tasks?.filter(t => t.status === "IN_PROGRESS" || (t.status as any) === 1).length || 0;
+        {projects.map((project) => {
+          const totalTasks = project.tasks?.length || 0;
+          const completedTasks = project.tasks?.filter(t => t.status === "DONE").length || 0;
+          const inProgressTasks = project.tasks?.filter(t => t.status === "IN_PROGRESS").length || 0;
           const percentage = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
 
           return (

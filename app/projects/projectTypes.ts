@@ -1,10 +1,12 @@
+import { Task } from "./taskTypes";
+
 export type ProjectStatus = "active" | "on-hold" | "completed" | "planning";
 export type ProjectPriority = "high" | "medium" | "low";
 
 export interface TeamMember {
   name: string;
-  color: string;
-  initials: string;
+  username: string;
+  id: number;
 }
 
 export interface Project {
@@ -18,8 +20,24 @@ export interface Project {
   tasksDone: number;
   tasksInProgress: number;
   dueDate: string;
-  team: TeamMember[];
+  members: TeamMember[];
   color: string;
+}
+
+export interface ProjectDTO {
+    id: string;
+    name: string;
+    description: string;
+    status: ProjectStatus;
+    priority: ProjectPriority;
+    progress: number;
+    tasksTotal: number;
+    tasksDone: number;
+    tasksInProgress: number;
+    dueDate: string;
+    members: TeamMember[];
+    color: string;
+    tasks: Task[];
 }
 
 export const statusConfig: Record<ProjectStatus,
