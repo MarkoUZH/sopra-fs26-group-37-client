@@ -178,10 +178,10 @@ const handleSaveTask = async (taskData: Omit<Task, "id">) => {
             <Button
               type="text"
               icon={<ArrowLeftOutlined />}
-              onClick={() => router.push('/projects')}
+              onClick={() => router.push('/dashboard')}
               style={{ marginBottom: 16, color: "#6b7280", paddingLeft: 0 }}
             >
-              Back to projects
+              Back to dashboard
             </Button>
 
             {project && (

@@ -101,7 +101,7 @@ const ManageSprintsModal = ({ open, onClose }: Props): React.JSX.Element | null 
       sprintStatus: form.status,
       startTime: dayjs(form.startDate, "DD.MM.YYYY").toISOString(),
       endTime: dayjs(form.endDate, "DD.MM.YYYY").toISOString(),
-      projectId: Number(form.projectId), 
+      projectId: Number(form.projectId),
     };
 
     try {
@@ -111,6 +111,7 @@ const ManageSprintsModal = ({ open, onClose }: Props): React.JSX.Element | null 
       } else {
         await api.post("/sprints", payload);
         message.success("Sprint created");
+        window.dispatchEvent(new Event("sprintCreated"));
       }
       
       setShowForm(false);
@@ -174,6 +175,7 @@ const ManageSprintsModal = ({ open, onClose }: Props): React.JSX.Element | null 
                 <Text style={{ fontSize: 13, color: "#555" }}>Project</Text>
                 <Select
                   placeholder="Select a project"
+                  disabled={!!editingId}
                   value={form.projectId || undefined}
                   onChange={(val) => setForm({ ...form, projectId: val })}
                   style={{ width: "100%" }}

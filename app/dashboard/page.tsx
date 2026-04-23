@@ -31,6 +31,7 @@ const Dashboard = (): React.JSX.Element => {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [targetLanguage, setTargetLanguage] = useState("en");
   const apiService = useMemo(() => new ApiService(), []);
+  const [sprintUpdateTrigger, setSprintUpdateTrigger] = useState(0);
 
   // 1. Read preferred language from localStorage on mount
   useEffect(() => {
