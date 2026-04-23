@@ -7,51 +7,33 @@ import {
   TagsOutlined,
   RocketOutlined,
 } from "@ant-design/icons";
-import { Divider, Menu, message } from "antd";
-import React, { useEffect, useState } from "react";
+import { Divider, Menu } from "antd";
+import React, { useEffect, useState, useMemo } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import useLocalStorage from "@/hooks/useLocalStorage";
 import { useApi } from "@/hooks/useApi";
 import ISO6391 from "iso-639-1";
-import ManageTagsModal from "./ManageTagsModal";
 import ManageSprintsModal from "./ManageSprintsModal";
-import {User} from "@/types/user";
-// ----------------------------
+import { User } from "@/types/user";
 
-// 1. Extract base English text to avoid recreation on every render
-const baseText = {
-  managerRole: "Manager",
-  memberRole: "Member",
-  mainSection: "MAIN",
-  dashboard: "Dashboard",
-  projects: "Projects",
-  tags: "Tags",
-  sprints: "Sprints",
-  settingsSection: "SETTINGS",
-  settings: "Settings",
-  logout: "Logout",
-};
+// --- DICTIONARY IMPORT ---
+import { getSidebarTranslation } from "@/utils/dictionary_sidebar";
 
 const SideBarSection = (): React.JSX.Element => {
   const router = useRouter();
-  const [tagsModalOpen, setTagsModalOpen] = useState(false);
   const [sprintsModalOpen, setSprintsModalOpen] = useState(false);
   const { clear: clearToken } = useLocalStorage<string>("token", "");
   const pathname = usePathname();
   const isInProject = pathname?.includes("/projects/");
 
   const api = useApi();
-  const { value: language, clear: clearLanguage } = useLocalStorage<string>("language", "");  
-  const { value: id , clear: clearId } = useLocalStorage<string>("id", "");
-  
-  // Define the state for the logged-in user
-  const [user, setUser] = useState<User | null>(null);
+  const { clear: clearLanguage } = useLocalStorage<string>("language", "");
+  const { value: id, clear: clearId } = useLocalStorage<string>("id", "");
 
-  // Translation State
-  const [uiText, setUiText] = useState(baseText);
+  const [user, setUser] = useState<User | null>(null);
   const [targetLanguage, setTargetLanguage] = useState("en");
 
-  // Read preferred language from localStorage on component mount
+  // 1. Sync language from LocalStorage on mount
   useEffect(() => {
     if (typeof window !== "undefined") {
       const savedLang = localStorage.getItem("language");
@@ -65,7 +47,23 @@ const SideBarSection = (): React.JSX.Element => {
     }
   }, []);
 
-  // Fetch the data when the component mounts
+  // 2. Memoized UI Text - Instant lookup
+  const uiText = useMemo(() => {
+    return {
+      managerRole: getSidebarTranslation("Manager", targetLanguage),
+      memberRole: getSidebarTranslation("Member", targetLanguage),
+      mainSection: getSidebarTranslation("MAIN", targetLanguage),
+      dashboard: getSidebarTranslation("Dashboard", targetLanguage),
+      projects: getSidebarTranslation("Projects", targetLanguage),
+      tags: getSidebarTranslation("Tags", targetLanguage),
+      sprints: getSidebarTranslation("Sprints", targetLanguage),
+      settingsSection: getSidebarTranslation("SETTINGS_SECTION", targetLanguage),
+      settings: getSidebarTranslation("Settings", targetLanguage),
+      logout: getSidebarTranslation("Logout", targetLanguage),
+    };
+  }, [targetLanguage]);
+
+  // 3. Fetch user data
   useEffect(() => {
     let isMounted = true;
     const fetchUser = async () => {
@@ -73,13 +71,11 @@ const SideBarSection = (): React.JSX.Element => {
         const currentUser = await api.get<User>(`/users/${id}`);
         if (isMounted) {
           setUser(currentUser);
-          
-          // Optionally sync targetLanguage if the backend has a different language stored
           if (currentUser.language && currentUser.language !== targetLanguage) {
-             setTargetLanguage(currentUser.language);
-             if (typeof window !== "undefined") {
-               localStorage.setItem("language", JSON.stringify(currentUser.language));
-             }
+            setTargetLanguage(currentUser.language);
+            if (typeof window !== "undefined") {
+              localStorage.setItem("language", JSON.stringify(currentUser.language));
+            }
           }
         }
       } catch (e) {
@@ -87,115 +83,39 @@ const SideBarSection = (): React.JSX.Element => {
       }
     };
     if (id) fetchUser();
-    
-    return () => {
-      isMounted = false;
-    };
-  }, [id]); // Omitted `api` and `targetLanguage` intentionally to prevent infinite loops
-
-  // Translate page whenever targetLanguage changes
-  useEffect(() => {
-    let authErrorShown = false;
-
-    const translatePage = async () => {
-      // Revert to English instantly if English is selected
-      if (targetLanguage === "en") {
-        setUiText(baseText);
-        return;
-      }
-
-      const translate = async (text: string) => {
-          try {
-            const result = await api.post<{ text?: () => Promise<string> } | string>("/translate", {
-                text: text,
-                sourceLanguage: "en",
-                language: targetLanguage,
-            });
-            // Extract plain text if the API returns a raw Response object
-            if (result && typeof result === 'object' && typeof result.text === 'function') {
-                return await result.text();
-            }
-
-          return typeof result === 'string' ? result : text;
-        } catch (err) {
-          // Gracefully catch any 401s without spamming the console
-          if (err instanceof Error && err.message.includes("401") && !authErrorShown) {
-            authErrorShown = true;
-            message.warning("Translation requires authorization. Please log in.");
-          } else if (!authErrorShown) {
-            console.error("Translation failed for text:", text, err);
-          }
-          return text; // Fallback to English on error
-        }
-      };
-
-      // Resolve all translations concurrently
-      const keys = Object.keys(baseText) as Array<keyof typeof baseText>;
-      const translations = await Promise.all(
-        keys.map((key) => translate(baseText[key]))
-      );
-
-      const newUiText = {} as typeof baseText;
-      keys.forEach((key, index) => {
-        newUiText[key] = translations[index];
-      });
-
-      setUiText(newUiText);
-    };
-
-    translatePage();
-  }, [targetLanguage]); // Omitted `api` intentionally to prevent infinite loops
+    return () => { isMounted = false; };
+  }, [id, api]);
 
   const handleLogout = async (): Promise<void> => {
     try {
-      const userId = localStorage.getItem("id"); // Or wherever you store the ID
-
-      if (userId) {
-        // 1. Call the backend to set status to OFFLINE
-        // Note: We use an empty body {} because the ID is in the URL
-        await api.put(`/logout/${userId}`, {});
-      }
+      const userId = localStorage.getItem("id");
+      if (userId) await api.put(`/logout/${userId}`, {});
     } catch (error) {
       console.error("Failed to logout safely:", error);
-      // Even if the backend call fails, we usually want to clear the local state
     } finally {
-      // 2. Clear local storage regardless of API success
       clearToken();
       clearLanguage();
       clearId();
-      
-      // 3. Redirect to login
       router.push("/login");
     }
   };
 
   const getFlagEmoji = (countryCode: string) => {
     if (!countryCode) return "";
-    // Most ISO language codes match the country code, 
-    // though some need manual mapping (e.g., 'en' -> 'GB' or 'US')
     const codePoints = countryCode
       .toUpperCase()
       .split('')
-      .map(char =>  127397 + char.charCodeAt(0));
+      .map(char => 127397 + char.charCodeAt(0));
     return String.fromCodePoint(...codePoints);
   };
-  
-  // Centralized click handler for the menus
+
   const onMenuClick = (info: { key: string }) => {
-    if (info.key === "logout") {
-      handleLogout();
-    } else if (info.key === "dashboard") {
-      router.push("/dashboard");
-    } else if (info.key === "settings") {
-      router.push("/settings");
-    } else if (info.key === "tags") {
-      setTagsModalOpen(true);
-    } else if (info.key == "sprints") {
-        setSprintsModalOpen(true);
-    }
-    else if (info.key === "projects") {
-      router.push("/projects");
-    }
+    if (info.key === "logout") handleLogout();
+    else if (info.key === "dashboard") router.push("/dashboard");
+    else if (info.key === "settings") router.push("/settings");
+    else if (info.key === "tags") router.push("/projects"); // Or trigger tag specific logic
+    else if (info.key === "sprints") setSprintsModalOpen(true);
+    else if (info.key === "projects") router.push("/projects");
   };
 
   return (
@@ -205,11 +125,11 @@ const SideBarSection = (): React.JSX.Element => {
           {user?.manager ? uiText.managerRole : uiText.memberRole}
         </span>
         <span style={{ fontSize: 18, fontWeight: 700 }}>
-         {user ? user.username : "Loading..."}{" "}{user?.language ? ` ${getFlagEmoji(user.language)}` : ""}
+          {user ? user.username : "Loading..."}{" "}
+          {user?.language ? ` ${getFlagEmoji(user.language)}` : ""}
         </span>
-
-        <span style={{ fontSize: 18, fontWeight: 700 }}>
-        {user?.language ? ISO6391.getNativeName(user.language) : ""}
+        <span style={{ fontSize: 14, fontWeight: 500, color: "#555" }}>
+          {user?.language ? ISO6391.getNativeName(user.language) : ""}
         </span>
       </div>
 
@@ -225,12 +145,11 @@ const SideBarSection = (): React.JSX.Element => {
           onClick={onMenuClick}
           style={{ border: "none", background: "transparent" }}
           items={[
-            { key: "dashboard", icon: <DashboardOutlined />, label: <span className="menu-item">Dashboard</span>},
-            { key: "projects", icon: <ProjectOutlined />, label: <span className="menu-item dropdown">Projects<span className="chevron">›</span></span> },
-            { key: "sprints", icon: <RocketOutlined />, label: <span className="menu-item">Sprints</span> },
+            { key: "dashboard", icon: <DashboardOutlined />, label: <span className="menu-item">{uiText.dashboard}</span> },
+            { key: "projects", icon: <ProjectOutlined />, label: <span className="menu-item dropdown">{uiText.projects}<span className="chevron">›</span></span> },
+            { key: "sprints", icon: <RocketOutlined />, label: <span className="menu-item">{uiText.sprints}</span> },
             ...(isInProject ? [
-                { key: "tags", icon: <TagsOutlined />, label: <span className="menu-item">Tags</span> },
-
+              { key: "tags", icon: <TagsOutlined />, label: <span className="menu-item">{uiText.tags}</span> },
             ] : []),
           ]}
         />
@@ -249,7 +168,10 @@ const SideBarSection = (): React.JSX.Element => {
           items={[
             { key: "settings", icon: <SettingOutlined />, label: <span className="menu-item">{uiText.settings}</span> },
             {
-              key: "logout", icon: <LogoutOutlined style={{ color: "#d55f5a" }} />, label: <span style={{ color: "#d55f5a" }} className="menu-item">{uiText.logout}</span> },
+              key: "logout",
+              icon: <LogoutOutlined style={{ color: "#d55f5a" }} />,
+              label: <span style={{ color: "#d55f5a" }} className="menu-item">{uiText.logout}</span>
+            },
           ]}
         />
       </div>
