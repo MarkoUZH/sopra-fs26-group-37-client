@@ -11,6 +11,11 @@ import { getTaskSummaryTranslation } from "@/utils/dictionary_task_summary";
 
 const { Title, Text } = Typography;
 
+// Define the interface to satisfy Vercel/TypeScript
+interface TranslateResponse {
+  text?: () => Promise<string>;
+}
+
 const TaskSummarySection = (): React.JSX.Element => {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedProject, setSelectedProject] = useState<ProjectDTO | null>(null);
@@ -45,19 +50,25 @@ const TaskSummarySection = (): React.JSX.Element => {
     noProjects: getTaskSummaryTranslation("No projects found.", targetLanguage)
   }), [targetLanguage]);
 
-  // 2. Dynamic Translation Helper (API)
-  const translateText = useCallback(async (text: string, lang: string) => {
+  // 2. Dynamic Translation Helper (API) - 'any' replaced with 'TranslateResponse | string'
+  const translateText = useCallback(async (text: string, lang: string): Promise<string> => {
     if (!text || lang === "en") return text;
     try {
-      const result = await api.post<any>("/translate", {
+      const result = await api.post<TranslateResponse | string>("/translate", {
         text,
         sourceLanguage: "en",
         language: lang,
       });
-      // Extract text if result is a Response-like object
-      if (result && typeof result.text === 'function') return await result.text();
+
+      // Safely check if 'result' is the object with the .text() method
+      if (result && typeof result === 'object' && typeof result.text === 'function') {
+        return await result.text();
+      }
+      
+      // If result is just the translated string
       return typeof result === 'string' ? result : text;
     } catch (err) {
+      console.error("Translation error:", err);
       return text;
     }
   }, [api]);
@@ -121,7 +132,6 @@ const TaskSummarySection = (): React.JSX.Element => {
 
       <Row gutter={[16, 16]}>
         {displayProjects.map((project, index) => {
-          // IMPORTANT: We use 'projects[index]' to get the original untranslated data for modals
           const originalProject = projects[index];
           const totalTasks = project.tasks?.length || 0;
           const completedTasks = project.tasks?.filter(t => t.status === "DONE").length || 0;
@@ -134,7 +144,7 @@ const TaskSummarySection = (): React.JSX.Element => {
                 <Flex justify="space-between" align="center">
                   <Title level={5} style={{ margin: 0 }}>{project.name}</Title>
                   <Flex gap={8}>
-                    {isManager && (
+                    {isManager && originalProject && (
                       <Dropdown menu={{ items: [{ 
                         key: 'edit', 
                         label: uiText.editProject, 
@@ -143,7 +153,10 @@ const TaskSummarySection = (): React.JSX.Element => {
                         <MoreOutlined style={{ cursor: "pointer", color: "#8c8c8c" }} />
                       </Dropdown>
                     )}
-                    <ArrowRightOutlined onClick={() => router.push(`/projects/${project.id}`)} />
+                    <ArrowRightOutlined 
+                      style={{ cursor: 'pointer' }}
+                      onClick={() => router.push(`/projects/${project.id}`)} 
+                    />
                   </Flex>
                 </Flex>
 
@@ -152,7 +165,7 @@ const TaskSummarySection = (): React.JSX.Element => {
                 </Text>
 
                 <Flex justify="space-between">
-                  <Text >{completedTasks}/{totalTasks} {uiText.tasksLabel}</Text>
+                  <Text>{completedTasks}/{totalTasks} {uiText.tasksLabel}</Text>
                   <Text>{percentage}%</Text>
                 </Flex>
                 <Progress percent={percentage} showInfo={false} strokeColor="#00c950" />
@@ -160,7 +173,9 @@ const TaskSummarySection = (): React.JSX.Element => {
                 <Flex gap={8} style={{ marginTop: 8 }}>
                   <Text type="secondary">{inProgressTasks} {uiText.inProgressLabel}</Text>
                   <Text type="secondary">•</Text>
-                  <Text type="secondary">{originalProject.members?.length || 0} {uiText.membersLabel}</Text>
+                  <Text type="secondary">
+                    {originalProject?.members?.length || 0} {uiText.membersLabel}
+                  </Text>
                 </Flex>
               </Card>
             </Col>
@@ -169,7 +184,9 @@ const TaskSummarySection = (): React.JSX.Element => {
       </Row>
 
       {displayProjects.length === 0 && (
-        <Flex justify="center" style={{ padding: '20px' }}><Text type="secondary">{uiText.noProjects}</Text></Flex>
+        <Flex justify="center" style={{ padding: '20px' }}>
+          <Text type="secondary">{uiText.noProjects}</Text>
+        </Flex>
       )}
       
       <CreateProjectModal open={isModalOpen} onClose={() => setIsModalOpen(false)} />
