@@ -3,7 +3,7 @@ import { ApiService } from "@/api/apiService";
 import { DeleteOutlined, PlusOutlined, UserOutlined } from "@ant-design/icons";
 import { Avatar, Button, Flex, Input, Select, Typography } from "antd";
 import React, { useEffect, useState, useMemo } from "react";
-import { getProjectTranslation } from "@/utils/dictionary_projects_create";
+import { getProjectTranslation } from "@/utils/dictionary_projects";
 const { Title } = Typography;
 
 interface Props {
