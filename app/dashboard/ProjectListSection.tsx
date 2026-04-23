@@ -24,6 +24,7 @@ export default function ProjectListSection(): React.JSX.Element {
   const api = useApi();
   const [sprints, setSprints] = useState<SprintGetDTO[]>([]);
   const [targetLanguage, setTargetLanguage] = useState("en");
+  
 
   // 1. Sync language from LocalStorage
   useEffect(() => {
@@ -71,6 +72,13 @@ export default function ProjectListSection(): React.JSX.Element {
     };
     
     fetchSprints();
+    const handleRefresh = () => {
+    fetchSprints(); // Your existing function that loads data
+  };
+
+  window.addEventListener("sprintCreated", handleRefresh);
+  return () => window.removeEventListener("sprintCreated", handleRefresh);
+    
     return () => { isMounted = false; };
   }, [api]);
 
