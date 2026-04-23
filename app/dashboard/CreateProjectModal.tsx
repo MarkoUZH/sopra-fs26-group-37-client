@@ -65,12 +65,21 @@ const CreateProjectModal = ({ open, onClose }: Props): React.JSX.Element | null 
 
   const handleAddProject = async () => {
     const storedId = localStorage.getItem("id");
+    let savedLanguage = "de"; // Default fallback
+    if (typeof window !== "undefined") {
+      const rawLang = localStorage.getItem("language");
+      if (rawLang) {
+        // Remove quotes if it was stored as a JSON string (e.g. '"en"' -> 'en')
+        savedLanguage = rawLang.replace(/"/g, "");
+      }
+    }
     try {
       const projectData = {
         name: projectName,
         description: description,
         memberIds: members.map(m => parseInt(m.key)),
         ownerId: parseInt(storedId || "0"),
+        originalLanguage: savedLanguage,
       };
 
       await api.post("/projects", projectData);

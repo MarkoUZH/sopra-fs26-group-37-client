@@ -50,49 +50,55 @@ const TaskSummarySection = (): React.JSX.Element => {
     noProjects: getTaskSummaryTranslation("No projects found.", targetLanguage)
   }), [targetLanguage]);
 
-  // 2. Dynamic Translation Helper (API) - 'any' replaced with 'TranslateResponse | string'
-  const translateText = useCallback(async (text: string, lang: string): Promise<string> => {
-    if (!text || lang === "en") return text;
-    try {
-      const result = await api.post<TranslateResponse | string>("/translate", {
-        text,
-        sourceLanguage: "en",
-        language: lang,
-      });
 
-      // Safely check if 'result' is the object with the .text() method
-      if (result && typeof result === 'object' && typeof result.text === 'function') {
-        return await result.text();
-      }
-      
-      // If result is just the translated string
-      return typeof result === 'string' ? result : text;
-    } catch (err) {
-      console.error("Translation error:", err);
-      return text;
+
+  // 2. Dynamic Translation Helper (API) - 'any' replaced with 'TranslateResponse | string'
+// Add sourceLang to the parameters
+const translateText = useCallback(async (text: string, sourceLang: string, targetLang: string): Promise<string> => {
+  // If the project language is already the same as the target language, don't translate
+  if (!text || sourceLang === targetLang) return text;
+
+  try {
+    const result = await api.post<TranslateResponse | string>("/translate", {
+      text,
+      sourceLanguage: sourceLang, // Use the passed sourceLang
+      language: targetLang,
+    });
+
+    if (result && typeof result === 'object' && typeof result.text === 'function') {
+      return await result.text();
     }
-  }, [api]);
+    
+    return typeof result === 'string' ? result : text;
+  } catch (err) {
+    console.error("Translation error:", err);
+    return text;
+  }
+}, [api]);
 
   // 3. Translate Dynamic Project Content
-  useEffect(() => {
-    const translateDynamicContent = async () => {
-      if (targetLanguage === "en") {
-        setDisplayProjects(projects);
-        return;
-      }
-
-      const translated = await Promise.all(
-        projects.map(async (p) => ({
+useEffect(() => {
+  const translateDynamicContent = async () => {
+    // Note: We no longer skip if targetLanguage === "en" globally, 
+    // because some projects might be in "de" or "es" and need translation TO "en".
+    
+    const translated = await Promise.all(
+      projects.map(async (p) => {
+        // Use the project's specific originalLanguage
+        const source = p.originalLanguage || "fr"; // Fallback to en if undefined
+        
+        return {
           ...p,
-          name: await translateText(p.name, targetLanguage),
-          description: await translateText(p.description, targetLanguage),
-        }))
-      );
-      setDisplayProjects(translated);
-    };
+          name: await translateText(p.name, source, targetLanguage),
+          description: await translateText(p.description, source, targetLanguage),
+        };
+      })
+    );
+    setDisplayProjects(translated);
+  };
 
-    if (projects.length > 0) translateDynamicContent();
-  }, [targetLanguage, projects, translateText]);
+  if (projects.length > 0) translateDynamicContent();
+}, [targetLanguage, projects, translateText]);
 
   // 4. Fetch Projects
   useEffect(() => {

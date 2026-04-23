@@ -22,6 +22,7 @@ export interface Project {
   dueDate: string;
   members: TeamMember[];
   color: string;
+  originalLanguage: string;
 }
 
 export interface ProjectDTO {
@@ -34,6 +35,7 @@ export interface ProjectDTO {
     tasksTotal: number;
     tasksDone: number;
     tasksInProgress: number;
+    originalLanguage: string;
     dueDate: string;
     members: TeamMember[];
     color: string;
