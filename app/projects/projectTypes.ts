@@ -1,3 +1,5 @@
+import { Task } from "./taskTypes";
+
 export type ProjectStatus = "active" | "on-hold" | "completed" | "planning";
 export type ProjectPriority = "high" | "medium" | "low";
 
@@ -20,6 +22,22 @@ export interface Project {
   dueDate: string;
   team: TeamMember[];
   color: string;
+}
+
+export interface ProjectDTO {
+    id: string;
+    name: string;
+    description: string;
+    status: ProjectStatus;
+    priority: ProjectPriority;
+    progress: number;
+    tasksTotal: number;
+    tasksDone: number;
+    tasksInProgress: number;
+    dueDate: string;
+    members: TeamMember[];
+    color: string;
+    tasks: Task[];
 }
 
 export const statusConfig: Record<ProjectStatus,
