@@ -63,7 +63,7 @@ const EditProjectModal = ({ open, onClose, project }: Props): React.JSX.Element 
     if (open && project) {
       setProjectName(project.name);
       setDescription(project.description);
-      const formattedMembers = project.members?.map((m: any) => ({
+      const formattedMembers = project.members?.map((m: User) => ({
         key: m.id.toString(),
         initial: (m.name || m.username || "U").charAt(0).toUpperCase(),
         name: m.name || m.username,
