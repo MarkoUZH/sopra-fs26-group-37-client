@@ -8,6 +8,23 @@ import { useApi } from "@/hooks/useApi";
 
 const { Title, Text } = Typography;
 
+// --- Interfaces for API Responses ---
+interface ApiSprint {
+  id: number;
+  name: string;
+  sprintStatus: string;
+  startTime: string;
+  endTime: string;
+  projectId: string;
+  projectName?: string;
+}
+
+interface ApiProject {
+  id: number;
+  name: string;
+}
+
+// --- Component Props & State Interfaces ---
 interface Props {
   open: boolean;
   onClose: () => void;
@@ -38,19 +55,18 @@ const ManageSprintsModal = ({ open, onClose }: Props): React.JSX.Element | null 
   const [form, setForm] = useState(EMPTY_FORM);
   const api = useApi();
   
-  // Ref to the modal content - THIS FIXES THE CALENDAR/DROPDOWN
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // 1. Fetch Data Hook (Must be called before any early returns)
   useEffect(() => {
     if (!open) return;
     let isMounted = true;
 
     const fetchData = async () => {
       try {
+        // Explicitly typing the API response in Promise.all
         const [sprintData, projectData] = await Promise.all([
-          api.get<any[]>("/sprints"),
-          api.get<any[]>("/projects")
+          api.get<ApiSprint[]>("/sprints"),
+          api.get<ApiProject[]>("/projects")
         ]);
 
         if (!isMounted) return;
@@ -101,7 +117,7 @@ const ManageSprintsModal = ({ open, onClose }: Props): React.JSX.Element | null 
       setForm(EMPTY_FORM);
       setEditingId(null);
 
-      const refreshed = await api.get<any[]>("/sprints");
+      const refreshed = await api.get<ApiSprint[]>("/sprints");
       setSprints(refreshed.map(s => ({
         id: s.id,
         name: s.name,
@@ -116,8 +132,6 @@ const ManageSprintsModal = ({ open, onClose }: Props): React.JSX.Element | null 
     }
   };
 
-  // --- CRITICAL: THE HOOKS FIX ---
-  // Only return null AFTER all Hooks have been called.
   if (!open) return null;
 
   return createPortal(
@@ -131,7 +145,7 @@ const ManageSprintsModal = ({ open, onClose }: Props): React.JSX.Element | null 
       }}
     >
       <div
-        ref={containerRef} // Attach the ref here
+        ref={containerRef}
         onClick={(e) => e.stopPropagation()}
         style={{
           background: "#fff", borderRadius: 12,
@@ -163,7 +177,6 @@ const ManageSprintsModal = ({ open, onClose }: Props): React.JSX.Element | null 
                   value={form.projectId || undefined}
                   onChange={(val) => setForm({ ...form, projectId: val })}
                   style={{ width: "100%" }}
-                  // This forces the dropdown to render inside the modal portal
                   getPopupContainer={() => containerRef.current || document.body}
                   options={projects.map(p => ({ label: p.name, value: String(p.id) }))}
                 />
@@ -192,7 +205,7 @@ const ManageSprintsModal = ({ open, onClose }: Props): React.JSX.Element | null 
                     format="DD.MM.YYYY"
                     getPopupContainer={() => containerRef.current || document.body}
                     value={form.startDate ? dayjs(form.startDate, "DD.MM.YYYY") : null}
-                    onChange={(_, dateStr) => setForm({ ...form, startDate: dateStr as string })}
+                    onChange={(_, dateStr) => setForm({ ...form, startDate: Array.isArray(dateStr) ? dateStr[0] : dateStr })}
                   />
                 </Flex>
                 <Flex vertical gap={4} style={{ flex: 1 }}>
@@ -202,7 +215,7 @@ const ManageSprintsModal = ({ open, onClose }: Props): React.JSX.Element | null 
                     format="DD.MM.YYYY"
                     getPopupContainer={() => containerRef.current || document.body}
                     value={form.endDate ? dayjs(form.endDate, "DD.MM.YYYY") : null}
-                    onChange={(_, dateStr) => setForm({ ...form, endDate: dateStr as string })}
+                    onChange={(_, dateStr) => setForm({ ...form, endDate: Array.isArray(dateStr) ? dateStr[0] : dateStr })}
                   />
                 </Flex>
               </Flex>
