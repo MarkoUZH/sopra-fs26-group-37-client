@@ -146,7 +146,6 @@ const SideBarSection = (): React.JSX.Element => {
           style={{ border: "none", background: "transparent" }}
           items={[
             { key: "dashboard", icon: <DashboardOutlined />, label: <span className="menu-item">{uiText.dashboard}</span> },
-            { key: "projects", icon: <ProjectOutlined />, label: <span className="menu-item dropdown">{uiText.projects}<span className="chevron">›</span></span> },
             { key: "sprints", icon: <RocketOutlined />, label: <span className="menu-item">{uiText.sprints}</span> },
             ...(isInProject ? [
               { key: "tags", icon: <TagsOutlined />, label: <span className="menu-item">{uiText.tags}</span> },
