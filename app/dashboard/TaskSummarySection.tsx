@@ -1,7 +1,7 @@
 "use client";
 import { MoreOutlined, ArrowRightOutlined, FolderOutlined, PlusOutlined } from "@ant-design/icons";
 import { Button, Card, Col, Dropdown, Flex, Progress, Row, Typography, message } from "antd";
-import React, { useEffect, useState, useMemo } from "react";
+import React, { useEffect, useState, useMemo, useCallback } from "react";
 import { ApiService } from "@/api/apiService"; 
 import CreateProjectModal from "./CreateProjectModal";
 import EditProjectModal from "./EditProjectModal";
@@ -43,6 +43,8 @@ const TaskSummarySection = (): React.JSX.Element => {
   const [selectedProject, setSelectedProject] = useState<ProjectDTO | null>(null);
   const [isManager, setIsManager] = useState<boolean>(false);
   const [projects, setProjects] = useState<ProjectDTO[]>([]);
+  // displayProjects holds the translated versions of the projects
+  const [displayProjects, setDisplayProjects] = useState<ProjectDTO[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   
   const router = useRouter();
@@ -66,61 +68,69 @@ const TaskSummarySection = (): React.JSX.Element => {
     }
   }, []);
 
-  // Translate page whenever targetLanguage changes
-  useEffect(() => {
-    let authErrorShown = false;
+  // Helper function for translating a single string
+  const translateText = useCallback(async (text: string, lang: string) => {
+    if (!text || lang === "en") return text;
+    try {
+      const result = await api.post<any>("/translate", {
+        text: text,
+        sourceLanguage: "en",
+        language: lang,
+      });
 
-    const translatePage = async () => {
-      // Revert to English instantly if English is selected
+      // Handle plain text response
+      if (result && typeof result.text === 'function') {
+        return await result.text();
+      }
+      return typeof result === 'string' ? result : text;
+    } catch (err) {
+      return text; // Fallback to original text
+    }
+  }, [api]);
+
+  // 2. Logic for translating UI labels and dynamic project data
+  useEffect(() => {
+    const performTranslations = async () => {
+      // Step A: Translate UI Labels
       if (targetLanguage === "en") {
         setUiText(baseText);
+        setDisplayProjects(projects);
         return;
       }
 
-      const translate = async (text: string) => {
-        try {
-          const result = await api.post<any>("/translate", {
-            text: text,
-            sourceLanguage: "en",
-            language: targetLanguage,
-          });
-
-          // Extract plain text if the API returns a raw Response object
-          if (result && typeof result.text === 'function') {
-            return await result.text();
-          }
-
-          return typeof result === 'string' ? result : text;
-        } catch (err) {
-          // Gracefully catch any 401s without spamming the console
-          if (err instanceof Error && err.message.includes("401") && !authErrorShown) {
-            authErrorShown = true;
-            message.warning("Translation requires authorization. Please log in.");
-          } else if (!authErrorShown) {
-            console.error("Translation failed for text:", text, err);
-          }
-          return text; // Fallback to English on error
-        }
-      };
-
-      // Resolve all translations concurrently
       const keys = Object.keys(baseText) as Array<keyof typeof baseText>;
       const translations = await Promise.all(
-        keys.map((key) => translate(baseText[key]))
+        keys.map((key) => translateText(baseText[key], targetLanguage))
       );
 
       const newUiText = {} as typeof baseText;
       keys.forEach((key, index) => {
-        newUiText[key] = translations[index];
+        newUiText[key] = translations[index] || baseText[key];
       });
-
       setUiText(newUiText);
+
+      // Step B: Translate Project Titles and Descriptions
+      if (projects.length > 0) {
+        const translatedProjects = await Promise.all(
+          projects.map(async (project) => {
+            const translatedName = await translateText(project.name, targetLanguage);
+            const translatedDesc = await translateText(project.description, targetLanguage);
+            return {
+              ...project,
+              name: translatedName,
+              description: translatedDesc
+            };
+          })
+        );
+        setDisplayProjects(translatedProjects);
+      }
     };
 
-    translatePage();
-  }, [targetLanguage, api]);
+    performTranslations();
+  }, [targetLanguage, projects, translateText]);
 
   const handleEditClick = (project: ProjectDTO) => {
+    // CRITICAL: Always use the original (untranslated) project for editing
     setSelectedProject(project);
     setIsEditModalOpen(true);
   };
@@ -138,7 +148,13 @@ const TaskSummarySection = (): React.JSX.Element => {
         setIsManager(userData.manager);
         const data = await api.get<ProjectDTO[]>(`/projects/users/${userId}`);
         
-        if (isMounted) setProjects(data);
+        if (isMounted) {
+          setProjects(data || []);
+          // Initialize displayProjects with raw data immediately
+          if (targetLanguage === "en") {
+            setDisplayProjects(data || []);
+          }
+        }
       } catch (error) {
         console.error("Project Fetch Error:", error);
       }
@@ -149,7 +165,7 @@ const TaskSummarySection = (): React.JSX.Element => {
     return () => {
       isMounted = false;
     };
-  }, [api]);
+  }, [api, targetLanguage]);
 
   return (
     <Card style={{ borderRadius: 12, width: "100%", background: "#ffffff", boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.03), 0 1px 6px -1px rgba(0, 0, 0, 0.02), 0 2px 4px 0 rgba(0, 0, 0, 0.02)', marginTop: 16 }}>
@@ -166,16 +182,20 @@ const TaskSummarySection = (): React.JSX.Element => {
       </Flex>
 
       <Row gutter={[16, 16]}>
-        {projects.map((project) => {
-          const totalTasks = project.tasks?.length || 0;
-          const completedTasks = project.tasks?.filter(t => t.status === "DONE").length || 0;
-          const inProgressTasks = project.tasks?.filter(t => t.status === "IN_PROGRESS" || (t.status as any) === 1).length || 0;
+        {displayProjects.map((project) => {
+          // Find the original project data for logic (task counts, percentages)
+          const originalProject = projects.find(p => p.id === project.id) || project;
+          
+          const totalTasks = originalProject.tasks?.length || 0;
+          const completedTasks = originalProject.tasks?.filter(t => t.status === "DONE").length || 0;
+          const inProgressTasks = originalProject.tasks?.filter(t => t.status === "IN_PROGRESS" || (t.status as any) === 1).length || 0;
           const percentage = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
 
           return (
             <Col xs={24} sm={12} lg={8} key={project.id} style={{ display: "flex" }}>
               <Card size="small" style={{ borderRadius: 12, width: "100%", display: "flex", flexDirection: "column" }}>
                 <Flex justify="space-between" align="center">
+                  {/* Using translated project name */}
                   <Title level={5} style={{ margin: 0 }}>{project.name}</Title>
                   <Flex gap={8} align="center">
                     {isManager && (
@@ -184,7 +204,7 @@ const TaskSummarySection = (): React.JSX.Element => {
                           items: [{
                             key: 'edit',
                             label: uiText.editProject,
-                            onClick: () => handleEditClick(project),
+                            onClick: () => handleEditClick(originalProject),
                           }],
                         }}
                         trigger={['click']}
@@ -200,6 +220,7 @@ const TaskSummarySection = (): React.JSX.Element => {
                   </Flex>
                 </Flex>
 
+                {/* Using translated project description */}
                 <Text style={{ display: "block", margin: "8px 0", color: "#4A5565", minHeight: "40px" }}>
                   {project.description}
                 </Text>
@@ -214,7 +235,7 @@ const TaskSummarySection = (): React.JSX.Element => {
                 <Flex gap={8} align="center" style={{ marginTop: 8 }}>
                   <Text style={{ color: "#4A5565" }}>{inProgressTasks} {uiText.inProgressLabel}</Text>
                   <Text style={{ color: "#4A5565" }}>•</Text>
-                  <Text style={{ color: "#4A5565" }}>{project.members?.length || 0} {uiText.membersLabel}</Text>
+                  <Text style={{ color: "#4A5565" }}>{originalProject.members?.length || 0} {uiText.membersLabel}</Text>
                 </Flex>
               </Card>
             </Col>
@@ -222,7 +243,7 @@ const TaskSummarySection = (): React.JSX.Element => {
         })}
       </Row>
 
-      {projects.length === 0 && (
+      {displayProjects.length === 0 && (
         <Flex justify="center" style={{ padding: '20px' }}>
           <Text type="secondary">{uiText.noProjects}</Text>
         </Flex>
