@@ -1,4 +1,4 @@
-import {Task} from "@/projects/taskTypes";
+import { Task } from "./taskTypes";
 
 export type ProjectStatus = "active" | "on-hold" | "completed" | "planning";
 export type ProjectPriority = "high" | "medium" | "low";
@@ -6,7 +6,6 @@ export type ProjectPriority = "high" | "medium" | "low";
 export interface TeamMember {
   name: string;
   username: string;
-  initials: string;
   id: number;
 }
 

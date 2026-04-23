@@ -16,7 +16,6 @@ export interface Task {
   dueDate?: string;
   tags?: Tag[];                        // Changed from string[] to Tag[]
   status: TaskColumn;                  // Backend uses 'status', frontend used 'column'
-  acceptanceCriteria?: string;         // Backend sends a single String, not an array
   timeEstimate?: number;
 }
 export interface KanbanColumnConfig {
@@ -32,8 +31,8 @@ export const KANBAN_COLUMNS: KanbanColumnConfig[] = [
   { key: "DONE",       label: "Done",        color: "#00c950", bg: "#f0fdf4" },
 ];
 
-export const PRIORITY_DOT_COLOR: Record<ProjectPriority, string> = {
-  high:   "#f04000",
-  medium: "#f0a800",
-  low:    "#f0d400",
+export const PRIORITY_DOT_COLOR = {
+  HIGH:   { label: "High",   color: "#f04000" }, 
+  MEDIUM: { label: "Medium", color: "#f0a800" }, 
+  LOW:    { label: "Low",    color: "#f0d400" }, 
 };

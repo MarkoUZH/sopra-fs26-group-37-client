@@ -32,35 +32,27 @@ const ProjectPage: React.FC = () => {
   const router = useRouter();
   const projectId = (params?.id as string) ?? "1";
 
-  // 2. Fetch and Map Data
-  useEffect(() => {
-    const fetchProject = async () => {
-      setLoading(true);
-      try {
-        // Note: Using template literals `` for the URL
-        const data = await apiService.get<ProjectDTO>(`/projects/${projectId}`);
-        
-        setProject(data);
-        
-        // Map TaskDTO to your frontend Task interface
-        if (data.tasks) {
-          const mappedTasks: Task[] = data.tasks.map((t: Task) => ({
-  ...t, 
-  status: t.status, 
-}));
-setTasks(mappedTasks);
-        }
-      } catch (error) {
-        console.error("Failed to fetch project:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    if (projectId) {
-      fetchProject();
+  const fetchProject = React.useCallback(async () => {
+  // We don't necessarily want the big loading spinner for every small update, 
+  // so maybe don't set global loading to true here unless it's the first load.
+  try {
+    const data = await apiService.get<ProjectDTO>(`/projects/${projectId}`);
+    setProject(data);
+    if (data.tasks) {
+      setTasks(data.tasks);
     }
-  }, [apiService, projectId]);
+  } catch (error) {
+    console.error("Failed to refresh data:", error);
+  }
+}, [apiService, projectId]);
+
+// Update your useEffect to use this function
+useEffect(() => {
+  setLoading(true);
+  fetchProject().finally(() => setLoading(false));
+}, [fetchProject])
+  // 2. Fetch and Map Data
+  
 
   // 3. Derived values for Header
   const totalTasks = tasks.length;
@@ -126,7 +118,7 @@ const handleDrop = async (e: React.DragEvent, targetStatus: TaskColumn) => {
 
   const handleDeleteTask = (taskId: number) => {
     setTasks((prev) => prev.filter((t) => t.id !== taskId));
-    // Optional: apiService.delete(`/tasks/${taskId}`)
+    apiService.delete(`/tasks/${taskId}`)
   };
 
 const handleSaveTask = async (taskData: Omit<Task, "id">) => {
@@ -145,12 +137,13 @@ const handleSaveTask = async (taskData: Omit<Task, "id">) => {
     };
 
     if (editingTask) {
-      const updatedTask = await apiService.put<Task>(`/tasks/${editingTask.id}`, postBody);
-      setTasks((prev) => prev.map((t) => (t.id === editingTask.id ? updatedTask : t)));
+      await apiService.put(`/tasks/${editingTask.id}`, postBody);
     } else {
-      const savedTask = await apiService.post<Task>(`/tasks`, postBody);
-      setTasks((prev) => [...prev, savedTask]);
+      await apiService.post(`/tasks`, postBody);
     }
+    
+   
+    await fetchProject(); 
     
     setModalOpen(false);
     setEditingTask(null);
@@ -162,7 +155,6 @@ const handleSaveTask = async (taskData: Omit<Task, "id">) => {
   if (loading) {
     return (
       <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
-        <Spin size="large" tip="Loading project..." />
       </div>
     );
   }

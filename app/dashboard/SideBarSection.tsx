@@ -227,9 +227,10 @@ const SideBarSection = (): React.JSX.Element => {
           items={[
             { key: "dashboard", icon: <DashboardOutlined />, label: <span className="menu-item">Dashboard</span>},
             { key: "projects", icon: <ProjectOutlined />, label: <span className="menu-item dropdown">Projects<span className="chevron">›</span></span> },
+            { key: "sprints", icon: <RocketOutlined />, label: <span className="menu-item">Sprints</span> },
             ...(isInProject ? [
-              { key: "tags", icon: <TagsOutlined />, label: <span className="menu-item">Tags</span> },
-              { key: "sprints", icon: <RocketOutlined />, label: <span className="menu-item">Sprints</span> },
+                { key: "tags", icon: <TagsOutlined />, label: <span className="menu-item">Tags</span> },
+
             ] : []),
           ]}
         />
@@ -252,6 +253,7 @@ const SideBarSection = (): React.JSX.Element => {
           ]}
         />
       </div>
+      <ManageTagsModal open={tagsModalOpen} onClose={() => setTagsModalOpen(false)} />
       <ManageSprintsModal open={sprintsModalOpen} onClose={() => setSprintsModalOpen(false)} />
     </div>
   );
