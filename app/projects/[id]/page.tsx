@@ -154,7 +154,6 @@ const handleSaveTask = async (taskData: Omit<Task, "id">) => {
   if (loading) {
     return (
       <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
-        <Spin size="large" tip="Loading project..." />
       </div>
     );
   }
