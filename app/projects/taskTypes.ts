@@ -11,7 +11,7 @@ export interface Task {
   id: number;              // Changed from string to number
   name: string;
   description?: string;
-  originalLanguage: string;
+  originalLanguage?: string;
   priority: "LOW" | "MEDIUM" | "HIGH"; // Match backend Enum casing
   assignedUsers: TeamMember[];         // Changed from assignee to array
   dueDate?: string;
