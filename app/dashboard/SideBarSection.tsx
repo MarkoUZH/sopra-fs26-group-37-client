@@ -113,7 +113,7 @@ const SideBarSection = (): React.JSX.Element => {
     if (info.key === "logout") handleLogout();
     else if (info.key === "dashboard") router.push("/dashboard");
     else if (info.key === "settings") router.push("/settings");
-    else if (info.key === "tags") router.push("/projects"); // Or trigger tag specific logic
+    //else if (info.key === "tags") router.push("/projects"); // Or trigger tag specific logic
     else if (info.key === "sprints") setSprintsModalOpen(true);
     else if (info.key === "projects") router.push("/projects");
   };
