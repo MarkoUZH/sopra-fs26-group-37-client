@@ -140,18 +140,18 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onDragStart, onEdit, onDelete
             <Flex vertical gap={4} style={{ marginBottom: 12 }}>
                 {task.assignedUsers?.[0] && (
                     <Flex align="center" gap={6}>
-                        <UserOutlined style={{ fontSize: 12, color: "#555" }} />
-                        <Text style={{ fontSize: 12, color: "#555" }}>{task.assignedUsers[0].username}</Text>
+                        <UserOutlined style={{ fontSize: 12, color: "#8c8c8c", marginBottom: -5 }} />
+                        <Text type="secondary" style={{ fontSize: 12, marginBottom: -5 }}>{task.assignedUsers[0].username}</Text>
                     </Flex>
                 )}
                 {task.timeEstimate !== undefined && (
-                    <Text type="secondary" style={{ fontSize: 12 }}>Est: {task.timeEstimate}h</Text>
+                    <Text type="secondary" style={{ fontSize: 12, marginBottom: -8 }}>Est: {task.timeEstimate}h</Text>
                 )}
             </Flex>
 
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderTop: "1px solid #f9f9f9", paddingTop: 12 }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderTop: "1px solid #f9f9f9", paddingTop: 5 }}>
                 {task.dueDate ? (
-                    <Text style={{ fontSize: 11, color: "#9ca3af" }}>
+                    <Text type="secondary" style={{ fontSize: 11 }}>
                         <CalendarOutlined style={{ marginRight: 4 }} />
                         {new Date(task.dueDate).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
                     </Text>
@@ -159,12 +159,12 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onDragStart, onEdit, onDelete
 
                 <Tooltip title={isTranslated ? "Show Original" : "Translate"} placement="top">
                     <Flex align="center" gap={4}>
-                        <TranslationOutlined style={{ fontSize: 12, color: isTranslated ? "#1677ff" : "#bfbfbf" }} />
+                        <TranslationOutlined style={{ fontSize: 12, color: isTranslated ? "#6066FF" : "#bfbfbf" }} />
                         <Switch
                             size="small"
                             checked={isTranslated}
                             onChange={(checked) => setIsTranslated(checked)}
-                            style={{ scale: '0.8' }}
+                            style={{ scale: '0.8', backgroundColor: isTranslated ? "#6066FF" : "#bfbfbf" }}
                         />
                     </Flex>
                 </Tooltip>

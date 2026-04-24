@@ -137,10 +137,16 @@ const TaskModal: React.FC<TaskModalProps> = ({
         <Flex vertical gap={14} style={{ padding: "0 24px 24px 24px" }}>
           {/* Title */}
           <Flex vertical gap={4}>
-            <span style={{ fontSize: 13, color: "#555" }}>Title</span>
+            <Flex justify="space-between">
+              <span style={{ fontSize: 13, color: "#555" }}>Title</span>
+              <span style={{ fontSize: 12, color: form.name.length >= 255 ? "#ef4444" : "#aaa" }}>
+                {form.name.length}/255
+              </span>
+            </Flex>
             <Input
               placeholder="Add a task title..."
               value={form.name}
+              maxLength={255}
               onChange={(e) => setForm({ ...form, name: e.target.value })}
               style={{ borderRadius: 8 }}
             />
@@ -148,11 +154,17 @@ const TaskModal: React.FC<TaskModalProps> = ({
 
           {/* Description */}
           <Flex vertical gap={4}>
-            <span style={{ fontSize: 13, color: "#555" }}>Description</span>
+            <Flex justify="space-between">
+              <span style={{ fontSize: 13, color: "#555" }}>Description</span>
+              <span style={{ fontSize: 12, color: form.description.length >= 255 ? "#ef4444" : "#aaa" }}>
+                {form.description.length}/255
+              </span>
+            </Flex>
             <Input.TextArea
               placeholder="Add a description..."
               rows={3}
               value={form.description}
+              maxLength={255}
               onChange={(e) => setForm({ ...form, description: e.target.value })}
               style={{ borderRadius: 8, resize: "none" }}
             />
