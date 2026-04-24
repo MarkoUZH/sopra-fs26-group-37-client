@@ -3,10 +3,11 @@ import { TeamOutlined } from "@ant-design/icons";
 import { Avatar, Card, Col, Progress, Row, Tooltip, Typography } from "antd";
 import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { ApiService } from "@/api/apiService";
+// 1. Import your new dictionary helper
+import { getHeaderTranslation } from "@/utils/dictionary_projectHeaders";
 
 const { Title, Text, Paragraph } = Typography;
 
-// Define the interface to satisfy TypeScript/Vercel
 interface TranslateResponse {
   text?: () => Promise<string>;
 }
@@ -40,10 +41,16 @@ const ProjectHeader: React.FC<ProjectHeaderProps> = ({ project, totalTasks, done
     return "en";
   }, []);
 
+  // 2. Compute UI labels using the dictionary
+  const uiLabels = useMemo(() => ({
+    complete: getHeaderTranslation("Complete", targetLanguage),
+    totalTasks: getHeaderTranslation("Total tasks", targetLanguage),
+    team: getHeaderTranslation("Team", targetLanguage),
+  }), [targetLanguage]);
+
   const translateText = useCallback(async (text: string, sourceLang: string, targetLang: string): Promise<string> => {
     if (!text || sourceLang === targetLang) return text;
     try {
-      // Replaced 'any' with explicit types
       const result = await api.post<TranslateResponse | string>("/translate", {
         text,
         sourceLanguage: sourceLang,
@@ -128,7 +135,10 @@ const ProjectHeader: React.FC<ProjectHeaderProps> = ({ project, totalTasks, done
                 <Text strong style={{ fontSize: 22, lineHeight: "28px" }}>
                   {progress}%
                 </Text>
-                <Text style={{ fontSize: 12, color: "#9ca3af", marginBottom: 6 }}>Complete</Text>
+                {/* 3. Swap "Complete" for the dictionary label */}
+                <Text style={{ fontSize: 12, color: "#9ca3af", marginBottom: 6 }}>
+                  {uiLabels.complete}
+                </Text>
                 <Progress
                   percent={progress}
                   showInfo={false}
@@ -141,11 +151,17 @@ const ProjectHeader: React.FC<ProjectHeaderProps> = ({ project, totalTasks, done
 
               <Col style={columnStyle}>
                 <Text strong style={{ fontSize: 22, lineHeight: "28px" }}>{totalTasks}</Text>
-                <Text style={{ fontSize: 12, color: "#9ca3af" }}>Total tasks</Text>
+                {/* 4. Swap "Total tasks" for the dictionary label */}
+                <Text style={{ fontSize: 12, color: "#9ca3af" }}>
+                  {uiLabels.totalTasks}
+                </Text>
               </Col>
 
               <Col style={columnStyle}>
-                <Text style={{ fontSize: 12, color: "#9ca3af", marginBottom: 6 }}>Team</Text>
+                {/* 5. Swap "Team" for the dictionary label */}
+                <Text style={{ fontSize: 12, color: "#9ca3af", marginBottom: 6 }}>
+                  {uiLabels.team}
+                </Text>
                 <Avatar.Group max={{ count: 4 }} size="small">
                   {project.members?.map((member) => (
                     <Tooltip key={member.id} title={member.username}>

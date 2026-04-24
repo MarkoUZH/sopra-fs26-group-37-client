@@ -3,12 +3,12 @@ import {
   CheckCircleOutlined,
   ClockCircleOutlined,
   FlagOutlined,
-  PlusOutlined,
 } from "@ant-design/icons";
-import { Button, Typography } from "antd";
-import React, { useState } from "react";
+import { Typography } from "antd";
+import React, { useState, useMemo } from "react";
 import TaskCard from "@/projects/TaskCard";
 import { KanbanColumnConfig, Task, TaskColumn } from "@/projects/taskTypes";
+import { getKanbanTranslation } from "@/utils/dictionary_kanban"; // Import helper
 
 const { Text } = Typography;
 
@@ -40,6 +40,19 @@ const KanbanColumn: React.FC<KanbanColumnProps> = ({
 }) => {
   const [isDragOver, setIsDragOver] = useState(false);
 
+  // 1. Get current language
+  const targetLanguage = useMemo(() => {
+    if (typeof window !== "undefined") {
+      return localStorage.getItem("language")?.replace(/"/g, '') || "en";
+    }
+    return "en";
+  }, []);
+
+  // 2. Translate the column label
+  const translatedLabel = useMemo(() => 
+    getKanbanTranslation(column.key, targetLanguage), 
+  [column.key, targetLanguage]);
+
   return (
     <div
       onDragOver={(e) => { e.preventDefault(); setIsDragOver(true); }}
@@ -55,7 +68,6 @@ const KanbanColumn: React.FC<KanbanColumnProps> = ({
         transition: "background 0.15s, border 0.15s",
       }}
     >
-      {/* Column header */}
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
           <span
@@ -73,7 +85,8 @@ const KanbanColumn: React.FC<KanbanColumnProps> = ({
           >
             {columnIcon[column.key]}
           </span>
-          <Text strong style={{ fontSize: 14 }}>{column.label}</Text>
+          {/* 3. Use the translated label here */}
+          <Text strong style={{ fontSize: 14 }}>{translatedLabel}</Text>
           <span
             style={{
               fontSize: 12,
@@ -90,7 +103,6 @@ const KanbanColumn: React.FC<KanbanColumnProps> = ({
         </div>
       </div>
 
-      {/* Task cards */}
       <div style={{ minHeight: 80 }}>
         {tasks.map((task) => (
           <TaskCard
@@ -103,9 +115,7 @@ const KanbanColumn: React.FC<KanbanColumnProps> = ({
           />
         ))}
       </div>
-
-      {/* Add task button */}
-          </div>
+    </div>
   );
 };
 
