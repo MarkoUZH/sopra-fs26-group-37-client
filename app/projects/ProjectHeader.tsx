@@ -2,15 +2,20 @@
 import { TeamOutlined } from "@ant-design/icons";
 import { Avatar, Card, Col, Progress, Row, Tooltip, Typography } from "antd";
 import React, { useState, useEffect, useMemo, useCallback } from "react";
-import { ApiService } from "@/api/apiService"; // Ensure this path is correct
+import { ApiService } from "@/api/apiService";
 
 const { Title, Text, Paragraph } = Typography;
+
+// Define the interface to satisfy TypeScript/Vercel
+interface TranslateResponse {
+  text?: () => Promise<string>;
+}
 
 export interface ProjectHeaderProps {
   project: {
     name: string;
     description: string;
-    originalLanguage?: string; // Added from previous task
+    originalLanguage?: string;
     members: { id: number; username: string; name?: string }[];
     owner?: { id: number; username: string };
   };
@@ -20,7 +25,7 @@ export interface ProjectHeaderProps {
 
 const ProjectHeader: React.FC<ProjectHeaderProps> = ({ project, totalTasks, doneTasks }) => {
   const progress = totalTasks > 0 ? Math.round((doneTasks / totalTasks) * 100) : 0;
-  // 1. Translation State
+  
   const [displayContent, setDisplayContent] = useState({
     name: project.name,
     description: project.description
@@ -28,28 +33,34 @@ const ProjectHeader: React.FC<ProjectHeaderProps> = ({ project, totalTasks, done
 
   const api = useMemo(() => new ApiService(), []);
   
-  // Get user language from localStorage (consistent with TaskSummary)
-  const targetLanguage = typeof window !== "undefined" 
-    ? localStorage.getItem("language")?.replace(/"/g, '') || "en" 
-    : "en";
+  const targetLanguage = useMemo(() => {
+    if (typeof window !== "undefined") {
+      return localStorage.getItem("language")?.replace(/"/g, '') || "en";
+    }
+    return "en";
+  }, []);
 
-  // 2. Translation logic
   const translateText = useCallback(async (text: string, sourceLang: string, targetLang: string): Promise<string> => {
     if (!text || sourceLang === targetLang) return text;
     try {
-      const result = await api.post<any>("/translate", {
+      // Replaced 'any' with explicit types
+      const result = await api.post<TranslateResponse | string>("/translate", {
         text,
         sourceLanguage: sourceLang,
         language: targetLang,
       });
-      return typeof result === 'object' && result.text ? await result.text() : result;
+
+      if (result && typeof result === 'object' && typeof result.text === 'function') {
+        return await result.text();
+      }
+      
+      return typeof result === 'string' ? result : text;
     } catch (err) {
       console.error("Translation error:", err);
       return text;
     }
   }, [api]);
 
-  // 3. Auto-translate on mount or when project/language changes
   useEffect(() => {
     const autoTranslate = async () => {
       const source = project.originalLanguage || "en";
@@ -61,7 +72,6 @@ const ProjectHeader: React.FC<ProjectHeaderProps> = ({ project, totalTasks, done
         ]);
         setDisplayContent({ name: tName, description: tDesc });
       } else {
-        // Fallback to original if languages match
         setDisplayContent({ name: project.name, description: project.description });
       }
     };
@@ -105,10 +115,8 @@ const ProjectHeader: React.FC<ProjectHeaderProps> = ({ project, totalTasks, done
               >
                 <TeamOutlined style={{ fontSize: 22 }} />
               </div>
-              {/* Use translated name */}
               <Title level={3} style={{ margin: 0 }}>{displayContent.name}</Title>
             </div>
-            {/* Use translated description */}
             <Paragraph style={{ color: "#6b7280", fontSize: 13, margin: 0 }}>
               {displayContent.description}
             </Paragraph>

@@ -14,6 +14,11 @@ import { ApiService } from "@/api/apiService";
 
 const { Text } = Typography;
 
+// Define the interface to satisfy TypeScript/Vercel
+interface TranslateResponse {
+  text?: () => Promise<string>;
+}
+
 export interface TaskCardProps {
     task: Task,
     onDragStart: (e: React.DragEvent, taskId: number) => void,
@@ -25,29 +30,43 @@ export interface TaskCardProps {
 const TaskCard: React.FC<TaskCardProps> = ({ task, onDragStart, onEdit, onDelete }) => {
     const [dragging, setDragging] = useState(false);
     const [isTranslated, setIsTranslated] = useState(true);
-    const [translatedContent, setTranslatedContent] = useState({ name: task.name, description: task.description });
+    const [translatedContent, setTranslatedContent] = useState({ 
+        name: task.name, 
+        description: task.description || "" 
+    });
     
     const api = useMemo(() => new ApiService(), []);
-    const targetLanguage = typeof window !== "undefined" ? localStorage.getItem("language")?.replace(/"/g, '') || "en" : "en";
+    
+    const targetLanguage = useMemo(() => {
+        if (typeof window !== "undefined") {
+            return localStorage.getItem("language")?.replace(/"/g, '') || "en";
+        }
+        return "en";
+    }, []);
 
-    // Reusable translation helper
     const translateText = useCallback(async (text: string, sourceLang: string, targetLang: string): Promise<string> => {
         if (!text || sourceLang === targetLang) return text;
         try {
-            const result = await api.post<any>("/translate", {
+            // Replace 'any' with the specific expected types
+            const result = await api.post<TranslateResponse | string>("/translate", {
                 text,
                 sourceLanguage: sourceLang,
                 language: targetLang,
             });
-            // Handle both string and object responses based on your API signature
-            return typeof result === 'object' && result.text ? await result.text() : result;
+
+            // Handle object response with text() method (common in fetch-based wrappers)
+            if (result && typeof result === 'object' && typeof result.text === 'function') {
+                return await result.text();
+            }
+            
+            // Handle direct string response
+            return typeof result === 'string' ? result : text;
         } catch (err) {
             console.error("Translation error:", err);
             return text;
         }
     }, [api]);
 
-    // Fetch translation once on mount or when targetLanguage changes
     useEffect(() => {
         const fetchTranslation = async () => {
             const source = task.originalLanguage || "en";
@@ -67,7 +86,6 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onDragStart, onEdit, onDelete
         { key: "delete", label: "Delete task", icon: <DeleteOutlined />, danger: true },
     ];
 
-    // Determine what to show based on toggle state
     const displayName = isTranslated ? translatedContent.name : task.name;
     const displayDescription = isTranslated ? translatedContent.description : task.description;
 
@@ -88,7 +106,6 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onDragStart, onEdit, onDelete
                 transition: "all 0.2s ease",
             }}
         >
-            {/* Top Section */}
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 8 }}>
                 <div style={{ display: "flex", alignItems: "flex-start", gap: 8 }}>
                     <span style={{
@@ -114,14 +131,12 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onDragStart, onEdit, onDelete
                 </Dropdown>
             </div>
 
-            {/* Description */}
             {displayDescription && (
                 <Text style={{ fontSize: 13, color: "#6b7280", display: "block", marginBottom: 12 }}>
                     {displayDescription}
                 </Text>
             )}
 
-            {/* Metadata (Assigned, Time, etc.) */}
             <Flex vertical gap={4} style={{ marginBottom: 12 }}>
                 {task.assignedUsers?.[0] && (
                     <Flex align="center" gap={6}>
@@ -134,7 +149,6 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onDragStart, onEdit, onDelete
                 )}
             </Flex>
 
-            {/* Footer */}
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderTop: "1px solid #f9f9f9", paddingTop: 12 }}>
                 {task.dueDate ? (
                     <Text style={{ fontSize: 11, color: "#9ca3af" }}>
@@ -143,7 +157,6 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onDragStart, onEdit, onDelete
                     </Text>
                 ) : <div />}
 
-                {/* Translation Toggle */}
                 <Tooltip title={isTranslated ? "Show Original" : "Translate"} placement="top">
                     <Flex align="center" gap={4}>
                         <TranslationOutlined style={{ fontSize: 12, color: isTranslated ? "#1677ff" : "#bfbfbf" }} />
