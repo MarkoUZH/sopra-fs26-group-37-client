@@ -1,17 +1,17 @@
 "use client";
-import { CalendarOutlined, TeamOutlined } from "@ant-design/icons";
+import { TeamOutlined } from "@ant-design/icons";
 import { Avatar, Card, Col, Progress, Row, Tooltip, Typography } from "antd";
-import { userAgent } from "next/server";
-import React from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
+import { ApiService } from "@/api/apiService"; // Ensure this path is correct
+
 const { Title, Text, Paragraph } = Typography;
 
 export interface ProjectHeaderProps {
   project: {
     name: string;
     description: string;
-    // Mapping Java's List<UserGetDTO> members
+    originalLanguage?: string; // Added from previous task
     members: { id: number; username: string; name?: string }[];
-    // Mapping Java's UserGetDTO owner
     owner?: { id: number; username: string };
   };
   totalTasks: number;
@@ -20,8 +20,55 @@ export interface ProjectHeaderProps {
 
 const ProjectHeader: React.FC<ProjectHeaderProps> = ({ project, totalTasks, doneTasks }) => {
   const progress = totalTasks > 0 ? Math.round((doneTasks / totalTasks) * 100) : 0;
+  // 1. Translation State
+  const [displayContent, setDisplayContent] = useState({
+    name: project.name,
+    description: project.description
+  });
 
-  // Helper styles for centered metric columns
+  const api = useMemo(() => new ApiService(), []);
+  
+  // Get user language from localStorage (consistent with TaskSummary)
+  const targetLanguage = typeof window !== "undefined" 
+    ? localStorage.getItem("language")?.replace(/"/g, '') || "en" 
+    : "en";
+
+  // 2. Translation logic
+  const translateText = useCallback(async (text: string, sourceLang: string, targetLang: string): Promise<string> => {
+    if (!text || sourceLang === targetLang) return text;
+    try {
+      const result = await api.post<any>("/translate", {
+        text,
+        sourceLanguage: sourceLang,
+        language: targetLang,
+      });
+      return typeof result === 'object' && result.text ? await result.text() : result;
+    } catch (err) {
+      console.error("Translation error:", err);
+      return text;
+    }
+  }, [api]);
+
+  // 3. Auto-translate on mount or when project/language changes
+  useEffect(() => {
+    const autoTranslate = async () => {
+      const source = project.originalLanguage || "en";
+      
+      if (source !== targetLanguage) {
+        const [tName, tDesc] = await Promise.all([
+          translateText(project.name, source, targetLanguage),
+          translateText(project.description || "", source, targetLanguage)
+        ]);
+        setDisplayContent({ name: tName, description: tDesc });
+      } else {
+        // Fallback to original if languages match
+        setDisplayContent({ name: project.name, description: project.description });
+      }
+    };
+
+    autoTranslate();
+  }, [project, targetLanguage, translateText]);
+
   const columnStyle: React.CSSProperties = {
     textAlign: "center",
     display: "flex",
@@ -40,11 +87,10 @@ const ProjectHeader: React.FC<ProjectHeaderProps> = ({ project, totalTasks, done
       }}
       styles={{ body: { padding: 0 } }}
     >
-      <div style={{ height: 5,  }} />
+      <div style={{ height: 5 }} />
 
       <div style={{ padding: "20px 24px" }}>
         <Row gutter={[24, 16]} align="middle" justify="space-between">
-          {/* Left: title + description */}
           <Col flex="1 1 300px">
             <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 8 }}>
               <div
@@ -57,19 +103,19 @@ const ProjectHeader: React.FC<ProjectHeaderProps> = ({ project, totalTasks, done
                   justifyContent: "center",
                 }}
               >
-                <TeamOutlined style={{ fontSize: 22}} />
+                <TeamOutlined style={{ fontSize: 22 }} />
               </div>
-              <Title level={3} style={{ margin: 0 }}>{project.name}</Title>
+              {/* Use translated name */}
+              <Title level={3} style={{ margin: 0 }}>{displayContent.name}</Title>
             </div>
+            {/* Use translated description */}
             <Paragraph style={{ color: "#6b7280", fontSize: 13, margin: 0 }}>
-              {project.description}
+              {displayContent.description}
             </Paragraph>
           </Col>
 
-          {/* Right: stats - aligned using Flexbox */}
           <Col>
             <Row gutter={[32, 0]} align="top">
-              {/* Progress */}
               <Col style={columnStyle}>
                 <Text strong style={{ fontSize: 22, lineHeight: "28px" }}>
                   {progress}%
@@ -79,28 +125,27 @@ const ProjectHeader: React.FC<ProjectHeaderProps> = ({ project, totalTasks, done
                   percent={progress}
                   showInfo={false}
                   railColor="#f0f0f0"
+                  strokeColor="#1677ff"
                   size={5}
                   style={{ width: 80, margin: 0 }}
                 />
               </Col>
 
-              {/* Total tasks */}
               <Col style={columnStyle}>
                 <Text strong style={{ fontSize: 22, lineHeight: "28px" }}>{totalTasks}</Text>
                 <Text style={{ fontSize: 12, color: "#9ca3af" }}>Total tasks</Text>
               </Col>
 
-              {/* Team */}
               <Col style={columnStyle}>
                 <Text style={{ fontSize: 12, color: "#9ca3af", marginBottom: 6 }}>Team</Text>
                 <Avatar.Group max={{ count: 4 }} size="small">
                   {project.members?.map((member) => (
-                        <Tooltip key={member.id} title={member.username}>
-                          <Avatar size="small" style={{ backgroundColor: "#87d068" }}>
-                            {member.username.charAt(0).toUpperCase()}
-                          </Avatar>
-                        </Tooltip>
-                      ))}
+                    <Tooltip key={member.id} title={member.username}>
+                      <Avatar size="small" style={{ backgroundColor: "#87d068" }}>
+                        {member.username.charAt(0).toUpperCase()}
+                      </Avatar>
+                    </Tooltip>
+                  ))}
                 </Avatar.Group>
               </Col>
             </Row>
