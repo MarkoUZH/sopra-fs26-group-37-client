@@ -99,10 +99,19 @@ reason).
 
 ---
 
-## Contributions Week 5 - [Begin Date] to [End Date]
+## Contributions Week 5 - 20.04.26 to 26.04.26
 
-_Continue with the same table format as above._
+| Student | Date | Link to Commit | Description | Relevance |
+| :--- | :--- | :--- | :--- | :--- |
+| **joazariah** | 21.04.2026  | [link](https://github.com/MarkoUZH/sopra-fs26-group-37-server/commit/9c25d3f1092367e1b39ed771772b32a04b9e9746) | Enabling switching languages in settings| This is relevant because an integral motivation for our application is enabling cross-cultural collaboration. Being able to switch the language is a pivotal part of making sure users can always communicate and work in the language they feel most comfortable in at the moment. |
+| **joazariah** | 23.04.2026 | [link](https://github.com/MarkoUZH/sopra-fs26-group-37-client/commit/3ebe3d39eecc4ecd0233f7d8219c0989970064de) | Translating the Project Card | While the translations of other sections of the website were eventually hard-coded,the project cards needed to be translated in real-time as the users enter it in their native language. This enables translation between any of our currently supported language. |
+| **joazariah** | 24.04.2026  | [link](https://github.com/MarkoUZH/sopra-fs26-group-37-client/commit/ebb9f52aa89f9d96bca227d7d97b27e8f9ed51f2) | Translating the Project Headers and Task Card | Similar to the project cards, the task cards as well as the project titles and descriptions above the kanban board require real-time translation as well, enabling seamless communication between users of different languages. |
 
+| | | | | |
+| | | | | |
+| | | | | |
+
+---
 ---
 
 ## Contributions Week 6 - [Begin Date] to [End Date]
