@@ -209,6 +209,9 @@ const ManageSprintsModal = ({ open, onClose }: Props): React.JSX.Element | null 
                     getPopupContainer={() => containerRef.current || document.body}
                     value={form.startDate ? dayjs(form.startDate, "DD.MM.YYYY") : null}
                     onChange={(_, dateStr) => setForm({ ...form, startDate: Array.isArray(dateStr) ? dateStr[0] : dateStr })}
+                    disabledDate={(current) =>
+                        form.endDate ? current > dayjs(form.endDate, "DD.MM.YYYY") : false
+                    }
                   />
                 </Flex>
                 <Flex vertical gap={4} style={{ flex: 1 }}>
@@ -219,6 +222,9 @@ const ManageSprintsModal = ({ open, onClose }: Props): React.JSX.Element | null 
                     getPopupContainer={() => containerRef.current || document.body}
                     value={form.endDate ? dayjs(form.endDate, "DD.MM.YYYY") : null}
                     onChange={(_, dateStr) => setForm({ ...form, endDate: Array.isArray(dateStr) ? dateStr[0] : dateStr })}
+                    disabledDate={(current) =>
+                        form.startDate ? current < dayjs(form.startDate, "DD.MM.YYYY") : false
+                    }
                   />
                 </Flex>
               </Flex>
