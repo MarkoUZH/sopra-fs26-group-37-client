@@ -32,6 +32,13 @@ export interface Project {
   sprints: Sprint[];
 }
 
+export interface SprintDTO {
+  id: number;
+  name: string;
+  startDate: string;
+  endDate: string;
+}
+
 export interface ProjectDTO {
     id: string;
     name: string;
