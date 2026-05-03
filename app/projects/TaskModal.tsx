@@ -9,7 +9,7 @@ import {
   TagOutlined,
   UserOutlined,
 } from "@ant-design/icons";
-import { Avatar, Button, DatePicker, Flex, Input, Select, Typography } from "antd";
+import { Avatar, Button, DatePicker, Flex, Input, InputNumber, Select, Typography } from "antd";
 import dayjs from "dayjs";
 import { TeamMember } from "@/projects/projectTypes";
 import { Task, TaskColumn } from "@/projects/taskTypes";
@@ -237,14 +237,12 @@ const TaskModal: React.FC<TaskModalProps> = ({
                 <ClockCircleOutlined style={{ fontSize: 12, color: "#555" }} />
                 <span style={{ fontSize: 13, color: "#555" }}>Time Estimate (Hours)</span>
               </Flex>
-              <Input
-                type="number"
-                min="1"
-                max="999"
+              <InputNumber
+                max={999}
                 placeholder="e.g. 8"
-                value={form.timeEstimate}
-                onChange={(e) => setForm({ ...form, timeEstimate: e.target.value })}
-                style={{ borderRadius: 8 }}
+                value={form.timeEstimate ? parseFloat(form.timeEstimate) : undefined}
+                onChange={(val) => setForm({ ...form, timeEstimate: val !== null && val !== undefined ? String(Math.abs(val)) : "" })}
+                style={{ width: "100%", borderRadius: 8 }}
               />
             </Flex>
 
