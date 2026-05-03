@@ -20,6 +20,7 @@ import TaskSummarySection from "./TaskSummarySection";
 import CreateProjectModal from "./CreateProjectModal";
 import { ApiService } from "@/api/apiService";
 import { Task } from "@/projects/taskTypes";
+import {useTaskWebSocket} from "@/hooks/useTaskWebSocket";
 // ------------------------------
 
 const { Content, Sider } = Layout;
@@ -27,7 +28,7 @@ const { Title, Text } = Typography;
 
 const Dashboard = (): React.JSX.Element => {
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [tasks, setTasks] = useState<Task[]>([]);
+  const { tasks } = useTaskWebSocket();
   const [targetLanguage, setTargetLanguage] = useState("en");
   const apiService = useMemo(() => new ApiService(), []);
   const [sprintUpdateTrigger, setSprintUpdateTrigger] = useState(0);
@@ -57,19 +58,6 @@ const Dashboard = (): React.JSX.Element => {
       activeSprints: getTranslation("Active Sprints", targetLanguage),
     };
   }, [targetLanguage]);
-
-  // 3. Fetch tasks
-  useEffect(() => {
-    const fetchTasks = async () => {
-      try {
-        const data = await apiService.get<Task[]>("/tasks");
-        setTasks(data);
-      } catch (error) {
-        console.error("Failed to fetch tasks:", error);
-      }
-    };
-    fetchTasks();
-  }, [apiService]);
 
   const statsData = [
     {

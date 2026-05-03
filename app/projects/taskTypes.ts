@@ -1,4 +1,4 @@
-import { ProjectPriority, TeamMember } from "@/projects/projectTypes";
+import {Project, ProjectPriority, TeamMember} from "@/projects/projectTypes";
 
 export type TaskColumn = "TODO" | "IN_PROGRESS" | "DONE";
 
@@ -18,6 +18,7 @@ export interface Task {
   tags?: Tag[];                        // Changed from string[] to Tag[]
   status: TaskColumn;                  // Backend uses 'status', frontend used 'column'
   timeEstimate?: number;
+  project?: Project
 }
 export interface KanbanColumnConfig {
   key: TaskColumn;
