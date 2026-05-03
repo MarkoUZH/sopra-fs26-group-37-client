@@ -21,6 +21,12 @@ import TaskSummarySection from "./TaskSummarySection";
 import CreateProjectModal from "./CreateProjectModal";
 import { ApiService } from "@/api/apiService";
 import { Task } from "@/projects/taskTypes";
+
+// Interface for Sprints
+interface Sprint {
+  id: number;
+  sprintStatus: string;
+}
 // ------------------------------
 
 const { Content, Sider } = Layout;
@@ -29,9 +35,12 @@ const { Title, Text } = Typography;
 const Dashboard = (): React.JSX.Element => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [tasks, setTasks] = useState<Task[]>([]);
+  const [activeSprintsCount, setActiveSprintsCount] = useState(0);
   const [targetLanguage, setTargetLanguage] = useState("en");
   const apiService = useMemo(() => new ApiService(), []);
-  const [sprintUpdateTrigger, setSprintUpdateTrigger] = useState(0);
+  
+  // Trigger used to refresh data when events occur
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
 
   // 1. Read preferred language from localStorage on mount
   useEffect(() => {
@@ -47,7 +56,14 @@ const Dashboard = (): React.JSX.Element => {
     }
   }, []);
 
-  // 2. Memoized UI Text - This replaces the old state and useEffect translation logic
+  // 2. Listen for sprint updates from the Modal
+  useEffect(() => {
+    const handleRefresh = () => setRefreshTrigger(prev => prev + 1);
+    window.addEventListener("sprintCreated", handleRefresh);
+    return () => window.removeEventListener("sprintCreated", handleRefresh);
+  }, []);
+
+  // 3. Memoized UI Text
   const uiText = useMemo(() => {
     return {
       dashboardTitle: getTranslation("My Dashboard", targetLanguage),
@@ -59,18 +75,26 @@ const Dashboard = (): React.JSX.Element => {
     };
   }, [targetLanguage]);
 
-  // 3. Fetch tasks
+  // 4. Fetch tasks and sprints
   useEffect(() => {
-    const fetchTasks = async () => {
+    const fetchData = async () => {
       try {
-        const data = await apiService.get<Task[]>("/tasks");
-        setTasks(data);
+        const [taskData, sprintData] = await Promise.all([
+          apiService.get<Task[]>("/tasks"),
+          apiService.get<Sprint[]>("/sprints")
+        ]);
+        
+        setTasks(taskData);
+        
+        // Filter for ACTIVE status
+        const activeCount = sprintData.filter(s => s.sprintStatus === "ACTIVE").length;
+        setActiveSprintsCount(activeCount);
       } catch (error) {
-        console.error("Failed to fetch tasks:", error);
+        console.error("Failed to fetch dashboard data:", error);
       }
     };
-    fetchTasks();
-  }, [apiService]);
+    fetchData();
+  }, [apiService, refreshTrigger]);
 
   const statsData = [
     {
@@ -100,7 +124,7 @@ const Dashboard = (): React.JSX.Element => {
     {
       icon: <ThunderboltOutlined style={{ fontSize: 24, color: "#fff" }} />,
       iconBg: "#ad46ff",
-      value: "1",
+      value: activeSprintsCount.toString(),
       label: uiText.activeSprints,
     },
   ];
