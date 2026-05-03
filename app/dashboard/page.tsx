@@ -21,12 +21,6 @@ import TaskSummarySection from "./TaskSummarySection";
 import CreateProjectModal from "./CreateProjectModal";
 import { ApiService } from "@/api/apiService";
 import { Task } from "@/projects/taskTypes";
-
-// Interface for Sprints
-interface Sprint {
-  id: number;
-  sprintStatus: string;
-}
 // ------------------------------
 
 const { Content, Sider } = Layout;
@@ -35,12 +29,9 @@ const { Title, Text } = Typography;
 const Dashboard = (): React.JSX.Element => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [tasks, setTasks] = useState<Task[]>([]);
-  const [activeSprintsCount, setActiveSprintsCount] = useState(0);
   const [targetLanguage, setTargetLanguage] = useState("en");
   const apiService = useMemo(() => new ApiService(), []);
-  
-  // Trigger used to refresh data when events occur
-  const [refreshTrigger, setRefreshTrigger] = useState(0);
+  const [sprintUpdateTrigger, setSprintUpdateTrigger] = useState(0);
 
   // 1. Read preferred language from localStorage on mount
   useEffect(() => {
@@ -56,14 +47,7 @@ const Dashboard = (): React.JSX.Element => {
     }
   }, []);
 
-  // 2. Listen for sprint updates from the Modal
-  useEffect(() => {
-    const handleRefresh = () => setRefreshTrigger(prev => prev + 1);
-    window.addEventListener("sprintCreated", handleRefresh);
-    return () => window.removeEventListener("sprintCreated", handleRefresh);
-  }, []);
-
-  // 3. Memoized UI Text
+  // 2. Memoized UI Text - This replaces the old state and useEffect translation logic
   const uiText = useMemo(() => {
     return {
       dashboardTitle: getTranslation("My Dashboard", targetLanguage),
@@ -75,56 +59,58 @@ const Dashboard = (): React.JSX.Element => {
     };
   }, [targetLanguage]);
 
-  // 4. Fetch tasks and sprints
+  // 3. Fetch tasks
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchTasks = async () => {
       try {
-        const [taskData, sprintData] = await Promise.all([
-          apiService.get<Task[]>("/tasks"),
-          apiService.get<Sprint[]>("/sprints")
-        ]);
-        
-        setTasks(taskData);
-        
-        // Filter for ACTIVE status
-        const activeCount = sprintData.filter(s => s.sprintStatus === "ACTIVE").length;
-        setActiveSprintsCount(activeCount);
+        const data = await apiService.get<Task[]>("/tasks");
+        setTasks(data);
       } catch (error) {
-        console.error("Failed to fetch dashboard data:", error);
+        console.error("Failed to fetch tasks:", error);
       }
     };
-    fetchData();
-  }, [apiService, refreshTrigger]);
+    fetchTasks();
+  }, [apiService]);
 
-  const statsData = [
-    {
-      icon: <UnorderedListOutlined style={{ fontSize: 24, color: "#fff" }} />,
-      iconBg: "#2b7fff",
-      value: tasks.length.toString(),
-      label: uiText.totalTasks,
-    },
-    {
-      icon: <FlagOutlined style={{ fontSize: 24, color: "#fff" }} />,
-      iconBg: "#f04000",
-      value: tasks.filter((t) => t.status === "TODO").length.toString(),
-      label: uiText.todo,
-    },
-    {
-      icon: <ClockCircleOutlined style={{ fontSize: 24, color: "#fff" }} />,
-      iconBg: "#f0b100",
-      value: tasks.filter((t) => t.status === "IN_PROGRESS").length.toString(),
-      label: uiText.inProgress,
-    },
-    {
-      icon: <CheckCircleOutlined style={{ fontSize: 24, color: "#fff" }} />,
-      iconBg: "#00c950",
-      value: tasks.filter((t) => t.status === "DONE").length.toString(),
-      label: uiText.completed,
-    },
+  const userIdRaw = typeof window !== "undefined" ? localStorage.getItem("id") : null;
+const currentUserId = userIdRaw ? Number(userIdRaw.replace(/['"]+/g, '')) : null;
+
+// 2. Filter the tasks globally first so the "Total Tasks" count is also correct
+const userTasks = useMemo(() => {
+  return tasks.filter((t) => 
+    t.assignedUsers?.map(u => u.id).includes(currentUserId as number)
+  );
+}, [tasks, currentUserId]);
+
+const statsData = [
+  {
+    icon: <UnorderedListOutlined style={{ fontSize: 24, color: "#fff" }} />,
+    iconBg: "#2b7fff",
+    value: userTasks.length.toString(), // Total tasks for THIS user
+    label: uiText.totalTasks,
+  },
+  {
+    icon: <FlagOutlined style={{ fontSize: 24, color: "#fff" }} />,
+    iconBg: "#f04000",
+    value: userTasks.filter((t) => t.status === "TODO").length.toString(),
+    label: uiText.todo,
+  },
+  {
+    icon: <ClockCircleOutlined style={{ fontSize: 24, color: "#fff" }} />,
+    iconBg: "#f0b100",
+    value: userTasks.filter((t) => t.status === "IN_PROGRESS").length.toString(),
+    label: uiText.inProgress,
+  },
+  {
+    icon: <CheckCircleOutlined style={{ fontSize: 24, color: "#fff" }} />,
+    iconBg: "#00c950",
+    value: userTasks.filter((t) => t.status === "DONE").length.toString(),
+    label: uiText.completed,
+  },
     {
       icon: <ThunderboltOutlined style={{ fontSize: 24, color: "#fff" }} />,
       iconBg: "#ad46ff",
-      value: activeSprintsCount.toString(),
+      value: "1",
       label: uiText.activeSprints,
     },
   ];
