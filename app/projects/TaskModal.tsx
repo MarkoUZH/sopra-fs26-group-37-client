@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { createPortal } from "react-dom";
 import {
   CalendarOutlined,
@@ -9,11 +9,12 @@ import {
   TagOutlined,
   UserOutlined,
 } from "@ant-design/icons";
-import { Avatar, Button, DatePicker, Flex, Input, Select, Typography } from "antd";
+import { Button, DatePicker, Flex, Input, Select, Typography } from "antd";
 import dayjs from "dayjs";
 import { TeamMember } from "@/projects/projectTypes";
 import { Task, TaskColumn } from "@/projects/taskTypes";
 import { useTags } from "@/dashboard/TagsContext";
+import { getModalTranslation } from "@/utils/dictionary_task_modal";
 
 const { Title } = Typography;
 
@@ -37,19 +38,59 @@ const TaskModal: React.FC<TaskModalProps> = ({
   projectId,
 }) => {
   const { getTagsForProject } = useTags();
-  const projectTags = getTagsForProject(projectId);
-
+  
+  const [targetLanguage, setTargetLanguage] = useState("en");
+  const [availableTags, setAvailableTags] = useState<any[]>([]);
+  
   const [form, setForm] = useState({
     name: "",
     description: "",
     priority: "MEDIUM" as Task["priority"],
     status: "TODO" as TaskColumn,
-    assigneeIndex: -1, // UI uses index for selection
+    assigneeIndex: -1,
     dueDate: null as dayjs.Dayjs | null,
-    timeEstimate: "" as string, // Labelled as "Hours"
-    tags: [] as string[], // UI uses tag names
+    timeEstimate: "",
+    tags: [] as string[],
   });
 
+  // 1. Language & Tag Sync
+  useEffect(() => {
+    if (open) {
+      if (typeof window !== "undefined") {
+        const savedLang = localStorage.getItem("language");
+        if (savedLang) {
+          try { setTargetLanguage(JSON.parse(savedLang)); } 
+          catch { setTargetLanguage(savedLang.replace(/"/g, '')); }
+        }
+      }
+
+      const loadTags = async () => {
+        const tags = await getTagsForProject(projectId);
+        setAvailableTags(tags || []);
+      };
+      loadTags();
+    }
+  }, [open, projectId, getTagsForProject]);
+
+  // 2. Translation Dictionary
+  const ui = useMemo(() => ({
+    header: getModalTranslation(editingTask ? "Edit Task" : "Create Task", targetLanguage),
+    title: getModalTranslation("Title", targetLanguage),
+    desc: getModalTranslation("Description", targetLanguage),
+    tags: getModalTranslation("Tags", targetLanguage),
+    members: getModalTranslation("Members", targetLanguage),
+    priority: getModalTranslation("Priority", targetLanguage),
+    date: getModalTranslation("Due Date", targetLanguage),
+    time: getModalTranslation("Time Estimate", targetLanguage),
+    unassigned: getModalTranslation("Unassigned", targetLanguage),
+    cancel: getModalTranslation("Cancel", targetLanguage),
+    action: getModalTranslation(editingTask ? "Save Changes Button" : "Add Task Button", targetLanguage),
+    high: getModalTranslation("High", targetLanguage),
+    medium: getModalTranslation("Medium", targetLanguage),
+    low: getModalTranslation("Low", targetLanguage),
+  }), [targetLanguage, editingTask]);
+
+  // 3. Form Sync
   useEffect(() => {
     if (open) {
       if (editingTask) {
@@ -65,14 +106,8 @@ const TaskModal: React.FC<TaskModalProps> = ({
         });
       } else {
         setForm({
-          name: "",
-          description: "",
-          priority: "MEDIUM",
-          status: initialColumn,
-          assigneeIndex: -1,
-          dueDate: null,
-          timeEstimate: "",
-          tags: [],
+          name: "", description: "", priority: "MEDIUM", status: initialColumn,
+          assigneeIndex: -1, dueDate: null, timeEstimate: "", tags: [],
         });
       }
     }
@@ -80,12 +115,12 @@ const TaskModal: React.FC<TaskModalProps> = ({
 
   if (!open) return null;
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!form.name.trim()) return;
-
-    // Convert UI names/indices back to objects with IDs for the backend
+    
+    const projectTags = await getTagsForProject(projectId);
+    const selectedTags = projectTags.filter((t: any) => form.tags.includes(t.name));
     const selectedAssignees = form.assigneeIndex >= 0 ? [team[form.assigneeIndex]] : [];
-    const selectedTags = projectTags.filter((t) => form.tags.includes(t.name));
 
     onSave({
       name: form.name,
@@ -96,39 +131,17 @@ const TaskModal: React.FC<TaskModalProps> = ({
       timeEstimate: parseFloat(form.timeEstimate) || 0,
       assignedUsers: selectedAssignees,
       tags: selectedTags,
+      originalLanguage: editingTask?.originalLanguage || targetLanguage,
     });
     onClose();
   };
 
   return createPortal(
-    <div
-      onClick={onClose}
-      style={{
-        position: "fixed",
-        inset: 0,
-        backgroundColor: "#00000099",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        zIndex: 9999,
-      }}
-    >
-      <div
-        onClick={(e) => e.stopPropagation()}
-        style={{
-          background: "#fff",
-          borderRadius: 12,
-          width: 560,
-          maxHeight: "90vh",
-          overflowY: "auto",
-          position: "relative",
-          zIndex: 10000,
-        }}
-      >
+    <div onClick={onClose} style={{ position: "fixed", inset: 0, backgroundColor: "#00000099", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 9999 }}>
+      <div onClick={(e) => e.stopPropagation()} style={{ background: "#fff", borderRadius: 12, width: 560, maxHeight: "90vh", overflowY: "auto", position: "relative", zIndex: 10000 }}>
+        
         <Flex justify="space-between" align="center" style={{ padding: "20px 24px 16px 24px" }}>
-          <Title level={3} style={{ margin: 0 }}>
-            {editingTask ? "Edit Task" : "Create Task"}
-          </Title>
+          <Title level={3} style={{ margin: 0 }}>{ui.header}</Title>
           <Button type="text" onClick={onClose} style={{ color: "#888", fontSize: 16 }}>✕</Button>
         </Flex>
 
@@ -137,129 +150,128 @@ const TaskModal: React.FC<TaskModalProps> = ({
         <Flex vertical gap={14} style={{ padding: "0 24px 24px 24px" }}>
           {/* Title */}
           <Flex vertical gap={4}>
-            <Flex justify="space-between">
-              <span style={{ fontSize: 13, color: "#555" }}>Title</span>
-              <span style={{ fontSize: 12, color: form.name.length >= 255 ? "#ef4444" : "#aaa" }}>
-                {form.name.length}/255
-              </span>
-            </Flex>
-            <Input
-              placeholder="Add a task title..."
-              value={form.name}
-              maxLength={255}
-              onChange={(e) => setForm({ ...form, name: e.target.value })}
-              style={{ borderRadius: 8 }}
-            />
+             <span style={{ fontSize: 13, color: "#555" }}>{ui.title}</span>
+             <Input 
+                placeholder="Add a task title..." 
+                value={form.name} 
+                maxLength={255} 
+                onChange={(e) => setForm({ ...form, name: e.target.value })} 
+                style={{ borderRadius: 8 }} 
+              />
           </Flex>
 
           {/* Description */}
           <Flex vertical gap={4}>
-            <Flex justify="space-between">
-              <span style={{ fontSize: 13, color: "#555" }}>Description</span>
-              <span style={{ fontSize: 12, color: form.description.length >= 255 ? "#ef4444" : "#aaa" }}>
-                {form.description.length}/255
-              </span>
-            </Flex>
-            <Input.TextArea
-              placeholder="Add a description..."
-              rows={3}
-              value={form.description}
-              maxLength={255}
-              onChange={(e) => setForm({ ...form, description: e.target.value })}
-              style={{ borderRadius: 8, resize: "none" }}
+            <span style={{ fontSize: 13, color: "#555" }}>{ui.desc}</span>
+            <Input.TextArea 
+               placeholder="Add a description..." 
+               rows={3} 
+               value={form.description} 
+               maxLength={255} 
+               onChange={(e) => setForm({ ...form, description: e.target.value })} 
+               style={{ borderRadius: 8, resize: "none" }} 
             />
           </Flex>
 
-          {/* Tags + Members Section */}
+          {/* Tags & Members Row */}
           <Flex gap={12}>
             <Flex vertical gap={4} style={{ flex: 1 }}>
+              <Flex align="center" gap={4}>
+                <TagOutlined style={{ fontSize: 12, color: "#555" }} />
+                <span style={{ fontSize: 13, color: "#555" }}>{ui.tags}</span>
+              </Flex>
+              <Select 
+                mode="multiple" 
+                placeholder={ui.tags} 
+                value={form.tags} 
+                onChange={(vals) => setForm({ ...form, tags: vals })} 
+                style={{ width: "100%" }}
+                getPopupContainer={(trigger) => trigger.parentElement!}
+                options={availableTags.map(tag => ({ label: tag.name, value: tag.name }))} 
+              />
             </Flex>
 
             <Flex vertical gap={4} style={{ flex: 1 }}>
               <Flex align="center" gap={4}>
                 <UserOutlined style={{ fontSize: 12, color: "#555" }} />
-                <span style={{ fontSize: 13, color: "#555" }}>Members</span>
+                <span style={{ fontSize: 13, color: "#555" }}>{ui.members}</span>
               </Flex>
-              <Select
-                placeholder="Unassigned"
-                allowClear
-                value={form.assigneeIndex >= 0 ? form.assigneeIndex : undefined}
-                onChange={(val) => setForm({ ...form, assigneeIndex: val ?? -1 })}
+              <Select 
+                placeholder={ui.unassigned} 
+                allowClear 
+                value={form.assigneeIndex >= 0 ? form.assigneeIndex : undefined} 
+                onChange={(val) => setForm({ ...form, assigneeIndex: val ?? -1 })} 
                 style={{ width: "100%" }}
                 getPopupContainer={(trigger) => trigger.parentElement!}
-                options={team.map((member, i) => ({
-                  label: <Flex align="center" gap={8}>{member.username}</Flex>,
-                  value: i,
-                }))}
+                options={team.map((member, i) => ({ label: member.username, value: i }))} 
               />
             </Flex>
           </Flex>
 
-          {/* Priority + Due Date */}
+          {/* Priority & Due Date Row */}
           <Flex gap={12}>
             <Flex vertical gap={4} style={{ flex: 1 }}>
               <Flex align="center" gap={4}>
                 <FlagOutlined style={{ fontSize: 12, color: "#555" }} />
-                <span style={{ fontSize: 13, color: "#555" }}>Priority</span>
+                <span style={{ fontSize: 13, color: "#555" }}>{ui.priority}</span>
               </Flex>
-              <Select
-                value={form.priority}
-                onChange={(val) => setForm({ ...form, priority: val })}
+              <Select 
+                value={form.priority} 
+                onChange={(val) => setForm({ ...form, priority: val })} 
                 style={{ width: "100%" }}
                 getPopupContainer={(trigger) => trigger.parentElement!}
                 options={[
-                  { label: "High", value: "HIGH" },
-                  { label: "Medium", value: "MEDIUM" },
-                  { label: "Low", value: "LOW" },
-                ]}
+                  { label: ui.high, value: "HIGH" }, 
+                  { label: ui.medium, value: "MEDIUM" }, 
+                  { label: ui.low, value: "LOW" }
+                ]} 
               />
             </Flex>
-
             <Flex vertical gap={4} style={{ flex: 1 }}>
               <Flex align="center" gap={4}>
                 <CalendarOutlined style={{ fontSize: 12, color: "#555" }} />
-                <span style={{ fontSize: 13, color: "#555" }}>Due Date</span>
+                <span style={{ fontSize: 13, color: "#555" }}>{ui.date}</span>
               </Flex>
-              <DatePicker
-                style={{ width: "100%", borderRadius: 8 }}
-                format="DD.MM.YYYY"
-                value={form.dueDate}
-                onChange={(date) => setForm({ ...form, dueDate: date })}
+              <DatePicker 
+                style={{ width: "100%", borderRadius: 8 }} 
+                format="DD.MM.YYYY" 
+                value={form.dueDate} 
+                onChange={(date) => setForm({ ...form, dueDate: date })} 
                 getPopupContainer={(trigger) => trigger.parentElement!}
               />
             </Flex>
           </Flex>
 
-          {/* Time Estimate (Hours) + Status */}
+          {/* Time Estimate */}
           <Flex gap={12}>
             <Flex vertical gap={4} style={{ flex: 1 }}>
               <Flex align="center" gap={4}>
                 <ClockCircleOutlined style={{ fontSize: 12, color: "#555" }} />
-                <span style={{ fontSize: 13, color: "#555" }}>Time Estimate (Hours)</span>
+                <span style={{ fontSize: 13, color: "#555" }}>{ui.time}</span>
               </Flex>
-              <Input
-                type="number"
-                min="1"
+              <Input 
+                type="number" 
+                min="1" 
                 max="999"
-                placeholder="e.g. 8"
-                value={form.timeEstimate}
-                onChange={(e) => setForm({ ...form, timeEstimate: e.target.value })}
-                style={{ borderRadius: 8 }}
+                placeholder="e.g. 8" 
+                value={form.timeEstimate} 
+                onChange={(e) => setForm({ ...form, timeEstimate: e.target.value })} 
+                style={{ borderRadius: 8 }} 
               />
             </Flex>
-
+            <div style={{ flex: 1 }} />
           </Flex>
 
-          {/* Footer buttons */}
-          <Flex justify="flex-end" gap={8} style={{ marginTop: 4 }}>
-            <Button onClick={onClose} style={{ borderRadius: 8 }}>Cancel</Button>
-            <Button
-              type="primary"
-              icon={<PlusOutlined />}
-              onClick={handleSave}
-              style={{ background: "#4f46e5", borderRadius: 8, border: "none" }}
+          {/* Footer */}
+          <Flex justify="flex-end" gap={8} style={{ marginTop: 10 }}>
+            <Button onClick={onClose} style={{ borderRadius: 8 }}>{ui.cancel}</Button>
+            <Button 
+               type="primary" 
+               icon={<PlusOutlined />} 
+               onClick={handleSave} 
+               style={{ background: "#4f46e5", borderRadius: 8, border: "none" }}
             >
-              {editingTask ? "Save Changes" : "Add Task"}
+              {ui.action}
             </Button>
           </Flex>
         </Flex>
