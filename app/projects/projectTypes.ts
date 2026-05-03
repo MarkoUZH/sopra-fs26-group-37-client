@@ -9,6 +9,12 @@ export interface TeamMember {
   id: number;
 }
 
+export interface Sprint {
+  id: number;
+  name: string;
+  // Add other fields from SprintGetDTO if needed (e.g., startDate, endDate)
+}
+
 export interface Project {
   id: string;
   name: string;
@@ -23,6 +29,7 @@ export interface Project {
   members: TeamMember[];
   color: string;
   originalLanguage: string;
+  sprints: Sprint[];
 }
 
 export interface ProjectDTO {
@@ -40,6 +47,7 @@ export interface ProjectDTO {
     members: TeamMember[];
     color: string;
     tasks: Task[];
+    sprints: Sprint[];
 }
 
 export const statusConfig: Record<ProjectStatus,

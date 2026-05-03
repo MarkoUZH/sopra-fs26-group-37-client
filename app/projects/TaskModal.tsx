@@ -8,6 +8,7 @@ import {
   PlusOutlined,
   TagOutlined,
   UserOutlined,
+  RocketOutlined,
 } from "@ant-design/icons";
 import { Button, DatePicker, Flex, Input, Select, Typography } from "antd";
 import dayjs from "dayjs";
@@ -23,6 +24,7 @@ export interface TaskModalProps {
   initialColumn: TaskColumn;
   editingTask?: Task | null;
   team: TeamMember[];
+  sprints: { id: number; name: string }[];
   projectId: string;
   onClose: () => void;
   onSave: (task: Omit<Task, "id">) => void;
@@ -33,12 +35,12 @@ const TaskModal: React.FC<TaskModalProps> = ({
   initialColumn,
   editingTask,
   team,
+  sprints = [],
   onClose,
   onSave,
   projectId,
 }) => {
   const { getTagsForProject } = useTags();
-  
   const [targetLanguage, setTargetLanguage] = useState("en");
   const [availableTags, setAvailableTags] = useState<any[]>([]);
   
@@ -51,9 +53,9 @@ const TaskModal: React.FC<TaskModalProps> = ({
     dueDate: null as dayjs.Dayjs | null,
     timeEstimate: "",
     tags: [] as string[],
+    sprintId: undefined as number | undefined,
   });
 
-  // 1. Language & Tag Sync
   useEffect(() => {
     if (open) {
       if (typeof window !== "undefined") {
@@ -63,7 +65,6 @@ const TaskModal: React.FC<TaskModalProps> = ({
           catch { setTargetLanguage(savedLang.replace(/"/g, '')); }
         }
       }
-
       const loadTags = async () => {
         const tags = await getTagsForProject(projectId);
         setAvailableTags(tags || []);
@@ -72,7 +73,6 @@ const TaskModal: React.FC<TaskModalProps> = ({
     }
   }, [open, projectId, getTagsForProject]);
 
-  // 2. Translation Dictionary
   const ui = useMemo(() => ({
     header: getModalTranslation(editingTask ? "Edit Task" : "Create Task", targetLanguage),
     title: getModalTranslation("Title", targetLanguage),
@@ -88,9 +88,9 @@ const TaskModal: React.FC<TaskModalProps> = ({
     high: getModalTranslation("High", targetLanguage),
     medium: getModalTranslation("Medium", targetLanguage),
     low: getModalTranslation("Low", targetLanguage),
+    sprint: getModalTranslation("Sprint", targetLanguage),
   }), [targetLanguage, editingTask]);
 
-  // 3. Form Sync
   useEffect(() => {
     if (open) {
       if (editingTask) {
@@ -103,11 +103,12 @@ const TaskModal: React.FC<TaskModalProps> = ({
           dueDate: editingTask.dueDate ? dayjs(editingTask.dueDate) : null,
           timeEstimate: editingTask.timeEstimate?.toString() ?? "",
           tags: editingTask.tags?.map((t) => t.name) ?? [],
+          sprintId: editingTask.sprintId,
         });
       } else {
         setForm({
           name: "", description: "", priority: "MEDIUM", status: initialColumn,
-          assigneeIndex: -1, dueDate: null, timeEstimate: "", tags: [],
+          assigneeIndex: -1, dueDate: null, timeEstimate: "", tags: [], sprintId: undefined,
         });
       }
     }
@@ -120,7 +121,6 @@ const TaskModal: React.FC<TaskModalProps> = ({
     
     const projectTags = await getTagsForProject(projectId);
     const selectedTags = projectTags.filter((t: any) => form.tags.includes(t.name));
-    const selectedAssignees = form.assigneeIndex >= 0 ? [team[form.assigneeIndex]] : [];
 
     onSave({
       name: form.name,
@@ -129,8 +129,9 @@ const TaskModal: React.FC<TaskModalProps> = ({
       status: form.status,
       dueDate: form.dueDate ? form.dueDate.toISOString() : undefined,
       timeEstimate: parseFloat(form.timeEstimate) || 0,
-      assignedUsers: selectedAssignees,
+      assignedUsers: form.assigneeIndex >= 0 ? [team[form.assigneeIndex]] : [],
       tags: selectedTags,
+      sprintId: form.sprintId,
       originalLanguage: editingTask?.originalLanguage || targetLanguage,
     });
     onClose();
@@ -148,32 +149,16 @@ const TaskModal: React.FC<TaskModalProps> = ({
         <div style={{ height: 1, background: "#e5e7eb", marginBottom: 15 }} />
 
         <Flex vertical gap={14} style={{ padding: "0 24px 24px 24px" }}>
-          {/* Title */}
           <Flex vertical gap={4}>
              <span style={{ fontSize: 13, color: "#555" }}>{ui.title}</span>
-             <Input 
-                placeholder="Add a task title..." 
-                value={form.name} 
-                maxLength={255} 
-                onChange={(e) => setForm({ ...form, name: e.target.value })} 
-                style={{ borderRadius: 8 }} 
-              />
+             <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} style={{ borderRadius: 8 }} />
           </Flex>
 
-          {/* Description */}
           <Flex vertical gap={4}>
             <span style={{ fontSize: 13, color: "#555" }}>{ui.desc}</span>
-            <Input.TextArea 
-               placeholder="Add a description..." 
-               rows={3} 
-               value={form.description} 
-               maxLength={255} 
-               onChange={(e) => setForm({ ...form, description: e.target.value })} 
-               style={{ borderRadius: 8, resize: "none" }} 
-            />
+            <Input.TextArea rows={3} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} style={{ borderRadius: 8, resize: "none" }} />
           </Flex>
 
-          {/* Tags & Members Row */}
           <Flex gap={12}>
             <Flex vertical gap={4} style={{ flex: 1 }}>
               <Flex align="center" gap={4}>
@@ -182,10 +167,9 @@ const TaskModal: React.FC<TaskModalProps> = ({
               </Flex>
               <Select 
                 mode="multiple" 
-                placeholder={ui.tags} 
                 value={form.tags} 
                 onChange={(vals) => setForm({ ...form, tags: vals })} 
-                style={{ width: "100%" }}
+                style={{ width: "100%" }} 
                 getPopupContainer={(trigger) => trigger.parentElement!}
                 options={availableTags.map(tag => ({ label: tag.name, value: tag.name }))} 
               />
@@ -197,18 +181,16 @@ const TaskModal: React.FC<TaskModalProps> = ({
                 <span style={{ fontSize: 13, color: "#555" }}>{ui.members}</span>
               </Flex>
               <Select 
-                placeholder={ui.unassigned} 
                 allowClear 
                 value={form.assigneeIndex >= 0 ? form.assigneeIndex : undefined} 
                 onChange={(val) => setForm({ ...form, assigneeIndex: val ?? -1 })} 
-                style={{ width: "100%" }}
+                style={{ width: "100%" }} 
                 getPopupContainer={(trigger) => trigger.parentElement!}
                 options={team.map((member, i) => ({ label: member.username, value: i }))} 
               />
             </Flex>
           </Flex>
 
-          {/* Priority & Due Date Row */}
           <Flex gap={12}>
             <Flex vertical gap={4} style={{ flex: 1 }}>
               <Flex align="center" gap={4}>
@@ -220,11 +202,7 @@ const TaskModal: React.FC<TaskModalProps> = ({
                 onChange={(val) => setForm({ ...form, priority: val })} 
                 style={{ width: "100%" }}
                 getPopupContainer={(trigger) => trigger.parentElement!}
-                options={[
-                  { label: ui.high, value: "HIGH" }, 
-                  { label: ui.medium, value: "MEDIUM" }, 
-                  { label: ui.low, value: "LOW" }
-                ]} 
+                options={[{ label: ui.high, value: "HIGH" }, { label: ui.medium, value: "MEDIUM" }, { label: ui.low, value: "LOW" }]} 
               />
             </Flex>
             <Flex vertical gap={4} style={{ flex: 1 }}>
@@ -242,37 +220,35 @@ const TaskModal: React.FC<TaskModalProps> = ({
             </Flex>
           </Flex>
 
-          {/* Time Estimate */}
           <Flex gap={12}>
             <Flex vertical gap={4} style={{ flex: 1 }}>
               <Flex align="center" gap={4}>
                 <ClockCircleOutlined style={{ fontSize: 12, color: "#555" }} />
                 <span style={{ fontSize: 13, color: "#555" }}>{ui.time}</span>
               </Flex>
-              <Input 
-                type="number" 
-                min="1" 
-                max="999"
-                placeholder="e.g. 8" 
-                value={form.timeEstimate} 
-                onChange={(e) => setForm({ ...form, timeEstimate: e.target.value })} 
-                style={{ borderRadius: 8 }} 
+              <Input type="number" min="1" max="999" placeholder="e.g. 8" value={form.timeEstimate} onChange={(e) => setForm({ ...form, timeEstimate: e.target.value })} style={{ borderRadius: 8 }} />
+            </Flex>
+
+            <Flex vertical gap={4} style={{ flex: 1 }}>
+              <Flex align="center" gap={4}>
+                <RocketOutlined style={{ fontSize: 12, color: "#555" }} />
+                <span style={{ fontSize: 13, color: "#555" }}>{ui.sprint || "Sprint"}</span>
+              </Flex>
+              <Select 
+                placeholder="Select Sprint"
+                allowClear
+                value={form.sprintId} 
+                onChange={(val) => setForm({ ...form, sprintId: val })} 
+                style={{ width: "100%" }}
+                getPopupContainer={(trigger) => trigger.parentElement!}
+                options={sprints.map(s => ({ label: s.name, value: s.id }))} 
               />
             </Flex>
-            <div style={{ flex: 1 }} />
           </Flex>
 
-          {/* Footer */}
           <Flex justify="flex-end" gap={8} style={{ marginTop: 10 }}>
             <Button onClick={onClose} style={{ borderRadius: 8 }}>{ui.cancel}</Button>
-            <Button 
-               type="primary" 
-               icon={<PlusOutlined />} 
-               onClick={handleSave} 
-               style={{ background: "#4f46e5", borderRadius: 8, border: "none" }}
-            >
-              {ui.action}
-            </Button>
+            <Button type="primary" icon={<PlusOutlined />} onClick={handleSave} style={{ background: "#4f46e5", borderRadius: 8, border: "none" }}>{ui.action}</Button>
           </Flex>
         </Flex>
       </div>

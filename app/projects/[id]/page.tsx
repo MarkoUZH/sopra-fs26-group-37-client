@@ -11,7 +11,7 @@ import { KANBAN_COLUMNS, Task, TaskColumn } from "@/projects/taskTypes";
 import { TagsProvider } from "@/dashboard/TagsContext";
 import { ApiService } from "@/api/apiService";
 import dayjs from "dayjs";
-import { ProjectDTO } from "@/projects/projectTypes";
+import { ProjectDTO, Sprint } from "@/projects/projectTypes";
 import { getPageTranslation } from "@/utils/dictionary_projectPage";
 
 const { Content, Sider } = Layout;
@@ -50,6 +50,8 @@ const ProjectPage: React.FC = () => {
     addTask: getPageTranslation("Add Task", targetLanguage),
   }), [targetLanguage]);
 
+  const [sprints, setSprints] = useState<Sprint[]>([]);
+
   // 5. Data Fetching
   const fetchProject = useCallback(async () => {
     try {
@@ -58,6 +60,7 @@ const ProjectPage: React.FC = () => {
       if (data.tasks) {
         setTasks(data.tasks);
       }
+      setSprints(data.sprints || []);
     } catch (error) {
       console.error("Failed to refresh data:", error);
     }
@@ -142,6 +145,7 @@ const ProjectPage: React.FC = () => {
         tagIds: taskData.tags?.map(t => t.id) || [],
         assignedUserIds: taskData.assignedUsers?.map(u => u.id) || [],
         projectId: Number(projectId),
+        sprintId: taskData.sprintId,
       };
 
       if (editingTask) {
@@ -240,6 +244,7 @@ const ProjectPage: React.FC = () => {
             open={modalOpen}
             initialColumn={modalColumn}
             editingTask={editingTask}
+            sprints={sprints}
             team={project.members || []}
             onClose={() => { setModalOpen(false); setEditingTask(null); }}
             onSave={handleSaveTask}

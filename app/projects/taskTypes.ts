@@ -18,6 +18,7 @@ export interface Task {
   tags?: Tag[];                        // Changed from string[] to Tag[]
   status: TaskColumn;                  // Backend uses 'status', frontend used 'column'
   timeEstimate?: number;
+  sprintId?: number;
 }
 export interface KanbanColumnConfig {
   key: TaskColumn;

@@ -8,9 +8,11 @@ import {
     TranslationOutlined
 } from "@ant-design/icons";
 import { Button, Dropdown, MenuProps, Switch, Tooltip, Typography, Flex } from "antd";
+import RocketOutlined from "@ant-design/icons/lib/icons/RocketOutlined";
 import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { PRIORITY_DOT_COLOR, Task } from "@/projects/taskTypes";
 import { ApiService } from "@/api/apiService";
+import { Sprint } from "./projectTypes";
 
 const { Text } = Typography;
 
@@ -25,6 +27,7 @@ export interface TaskCardProps {
     onEdit: (task: Task) => void,
     onDelete: (taskId: number) => void,
     projectId: number,
+    sprints: Sprint[];
 }
 
 const TaskCard: React.FC<TaskCardProps> = ({ task, onDragStart, onEdit, onDelete }) => {
@@ -66,7 +69,7 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onDragStart, onEdit, onDelete
             return text;
         }
     }, [api]);
-
+    
     useEffect(() => {
         const fetchTranslation = async () => {
             const source = task.originalLanguage || "en";
@@ -88,6 +91,8 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onDragStart, onEdit, onDelete
 
     const displayName = isTranslated ? translatedContent.name : task.name;
     const displayDescription = isTranslated ? translatedContent.description : task.description;
+
+
 
     return (
         <div
@@ -148,6 +153,17 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onDragStart, onEdit, onDelete
                     <Text type="secondary" style={{ fontSize: 12, marginBottom: -8 }}>Est: {task.timeEstimate}h</Text>
                 )}
             </Flex>
+
+            {/* SPRINT NAME DISPLAY */}
+                {task.sprintId && (
+                    <Flex align="center" gap={6}>
+                        <RocketOutlined style={{ fontSize: 12, color: "#1890ff" }} />
+                        <Text style={{ fontSize: 12, color: "#1890ff", fontWeight: 500 }}>
+                            {task.sprintId}
+                        </Text>
+                    </Flex>
+                )}
+
 
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderTop: "1px solid #f9f9f9", paddingTop: 5 }}>
                 {task.dueDate ? (
