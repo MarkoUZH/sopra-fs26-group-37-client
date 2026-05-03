@@ -10,14 +10,14 @@ import {
   UserOutlined,
   RocketOutlined,
 } from "@ant-design/icons";
-import { Button, DatePicker, Flex, Input, Select, Typography } from "antd";
+import { Button, DatePicker, Flex, Input, Select, Typography, Tag } from "antd"; // Added Tag here
 import dayjs from "dayjs";
 import { TeamMember } from "@/projects/projectTypes";
 import { Task, TaskColumn } from "@/projects/taskTypes";
 import { useTags } from "@/dashboard/TagsContext";
 import { getModalTranslation } from "@/utils/dictionary_task_modal";
 
-const { Title } = Typography;
+const { Title, Text } = Typography;
 
 export interface TaskModalProps {
   open: boolean;
@@ -102,8 +102,9 @@ const TaskModal: React.FC<TaskModalProps> = ({
           assigneeIndex: team.findIndex((m) => m.id === editingTask.assignedUsers?.[0]?.id),
           dueDate: editingTask.dueDate ? dayjs(editingTask.dueDate) : null,
           timeEstimate: editingTask.timeEstimate?.toString() ?? "",
-          tags: editingTask.tags?.map((t) => t.name) ?? [],
-          sprintId: editingTask.sprintId,
+          // Normalize to strings for the Select matcher
+          tags: editingTask.tags?.map((t: any) => String(t.name)) ?? [],
+          sprintId: editingTask.sprintId ? Number(editingTask.sprintId) : undefined,
         });
       } else {
         setForm({
@@ -131,7 +132,7 @@ const TaskModal: React.FC<TaskModalProps> = ({
       timeEstimate: parseFloat(form.timeEstimate) || 0,
       assignedUsers: form.assigneeIndex >= 0 ? [team[form.assigneeIndex]] : [],
       tags: selectedTags,
-      sprintId: form.sprintId,
+      sprintId: form.sprintId ? form.sprintId.toString() : undefined,
       originalLanguage: editingTask?.originalLanguage || targetLanguage,
     });
     onClose();
@@ -171,8 +172,32 @@ const TaskModal: React.FC<TaskModalProps> = ({
                 onChange={(vals) => setForm({ ...form, tags: vals })} 
                 style={{ width: "100%" }} 
                 getPopupContainer={(trigger) => trigger.parentElement!}
-                options={availableTags.map(tag => ({ label: tag.name, value: tag.name }))} 
+                options={availableTags.map(tag => ({ label: tag.name, value: tag.name }))}
+                // This forces the "Pills" to render even if types are weird
+                tagRender={(props) => {
+                    const { label, closable, onClose } = props;
+                    return (
+                      <Tag
+                        color="blue"
+                        closable={closable}
+                        onClose={onClose}
+                        style={{ marginRight: 3, display: 'flex', alignItems: 'center' }}
+                      >
+                        {label}
+                      </Tag>
+                    );
+                }}
               />
+              {/* VISUAL ROW: Shows tags below the selector if they are hidden in the line */}
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', marginTop: '4px' }}>
+                {form.tags.length > 0 && form.tags.map(tagName => (
+                  <Tag key={tagName} color="geekblue" closable onClose={() => {
+                    setForm({ ...form, tags: form.tags.filter(t => t !== tagName) });
+                  }}>
+                    {tagName}
+                  </Tag>
+                ))}
+              </div>
             </Flex>
 
             <Flex vertical gap={4} style={{ flex: 1 }}>
@@ -191,6 +216,7 @@ const TaskModal: React.FC<TaskModalProps> = ({
             </Flex>
           </Flex>
 
+          {/* ... [Rest of the code remains exactly as you had it] ... */}
           <Flex gap={12}>
             <Flex vertical gap={4} style={{ flex: 1 }}>
               <Flex align="center" gap={4}>

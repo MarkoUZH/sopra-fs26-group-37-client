@@ -5,9 +5,10 @@ import {
     EditOutlined,
     MoreOutlined,
     UserOutlined,
-    TranslationOutlined
+    TranslationOutlined,
+    TagOutlined
 } from "@ant-design/icons";
-import { Button, Dropdown, MenuProps, Switch, Tooltip, Typography, Flex } from "antd";
+import { Button, Dropdown, MenuProps, Switch, Tooltip, Typography, Flex, Tag } from "antd";
 import RocketOutlined from "@ant-design/icons/lib/icons/RocketOutlined";
 import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { PRIORITY_DOT_COLOR, Task } from "@/projects/taskTypes";
@@ -16,7 +17,6 @@ import { Sprint } from "./projectTypes";
 
 const { Text } = Typography;
 
-// Define the interface to satisfy TypeScript/Vercel
 interface TranslateResponse {
   text?: () => Promise<string>;
 }
@@ -50,19 +50,16 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onDragStart, onEdit, onDelete
     const translateText = useCallback(async (text: string, sourceLang: string, targetLang: string): Promise<string> => {
         if (!text || sourceLang === targetLang) return text;
         try {
-            // Replace 'any' with the specific expected types
             const result = await api.post<TranslateResponse | string>("/translate", {
                 text,
                 sourceLanguage: sourceLang,
                 language: targetLang,
             });
 
-            // Handle object response with text() method (common in fetch-based wrappers)
             if (result && typeof result === 'object' && typeof result.text === 'function') {
                 return await result.text();
             }
             
-            // Handle direct string response
             return typeof result === 'string' ? result : text;
         } catch (err) {
             console.error("Translation error:", err);
@@ -140,6 +137,27 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onDragStart, onEdit, onDelete
                 <Text style={{ fontSize: 13, color: "#6b7280", display: "block", marginBottom: 12 }}>
                     {displayDescription}
                 </Text>
+            )}
+
+            {/* --- TAGS SECTION --- */}
+            {task.tags && task.tags.length > 0 && (
+                <div style={{ display: "flex", flexWrap: "wrap", gap: "4px", marginBottom: 12 }}>
+                    {task.tags.map((tag) => (
+                        <Tag 
+                            key={tag.id} 
+                            color="geekblue" 
+                            style={{ 
+                                margin: 0, 
+                                fontSize: '10px', 
+                                borderRadius: '4px',
+                                border: 'none',
+                                fontWeight: 500
+                            }}
+                        >
+                            {tag.name.toUpperCase()}
+                        </Tag>
+                    ))}
+                </div>
             )}
 
             <Flex vertical gap={4} style={{ marginBottom: 12 }}>
