@@ -164,7 +164,12 @@ const ManageSprintsModal = ({ open, onClose }: Props): React.JSX.Element | null 
           {showForm && (
             <Flex vertical gap={10} style={{ border: "1px solid #e5e7eb", borderRadius: 10, padding: 16 }}>
               <Flex vertical gap={4}>
-                <Text style={{ fontSize: 13, color: "#555" }}>Sprint Name</Text>
+                <Flex justify="space-between" style={{ marginBottom: 4 }}>
+                  <Text style={{ fontSize: 13, color: "#555" }}>Sprint Name</Text>
+                  <span style={{ fontSize: 12, color: form.name.length >= 255 ? "#ef4444" : "#aaa" }}>
+                    {form.name.length}/255
+                  </span>
+                </Flex>
                 <Input
                   placeholder="e.g. Q1 Design Phase"
                   value={form.name}

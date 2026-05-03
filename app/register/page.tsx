@@ -87,7 +87,7 @@ const Register: React.FC = () => {
           label="Full Name"
           rules={[{ required: true, message: "Please input your full name!" }]}
         >
-          <Input placeholder="Enter your full name" />
+          <Input placeholder="Enter your full name" maxLength={255} />
         </Form.Item>
 
         <Form.Item
@@ -95,7 +95,7 @@ const Register: React.FC = () => {
           label="Username"
           rules={[{ required: true, message: "Please input your username!" }]}
         >
-          <Input placeholder="Enter username" />
+          <Input placeholder="Enter username" maxLength={255} />
         </Form.Item>
 
         <Form.Item
@@ -106,7 +106,7 @@ const Register: React.FC = () => {
             { type: "email", message: "The input is not a valid email address!" },
           ]}
         >
-          <Input placeholder="Enter email" />
+          <Input placeholder="Enter email" maxLength={255} />
         </Form.Item>
 
         <Form.Item
@@ -130,7 +130,7 @@ const Register: React.FC = () => {
           label="Password"
           rules={[{ required: true, message: "Please input your password!" }]}
         >
-          <Input.Password placeholder="Enter password" />
+          <Input.Password placeholder="Enter password" maxLength={255} />
         </Form.Item>
       
         <Form.Item 
