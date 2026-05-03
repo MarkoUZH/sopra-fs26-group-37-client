@@ -2,12 +2,15 @@
 import { MoreOutlined, ArrowRightOutlined, FolderOutlined, PlusOutlined } from "@ant-design/icons";
 import { Button, Card, Col, Dropdown, Flex, Progress, Row, Typography } from "antd";
 import React, { useEffect, useState, useMemo, useCallback } from "react";
-import { ApiService } from "@/api/apiService"; 
+import { ApiService } from "@/api/apiService";
+import { Client } from "@stomp/stompjs";
+import SockJS from "sockjs-client";
 import CreateProjectModal from "./CreateProjectModal";
 import EditProjectModal from "./EditProjectModal";
 import { useRouter } from "next/navigation";
 import { ProjectDTO } from "@/projects/projectTypes";
 import { getTaskSummaryTranslation } from "@/utils/dictionary_task_summary";
+import {getApiDomain} from "@/utils/domain";
 
 const { Title, Text } = Typography;
 
@@ -23,7 +26,7 @@ const TaskSummarySection = (): React.JSX.Element => {
   const [projects, setProjects] = useState<ProjectDTO[]>([]);
   const [displayProjects, setDisplayProjects] = useState<ProjectDTO[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  
+
   const router = useRouter();
   const api = useMemo(() => new ApiService(), []);
   const [targetLanguage, setTargetLanguage] = useState("en");
@@ -33,7 +36,7 @@ const TaskSummarySection = (): React.JSX.Element => {
     if (typeof window !== "undefined") {
       const savedLang = localStorage.getItem("language");
       if (savedLang) {
-        try { setTargetLanguage(JSON.parse(savedLang)); } 
+        try { setTargetLanguage(JSON.parse(savedLang)); }
         catch { setTargetLanguage(savedLang); }
       }
     }
@@ -68,7 +71,7 @@ const translateText = useCallback(async (text: string, sourceLang: string, targe
     if (result && typeof result === 'object' && typeof result.text === 'function') {
       return await result.text();
     }
-    
+
     return typeof result === 'string' ? result : text;
   } catch (err) {
     console.error("Translation error:", err);
@@ -79,14 +82,14 @@ const translateText = useCallback(async (text: string, sourceLang: string, targe
   // 3. Translate Dynamic Project Content
 useEffect(() => {
   const translateDynamicContent = async () => {
-    // Note: We no longer skip if targetLanguage === "en" globally, 
+    // Note: We no longer skip if targetLanguage === "en" globally,
     // because some projects might be in "de" or "es" and need translation TO "en".
-    
+
     const translated = await Promise.all(
       projects.map(async (p) => {
         // Use the project's specific originalLanguage
         const source = p.originalLanguage || "fr"; // Fallback to en if undefined
-        
+
         return {
           ...p,
           name: await translateText(p.name, source, targetLanguage),
@@ -101,26 +104,59 @@ useEffect(() => {
 }, [targetLanguage, projects, translateText]);
 
   // 4. Fetch Projects
-  useEffect(() => {
-    let isMounted = true;
-    const fetchProjects = async () => {
-      const userId = localStorage.getItem("id");
-      if (!userId) return;
-      try {
-        const userData = await api.get<{ manager: boolean }>(`/users/${userId}`);
-        const data = await api.get<ProjectDTO[]>(`/projects/users/${userId}`);
-        if (isMounted) {
-          setIsManager(userData.manager);
-          setProjects(data || []);
-          if (targetLanguage === "en") setDisplayProjects(data || []);
-        }
-      } catch (error) {
-        console.error("Fetch Error:", error);
-      }
-    };
-    fetchProjects();
-    return () => { isMounted = false; };
-  }, [api, targetLanguage]);
+    useEffect(() => {
+        const fetchUserRole = async () => {
+            const userId = localStorage.getItem("id");
+            if (!userId) return;
+            try {
+                const userData = await api.get<{ manager: boolean }>(`/users/${userId}`);
+                setIsManager(userData.manager);
+            } catch (error) { console.error("User fetch error:", error); }
+        };
+        fetchUserRole();
+    }, [api]);
+
+    // WebSocket for projects
+    useEffect(() => {
+        const userId = localStorage.getItem("id");
+        if (!userId) return;
+
+        const client = new Client({
+            webSocketFactory: () =>
+                new SockJS(`${getApiDomain()}/ws/projects`),
+            onConnect: () => {
+                client.subscribe("/topic/projects", (msg) => {
+                    const { type, payload } = JSON.parse(msg.body);
+                    switch (type) {
+                        case "projects_snapshot":
+                            setProjects(
+                                (payload as ProjectDTO[]).filter((p) =>
+                                    p.members?.some((m) => String(m.id) === userId)
+                                )
+                            );
+                            break;
+                        case "project_created":
+                            if ((payload as ProjectDTO).members?.some((m) => String(m.id) === userId)) {
+                                setProjects((prev) => [...prev, payload]);
+                            }
+                            break;
+                        case "project_updated":
+                            setProjects((prev) =>
+                                prev.map((p) => (p.id === payload.id ? payload : p))
+                            );
+                            break;
+                        case "project_deleted":
+                            setProjects((prev) => prev.filter((p) => p.id !== payload.id));
+                            break;
+                    }
+                });
+                client.publish({ destination: "/app/subscribe_projects", body: JSON.stringify({ userId }) });
+            },
+            reconnectDelay: 3000,
+        });
+        client.activate();
+        return () => { client.deactivate(); };
+    }, []);
 
   return (
     <Card style={{ borderRadius: 12, marginTop: 16, boxShadow: '0 2px 4px rgba(0,0,0,0.02)' }}>
@@ -151,17 +187,17 @@ useEffect(() => {
                   <Title level={5} style={{ margin: 0 }}>{project.name}</Title>
                   <Flex gap={8}>
                     {isManager && originalProject && (
-                      <Dropdown menu={{ items: [{ 
-                        key: 'edit', 
-                        label: uiText.editProject, 
-                        onClick: () => { setSelectedProject(originalProject); setIsEditModalOpen(true); } 
+                      <Dropdown menu={{ items: [{
+                        key: 'edit',
+                        label: uiText.editProject,
+                        onClick: () => { setSelectedProject(originalProject); setIsEditModalOpen(true); }
                       }] }}>
                         <MoreOutlined style={{ cursor: "pointer", color: "#8c8c8c" }} />
                       </Dropdown>
                     )}
-                    <ArrowRightOutlined 
+                    <ArrowRightOutlined
                       style={{ cursor: 'pointer' }}
-                      onClick={() => router.push(`/projects/${project.id}`)} 
+                      onClick={() => router.push(`/projects/${project.id}`)}
                     />
                   </Flex>
                 </Flex>
@@ -194,13 +230,13 @@ useEffect(() => {
           <Text type="secondary">{uiText.noProjects}</Text>
         </Flex>
       )}
-      
+
       <CreateProjectModal open={isModalOpen} onClose={() => setIsModalOpen(false)} />
       {selectedProject && (
-        <EditProjectModal 
-          open={isEditModalOpen} 
-          project={selectedProject} 
-          onClose={() => { setIsEditModalOpen(false); setSelectedProject(null); }} 
+        <EditProjectModal
+          open={isEditModalOpen}
+          project={selectedProject}
+          onClose={() => { setIsEditModalOpen(false); setSelectedProject(null); }}
         />
       )}
     </Card>

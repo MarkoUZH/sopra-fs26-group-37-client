@@ -88,7 +88,6 @@ const CreateProjectModal = ({ open, onClose }: Props): React.JSX.Element | null 
       setDescription("");
       setMembers([]);
       onClose();
-      window.location.reload(); 
     } catch (error) {
       console.error("Failed to create project:", error);
       alert(uiText.errorMsg);

@@ -10,7 +10,6 @@ import {
 import { Card, Col, Layout, Row, Typography } from "antd";
 import React from "react";
 import { TagsProvider } from "@/dashboard/TagsContext";
-
 // --- DICTIONARY IMPORT ---
 import { getTranslation } from "@/utils/dictionary_top_section";
 
