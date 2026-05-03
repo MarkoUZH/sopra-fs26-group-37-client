@@ -1,6 +1,6 @@
 "use client";
 import { CalendarOutlined, DeleteOutlined, EditOutlined, PlusOutlined } from "@ant-design/icons";
-import { Button, Flex, Input, Typography, DatePicker, Select, message } from "antd";
+import { Button, Flex, Input, Typography, DatePicker, Select, App } from "antd";
 import React, { useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import dayjs from "dayjs";
@@ -54,6 +54,7 @@ const ManageSprintsModal = ({ open, onClose }: Props): React.JSX.Element | null 
   const [editingId, setEditingId] = useState<number | null>(null);
   const [form, setForm] = useState(EMPTY_FORM);
   const api = useApi();
+  const { message } = App.useApp();
   
   const containerRef = useRef<HTMLDivElement>(null);
 
