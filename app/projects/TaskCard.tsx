@@ -8,9 +8,11 @@ import {
     TranslationOutlined
 } from "@ant-design/icons";
 import { Button, Dropdown, MenuProps, Switch, Tooltip, Typography, Flex } from "antd";
+import RocketOutlined from "@ant-design/icons/lib/icons/RocketOutlined";
 import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { PRIORITY_DOT_COLOR, Task } from "@/projects/taskTypes";
 import { ApiService } from "@/api/apiService";
+import { SprintDTO } from "./projectTypes";
 
 const { Text } = Typography;
 
@@ -30,6 +32,7 @@ export interface TaskCardProps {
 const TaskCard: React.FC<TaskCardProps> = ({ task, onDragStart, onEdit, onDelete }) => {
     const [dragging, setDragging] = useState(false);
     const [isTranslated, setIsTranslated] = useState(true);
+    const [sprintName, setSprintName] = useState("");
     const [translatedContent, setTranslatedContent] = useState({ 
         name: task.name, 
         description: task.description || "" 
@@ -66,7 +69,7 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onDragStart, onEdit, onDelete
             return text;
         }
     }, [api]);
-
+    
     useEffect(() => {
         const fetchTranslation = async () => {
             const source = task.originalLanguage || "en";
@@ -81,6 +84,31 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onDragStart, onEdit, onDelete
         fetchTranslation();
     }, [task, targetLanguage, translateText]);
 
+
+useEffect(() => {
+    const fetchSprintName = async () => {
+        if (!task?.sprintId) return;
+
+        try {
+            // 1. Call the API
+            const response = await api.get(`/sprints/${task.sprintId}`) as SprintDTO;
+
+            // 2. Check if it's a string or a Response object
+            if (response && response.name) {
+                setSprintName(response.name);
+            } 
+            else {
+                setSprintName(`Sprint #${task.sprintId}`);
+            }
+        } catch (err) {
+            console.error("Sprint fetch error:", err);
+            setSprintName(`Sprint #${task.sprintId}`);
+        }
+    };
+
+    fetchSprintName();
+}, [task?.sprintId, api]);
+
     const menuItems: MenuProps["items"] = [
         { key: "edit", label: "Edit task", icon: <EditOutlined /> },
         { key: "delete", label: "Delete task", icon: <DeleteOutlined />, danger: true },
@@ -88,6 +116,8 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onDragStart, onEdit, onDelete
 
     const displayName = isTranslated ? translatedContent.name : task.name;
     const displayDescription = isTranslated ? translatedContent.description : task.description;
+
+
 
     return (
         <div
@@ -148,6 +178,17 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onDragStart, onEdit, onDelete
                     <Text type="secondary" style={{ fontSize: 12, marginBottom: -8 }}>Est: {task.timeEstimate}h</Text>
                 )}
             </Flex>
+
+            {/* SPRINT NAME DISPLAY */}
+                {task.sprintId && (
+                    <Flex align="center" gap={6}>
+                        <RocketOutlined style={{ fontSize: 12, color: "#1890ff" }} />
+                        <Text style={{ fontSize: 12, color: "#1890ff", fontWeight: 500 }}>
+                            {sprintName}
+                        </Text>
+                    </Flex>
+                )}
+
 
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderTop: "1px solid #f9f9f9", paddingTop: 5 }}>
                 {task.dueDate ? (() => {

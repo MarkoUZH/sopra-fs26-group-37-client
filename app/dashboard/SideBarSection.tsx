@@ -18,13 +18,17 @@ import { User } from "@/types/user";
 
 // --- DICTIONARY IMPORT ---
 import { getSidebarTranslation } from "@/utils/dictionary_sidebar";
+import ManageTagsModal from "@/dashboard/ManageTagsModal";
 
 const SideBarSection = (): React.JSX.Element => {
   const router = useRouter();
   const [sprintsModalOpen, setSprintsModalOpen] = useState(false);
+  const [tagsModalOpen, setTagsModalOpen] = useState(false);
   const { clear: clearToken } = useLocalStorage<string>("token", "");
   const pathname = usePathname();
   const isInProject = pathname?.includes("/projects/");
+
+  const projectId = isInProject ? pathname.split("/projects/")[1]?.split("/")[0] : undefined;
 
   const api = useApi();
   const { clear: clearLanguage } = useLocalStorage<string>("language", "");
@@ -118,7 +122,7 @@ const SideBarSection = (): React.JSX.Element => {
     if (info.key === "logout") handleLogout();
     else if (info.key === "dashboard") router.push("/dashboard");
     else if (info.key === "settings") router.push("/settings");
-    //else if (info.key === "tags") router.push("/projects"); // Or trigger tag specific logic
+    else if (info.key === "tags") setTagsModalOpen(true);
     else if (info.key === "sprints") setSprintsModalOpen(true);
     else if (info.key === "projects") router.push("/projects");
   };
@@ -185,6 +189,7 @@ const SideBarSection = (): React.JSX.Element => {
         />
       </div>
       <ManageSprintsModal open={sprintsModalOpen} onClose={() => setSprintsModalOpen(false)} />
+      <ManageTagsModal open={tagsModalOpen} onClose={() => setTagsModalOpen(false)} projectId={projectId} />
     </div>
   );
 };

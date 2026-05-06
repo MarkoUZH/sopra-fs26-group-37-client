@@ -72,31 +72,41 @@ const Dashboard = (): React.JSX.Element => {
     fetchTasks();
   }, [apiService]);
 
-  const statsData = [
-    {
-      icon: <UnorderedListOutlined style={{ fontSize: 24, color: "#fff" }} />,
-      iconBg: "#2b7fff",
-      value: tasks.length.toString(),
-      label: uiText.totalTasks,
-    },
-    {
-      icon: <FlagOutlined style={{ fontSize: 24, color: "#fff" }} />,
-      iconBg: "#f04000",
-      value: tasks.filter((t) => t.status === "TODO").length.toString(),
-      label: uiText.todo,
-    },
-    {
-      icon: <ClockCircleOutlined style={{ fontSize: 24, color: "#fff" }} />,
-      iconBg: "#f0b100",
-      value: tasks.filter((t) => t.status === "IN_PROGRESS").length.toString(),
-      label: uiText.inProgress,
-    },
-    {
-      icon: <CheckCircleOutlined style={{ fontSize: 24, color: "#fff" }} />,
-      iconBg: "#00c950",
-      value: tasks.filter((t) => t.status === "DONE").length.toString(),
-      label: uiText.completed,
-    },
+  const userIdRaw = typeof window !== "undefined" ? localStorage.getItem("id") : null;
+const currentUserId = userIdRaw ? Number(userIdRaw.replace(/['"]+/g, '')) : null;
+
+// 2. Filter the tasks globally first so the "Total Tasks" count is also correct
+const userTasks = useMemo(() => {
+  return tasks.filter((t) => 
+    t.assignedUsers?.map(u => u.id).includes(currentUserId as number)
+  );
+}, [tasks, currentUserId]);
+
+const statsData = [
+  {
+    icon: <UnorderedListOutlined style={{ fontSize: 24, color: "#fff" }} />,
+    iconBg: "#2b7fff",
+    value: userTasks.length.toString(), // Total tasks for THIS user
+    label: uiText.totalTasks,
+  },
+  {
+    icon: <FlagOutlined style={{ fontSize: 24, color: "#fff" }} />,
+    iconBg: "#f04000",
+    value: userTasks.filter((t) => t.status === "TODO").length.toString(),
+    label: uiText.todo,
+  },
+  {
+    icon: <ClockCircleOutlined style={{ fontSize: 24, color: "#fff" }} />,
+    iconBg: "#f0b100",
+    value: userTasks.filter((t) => t.status === "IN_PROGRESS").length.toString(),
+    label: uiText.inProgress,
+  },
+  {
+    icon: <CheckCircleOutlined style={{ fontSize: 24, color: "#fff" }} />,
+    iconBg: "#00c950",
+    value: userTasks.filter((t) => t.status === "DONE").length.toString(),
+    label: uiText.completed,
+  },
     {
       icon: <ThunderboltOutlined style={{ fontSize: 24, color: "#fff" }} />,
       iconBg: "#ad46ff",

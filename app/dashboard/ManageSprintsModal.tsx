@@ -91,6 +91,28 @@ const ManageSprintsModal = ({ open, onClose }: Props): React.JSX.Element | null 
     return () => { isMounted = false; };
   }, [api, open]);
 
+  const calculateStatus = (startDate: string, endDate: string) => {
+  if (!startDate || !endDate) return "PLANNED";
+  
+  const now = dayjs();
+  const start = dayjs(startDate, "DD.MM.YYYY");
+  const end = dayjs(endDate, "DD.MM.YYYY");
+
+  if (now.isBefore(start, 'day')) return "PLANNED";
+  if (now.isAfter(end, 'day')) return "COMPLETED";
+  return "ACTIVE";
+};
+
+useEffect(() => {
+  if (form.startDate && form.endDate) {
+    const autoStatus = calculateStatus(form.startDate, form.endDate);
+    // Only update if the status actually changed to avoid infinite loops
+    if (autoStatus !== form.status) {
+      setForm(prev => ({ ...prev, status: autoStatus }));
+    }
+  }
+}, [form.startDate, form.endDate, form.status]);
+
   const handleSave = async () => {
     if (!form.name.trim() || !form.startDate || !form.endDate || !form.projectId) {
       message.warning("Please fill in all fields");
@@ -190,20 +212,19 @@ const ManageSprintsModal = ({ open, onClose }: Props): React.JSX.Element | null 
                 />
               </Flex>
 
-              <Flex vertical gap={4}>
-                <Text style={{ fontSize: 13, color: "#555" }}>Status</Text>
-                <Select
-                  value={form.status}
-                  onChange={(val) => setForm({ ...form, status: val })}
-                  style={{ width: "100%" }}
-                  getPopupContainer={() => containerRef.current || document.body}
-                  options={[
-                    { label: "Planned", value: "PLANNED" },
-                    { label: "Active", value: "ACTIVE" },
-                    { label: "Completed", value: "COMPLETED" },
-                  ]}
-                />
-              </Flex>
+        <Flex vertical gap={4}>
+          <Text style={{ fontSize: 13, color: "#555" }}>Auto-Calculated Status</Text>
+          <Select
+            disabled
+            value={form.status}
+            style={{ width: "100%" }}
+            options={[
+              { label: "Planned (Future)", value: "PLANNED" },
+              { label: "Active (Current)", value: "ACTIVE" },
+              { label: "Completed (Past)", value: "COMPLETED" },
+            ]}
+          />
+        </Flex>
 
               <Flex gap={12}>
                 <Flex vertical gap={4} style={{ flex: 1 }}>
