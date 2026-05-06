@@ -142,17 +142,38 @@ const EditProjectModal = ({ open, onClose, project }: Props): React.JSX.Element 
         </Flex>
 
         <div style={{ height: 1, background: "#e5e7eb", marginBottom: 15 }} />
-
         <Flex vertical gap={12} style={{ padding: "0 24px 24px 24px" }}>
-          <Flex vertical gap={6}>
-            <span style={{ fontSize: 13, color: "#555" }}>{uiText.projectName}</span>
-            <Input value={projectName} onChange={(e) => setProjectName(e.target.value)} style={{ borderRadius: 8 }} />
-          </Flex>
 
-          <Flex vertical gap={6}>
-            <span style={{ fontSize: 13, color: "#555" }}>{uiText.description}</span>
-            <Input.TextArea rows={4} value={description} onChange={(e) => setDescription(e.target.value)} style={{ borderRadius: 8, resize: "none" }} />
-          </Flex>
+            <Flex vertical gap={6}>
+              <Flex justify="space-between">
+                <span style={{ fontSize: 13, color: "#555" }}>{uiText.projectName}</span>
+                <span style={{ fontSize: 12, color: projectName.length >= 255 ? "#ef4444" : "#aaa" }}>
+                  {projectName.length}/255
+                </span>
+              </Flex>
+              <Input
+                value={projectName}
+                onChange={(e) => setProjectName(e.target.value)}
+                style={{ borderRadius: 8 }}
+                maxLength={255}
+              />
+            </Flex>
+
+            <Flex vertical gap={6}>
+              <Flex justify="space-between">
+                <span style={{ fontSize: 13, color: "#555" }}>{uiText.description}</span>
+                <span style={{ fontSize: 12, color: description.length >= 255 ? "#ef4444" : "#aaa" }}>
+                  {description.length}/255
+                </span>
+              </Flex>
+              <Input.TextArea
+                rows={4}
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                style={{ borderRadius: 8, resize: "none" }}
+                maxLength={255}
+              />
+            </Flex>
 
           <Flex vertical gap={6}>
             <Flex align="center" gap={4}>

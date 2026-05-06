@@ -11,8 +11,9 @@ import { KANBAN_COLUMNS, Task, TaskColumn } from "@/projects/taskTypes";
 import { TagsProvider } from "@/dashboard/TagsContext";
 import { ApiService } from "@/api/apiService";
 import dayjs from "dayjs";
-import { ProjectDTO } from "@/projects/projectTypes";
+import { ProjectDTO, Sprint } from "@/projects/projectTypes";
 import { getPageTranslation } from "@/utils/dictionary_projectPage";
+import FilterBar from "@/projects/FilterBar";
 
 const { Content, Sider } = Layout;
 const { Title } = Typography;
@@ -28,6 +29,8 @@ const ProjectPage: React.FC = () => {
   const [modalOpen, setModalOpen] = useState(false);
   const [modalColumn, setModalColumn] = useState<TaskColumn>("TODO");
   const [editingTask, setEditingTask] = useState<Task | null>(null);
+
+  const [selectedMembers, setSelectedMembers] = useState<number[]>([]);
   
   const apiService = useMemo(() => new ApiService(), []);
   const dragTaskId = useRef<string | null>(null);
@@ -50,6 +53,8 @@ const ProjectPage: React.FC = () => {
     addTask: getPageTranslation("Add Task", targetLanguage),
   }), [targetLanguage]);
 
+  const [sprints, setSprints] = useState<Sprint[]>([]);
+
   // 5. Data Fetching
   const fetchProject = useCallback(async () => {
     try {
@@ -58,6 +63,7 @@ const ProjectPage: React.FC = () => {
       if (data.tasks) {
         setTasks(data.tasks);
       }
+      setSprints(data.sprints || []);
     } catch (error) {
       console.error("Failed to refresh data:", error);
     }
@@ -71,6 +77,11 @@ const ProjectPage: React.FC = () => {
   // 6. Stats Calculation
   const totalTasks = tasks.length;
   const doneTasks = tasks.filter((t) => t.status === "DONE").length;
+
+  const filteredTasks = tasks.filter((task) =>
+    selectedMembers.length === 0 ||
+    task.assignedUsers?.some((u) => selectedMembers.includes(u.id))
+  );
 
   // 7. Event Handlers
   const handleDragStart = (e: React.DragEvent, taskId: number) => {
@@ -142,6 +153,7 @@ const ProjectPage: React.FC = () => {
         tagIds: taskData.tags?.map(t => t.id) || [],
         assignedUserIds: taskData.assignedUsers?.map(u => u.id) || [],
         projectId: Number(projectId),
+        sprintId: taskData.sprintId,
       };
 
       if (editingTask) {
@@ -182,7 +194,7 @@ const ProjectPage: React.FC = () => {
         </Sider>
 
         <Layout style={{ marginLeft: 220 }}>
-          <Content style={{ padding: "24px", background: "#f5f5f5" }}>
+          <Content style={{ padding: "12px 24px", background: "#f5f5f5" }}>
             <Button
               type="text"
               icon={<ArrowLeftOutlined />}
@@ -205,6 +217,11 @@ const ProjectPage: React.FC = () => {
               />
             )}
 
+            <FilterBar
+              members={project?.members || []}
+              selectedMembers={selectedMembers}
+              onMembersChange={setSelectedMembers}
+            />
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
               <Title level={4} style={{ margin: 0 }}>{uiText.boardTitle}</Title>
               <Button
@@ -222,7 +239,7 @@ const ProjectPage: React.FC = () => {
                 <KanbanColumn
                   key={col.key}
                   column={col}
-                  tasks={tasks.filter((t) => t.status === col.key)}
+                  tasks={filteredTasks.filter((t) => t.status === col.key)}
                   onDragStart={handleDragStart}
                   onDrop={handleDrop}
                   onEdit={handleEditTask}
@@ -240,6 +257,7 @@ const ProjectPage: React.FC = () => {
             open={modalOpen}
             initialColumn={modalColumn}
             editingTask={editingTask}
+            sprints={sprints}
             team={project.members || []}
             onClose={() => { setModalOpen(false); setEditingTask(null); }}
             onSave={handleSaveTask}

@@ -144,8 +144,8 @@ const ProjectHeader: React.FC<ProjectHeaderProps> = ({ project, totalTasks, done
                   showInfo={false}
                   railColor="#f0f0f0"
                   strokeColor="#1677ff"
-                  size={5}
-                  style={{ width: 80, margin: 0 }}
+                  size={["small", 5]}
+                  style={{ width: 100, margin: 0 }}
                 />
               </Col>
 
