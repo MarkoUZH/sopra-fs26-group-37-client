@@ -19,6 +19,7 @@ export interface Task {
   status: TaskColumn;                  // Backend uses 'status', frontend used 'column'
   timeEstimate?: number;
   project?: Project
+  sprintId?: string;
 }
 export interface KanbanColumnConfig {
   key: TaskColumn;
