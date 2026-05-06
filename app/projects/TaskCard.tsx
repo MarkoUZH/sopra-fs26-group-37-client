@@ -191,12 +191,15 @@ useEffect(() => {
 
 
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderTop: "1px solid #f9f9f9", paddingTop: 5 }}>
-                {task.dueDate ? (
-                    <Text type="secondary" style={{ fontSize: 11 }}>
-                        <CalendarOutlined style={{ marginRight: 4 }} />
-                        {new Date(task.dueDate).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+                {task.dueDate ? (() => {
+                  const isOverdue = task.status !== "DONE" && new Date(task.dueDate) < new Date();
+                  return (
+                    <Text style={{ fontSize: 11, color: isOverdue ? "#ef4444" : "#9ca3af" }}>
+                      <CalendarOutlined style={{ marginRight: 4, color: isOverdue ? "#ef4444" : "#9ca3af" }} />
+                      {new Date(task.dueDate).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
                     </Text>
-                ) : <div />}
+                  );
+                })() : <div />}
 
                 <Tooltip title={isTranslated ? "Show Original" : "Translate"} placement="top">
                     <Flex align="center" gap={4}>

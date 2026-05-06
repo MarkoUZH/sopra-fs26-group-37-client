@@ -228,16 +228,16 @@ const Settings = (): React.JSX.Element => {
         <Card title={<Flex align="center" gap={8}><UserOutlined />{uiText.profileTitle}</Flex>}>
           <Form layout="vertical">
             <Form.Item label={<Text strong>{uiText.usernameLabel}</Text>}>
-              <Input value={username} onChange={(e) => setUsername(e.target.value)} />
+              <Input value={username} onChange={(e) => setUsername(e.target.value)} maxLength={255} />
             </Form.Item>
             <Form.Item label={<Text strong>{uiText.fullNameLabel}</Text>}>
-              <Input value={name} onChange={(e) => setName(e.target.value)} />
+              <Input value={name} onChange={(e) => setName(e.target.value)} maxLength={255} />
             </Form.Item>
             <Form.Item label={<Text strong>{uiText.emailLabel}</Text>}>
               <Input value={user?.email || ""} disabled />
             </Form.Item>
             <Form.Item label={<Text strong>{uiText.newPasswordLabel}</Text>}>
-              <Input.Password value={password} onChange={(e) => setPassword(e.target.value)} />
+              <Input.Password value={password} onChange={(e) => setPassword(e.target.value)} maxLength={255} />
             </Form.Item>
             <Form.Item label={<Text strong>{uiText.roleLabel}</Text>}>
               <Input value={user?.manager ? uiText.managerRole : uiText.memberRole} disabled />
