@@ -1,6 +1,6 @@
 "use client";
 import { CalendarOutlined, DeleteOutlined, EditOutlined, PlusOutlined } from "@ant-design/icons";
-import { Button, Flex, Input, Typography, DatePicker, Select, message } from "antd";
+import { Button, Flex, Input, Typography, DatePicker, Select, App } from "antd";
 import React, { useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import dayjs from "dayjs";
@@ -54,6 +54,7 @@ const ManageSprintsModal = ({ open, onClose }: Props): React.JSX.Element | null 
   const [editingId, setEditingId] = useState<number | null>(null);
   const [form, setForm] = useState(EMPTY_FORM);
   const api = useApi();
+  const { message } = App.useApp();
   
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -163,7 +164,12 @@ const ManageSprintsModal = ({ open, onClose }: Props): React.JSX.Element | null 
           {showForm && (
             <Flex vertical gap={10} style={{ border: "1px solid #e5e7eb", borderRadius: 10, padding: 16 }}>
               <Flex vertical gap={4}>
-                <Text style={{ fontSize: 13, color: "#555" }}>Sprint Name</Text>
+                <Flex justify="space-between" style={{ marginBottom: 4 }}>
+                  <Text style={{ fontSize: 13, color: "#555" }}>Sprint Name</Text>
+                  <span style={{ fontSize: 12, color: form.name.length >= 255 ? "#ef4444" : "#aaa" }}>
+                    {form.name.length}/255
+                  </span>
+                </Flex>
                 <Input
                   placeholder="e.g. Q1 Design Phase"
                   value={form.name}
@@ -208,6 +214,9 @@ const ManageSprintsModal = ({ open, onClose }: Props): React.JSX.Element | null 
                     getPopupContainer={() => containerRef.current || document.body}
                     value={form.startDate ? dayjs(form.startDate, "DD.MM.YYYY") : null}
                     onChange={(_, dateStr) => setForm({ ...form, startDate: Array.isArray(dateStr) ? dateStr[0] : dateStr })}
+                    disabledDate={(current) =>
+                        form.endDate ? current > dayjs(form.endDate, "DD.MM.YYYY") : false
+                    }
                   />
                 </Flex>
                 <Flex vertical gap={4} style={{ flex: 1 }}>
@@ -218,6 +227,9 @@ const ManageSprintsModal = ({ open, onClose }: Props): React.JSX.Element | null 
                     getPopupContainer={() => containerRef.current || document.body}
                     value={form.endDate ? dayjs(form.endDate, "DD.MM.YYYY") : null}
                     onChange={(_, dateStr) => setForm({ ...form, endDate: Array.isArray(dateStr) ? dateStr[0] : dateStr })}
+                    disabledDate={(current) =>
+                        form.startDate ? current < dayjs(form.startDate, "DD.MM.YYYY") : false
+                    }
                   />
                 </Flex>
               </Flex>

@@ -100,13 +100,18 @@ const SideBarSection = (): React.JSX.Element => {
     }
   };
 
-  const getFlagEmoji = (countryCode: string) => {
-    if (!countryCode) return "";
-    const codePoints = countryCode
-      .toUpperCase()
-      .split('')
-      .map(char => 127397 + char.charCodeAt(0));
-    return String.fromCodePoint(...codePoints);
+  const LANGUAGE_TO_FLAG: Record<string, string> = {
+    af: "ZA", ar: "SA", az: "AZ", bn: "BD", cs: "CZ",
+    de: "DE", en: "GB", es: "ES", et: "EE", fa: "IR",
+    fi: "FI", fr: "FR", gl: "ES", gu: "IN", he: "IL",
+    hi: "IN", hr: "HR", id: "ID", it: "IT", ja: "JP",
+    ka: "GE", kk: "KZ", km: "KH", ko: "KR", lt: "LT",
+    lv: "LV", mk: "MK", ml: "IN", mn: "MN", mr: "IN",
+    my: "MM", ne: "NP", nl: "NL", pl: "PL", ps: "AF",
+    pt: "PT", ro: "RO", ru: "RU", si: "LK", sl: "SI",
+    sv: "SE", sw: "KE", ta: "IN", te: "IN", th: "TH",
+    tl: "PH", tr: "TR", uk: "UA", ur: "PK", vi: "VN",
+    xh: "ZA", zh: "CN",
   };
 
   const onMenuClick = (info: { key: string }) => {
@@ -124,9 +129,14 @@ const SideBarSection = (): React.JSX.Element => {
         <span style={{ fontSize: 12, letterSpacing: "0.6px", fontWeight: 500, color: "#888" }}>
           {user?.manager ? uiText.managerRole : uiText.memberRole}
         </span>
-        <span style={{ fontSize: 18, fontWeight: 700 }}>
-          {user ? user.username : "Loading..."}{" "}
-          {user?.language ? ` ${getFlagEmoji(user.language)}` : ""}
+        <span style={{ fontSize: 18, fontWeight: 700, display: "flex", alignItems: "center", gap: 6 }}>
+          {user ? user.username : "Loading..."}
+          {user?.language && LANGUAGE_TO_FLAG[user.language.toLowerCase()] && (
+            <span
+              className={`fi fi-${LANGUAGE_TO_FLAG[user.language.toLowerCase()].toLowerCase()}`}
+              style={{ fontSize: 16 }}
+            />
+          )}
         </span>
         <span style={{ fontSize: 14, fontWeight: 500, color: "#555" }}>
           {user?.language ? ISO6391.getNativeName(user.language) : ""}
