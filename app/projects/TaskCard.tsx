@@ -13,7 +13,7 @@ import RocketOutlined from "@ant-design/icons/lib/icons/RocketOutlined";
 import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { PRIORITY_DOT_COLOR, Task } from "@/projects/taskTypes";
 import { ApiService } from "@/api/apiService";
-import { Sprint } from "./projectTypes";
+import { SprintDTO } from "./projectTypes";
 
 const { Text } = Typography;
 
@@ -27,12 +27,12 @@ export interface TaskCardProps {
     onEdit: (task: Task) => void,
     onDelete: (taskId: number) => void,
     projectId: number,
-    sprints: Sprint[];
 }
 
 const TaskCard: React.FC<TaskCardProps> = ({ task, onDragStart, onEdit, onDelete }) => {
     const [dragging, setDragging] = useState(false);
     const [isTranslated, setIsTranslated] = useState(true);
+    const [sprintName, setSprintName] = useState("");
     const [translatedContent, setTranslatedContent] = useState({ 
         name: task.name, 
         description: task.description || "" 
@@ -80,6 +80,31 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onDragStart, onEdit, onDelete
         };
         fetchTranslation();
     }, [task, targetLanguage, translateText]);
+
+
+useEffect(() => {
+    const fetchSprintName = async () => {
+        if (!task?.sprintId) return;
+
+        try {
+            // 1. Call the API
+            const response = await api.get(`/sprints/${task.sprintId}`) as SprintDTO;
+
+            // 2. Check if it's a string or a Response object
+            if (response && response.name) {
+                setSprintName(response.name);
+            } 
+            else {
+                setSprintName(`Sprint #${task.sprintId}`);
+            }
+        } catch (err) {
+            console.error("Sprint fetch error:", err);
+            setSprintName(`Sprint #${task.sprintId}`);
+        }
+    };
+
+    fetchSprintName();
+}, [task?.sprintId, api]);
 
     const menuItems: MenuProps["items"] = [
         { key: "edit", label: "Edit task", icon: <EditOutlined /> },
@@ -177,19 +202,22 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onDragStart, onEdit, onDelete
                     <Flex align="center" gap={6}>
                         <RocketOutlined style={{ fontSize: 12, color: "#1890ff" }} />
                         <Text style={{ fontSize: 12, color: "#1890ff", fontWeight: 500 }}>
-                            {task.sprintId}
+                            {sprintName}
                         </Text>
                     </Flex>
                 )}
 
 
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderTop: "1px solid #f9f9f9", paddingTop: 5 }}>
-                {task.dueDate ? (
-                    <Text type="secondary" style={{ fontSize: 11 }}>
-                        <CalendarOutlined style={{ marginRight: 4 }} />
-                        {new Date(task.dueDate).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+                {task.dueDate ? (() => {
+                  const isOverdue = task.status !== "DONE" && new Date(task.dueDate) < new Date();
+                  return (
+                    <Text style={{ fontSize: 11, color: isOverdue ? "#ef4444" : "#9ca3af" }}>
+                      <CalendarOutlined style={{ marginRight: 4, color: isOverdue ? "#ef4444" : "#9ca3af" }} />
+                      {new Date(task.dueDate).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
                     </Text>
-                ) : <div />}
+                  );
+                })() : <div />}
 
                 <Tooltip title={isTranslated ? "Show Original" : "Translate"} placement="top">
                     <Flex align="center" gap={4}>

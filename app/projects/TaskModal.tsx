@@ -10,7 +10,8 @@ import {
   UserOutlined,
   RocketOutlined,
 } from "@ant-design/icons";
-import { Button, DatePicker, Flex, Input, Select, Typography, Tag } from "antd"; // Added Tag here
+
+import { Avatar, Button, DatePicker, Flex, Input, InputNumber, Select, Typography, Tag } from "antd";
 import dayjs from "dayjs";
 import { TeamMember } from "@/projects/projectTypes";
 import { Task, TaskColumn } from "@/projects/taskTypes";
@@ -245,14 +246,19 @@ const TaskModal: React.FC<TaskModalProps> = ({
               />
             </Flex>
           </Flex>
-
           <Flex gap={12}>
             <Flex vertical gap={4} style={{ flex: 1 }}>
               <Flex align="center" gap={4}>
                 <ClockCircleOutlined style={{ fontSize: 12, color: "#555" }} />
                 <span style={{ fontSize: 13, color: "#555" }}>{ui.time}</span>
               </Flex>
-              <Input type="number" min="1" max="999" placeholder="e.g. 8" value={form.timeEstimate} onChange={(e) => setForm({ ...form, timeEstimate: e.target.value })} style={{ borderRadius: 8 }} />
+              <InputNumber
+                max={999}
+                placeholder="e.g. 8"
+                value={form.timeEstimate ? parseFloat(form.timeEstimate) : undefined}
+                onChange={(val) => setForm({ ...form, timeEstimate: val !== null && val !== undefined ? String(Math.abs(val)) : "" })}
+                style={{ width: "100%", borderRadius: 8 }}
+              />
             </Flex>
 
             <Flex vertical gap={4} style={{ flex: 1 }}>

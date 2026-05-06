@@ -152,22 +152,34 @@ const CreateProjectModal = ({ open, onClose }: Props): React.JSX.Element | null 
         <Flex vertical gap={12} style={{ padding: "0 24px 24px 24px" }}>
 
           <Flex vertical gap={6}>
-            <span style={{ fontSize: 13, color: "#555" }}>{uiText.projectName}</span>
-            <Input 
-              placeholder={uiText.projectNamePlaceholder} 
-              style={{ borderRadius: 8 }} 
+            <Flex justify="space-between">
+              <span style={{ fontSize: 13, color: "#555" }}>{uiText.projectName}</span>
+              <span style={{ fontSize: 12, color: projectName.length >= 255 ? "#ef4444" : "#aaa" }}>
+                {projectName.length}/255
+              </span>
+            </Flex>
+            <Input
+              placeholder={uiText.projectNamePlaceholder}
+              style={{ borderRadius: 8 }}
               value={projectName}
+              maxLength={255}
               onChange={(e) => setProjectName(e.target.value)}
             />
           </Flex>
 
           <Flex vertical gap={6}>
-            <span style={{ fontSize: 13, color: "#555" }}>{uiText.description}</span>
+            <Flex justify="space-between">
+              <span style={{ fontSize: 13, color: "#555" }}>{uiText.description}</span>
+              <span style={{ fontSize: 12, color: description.length >= 255 ? "#ef4444" : "#aaa" }}>
+                {description.length}/255
+              </span>
+            </Flex>
             <Input.TextArea
               placeholder={uiText.descriptionPlaceholder}
               rows={4}
               style={{ borderRadius: 8, resize: "none", maxHeight: 120 }}
               value={description}
+              maxLength={255}
               onChange={(e) => setDescription(e.target.value)}
             />
           </Flex>

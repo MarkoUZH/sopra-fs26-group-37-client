@@ -1,7 +1,9 @@
 "use client";
 import { CalendarOutlined, DeleteOutlined, EditOutlined, PlusOutlined } from "@ant-design/icons";
-import { Button, Flex, Input, Typography, DatePicker, Select, message } from "antd";
+
+import { Button, Flex, Input, Typography, DatePicker, Select, message, App } from "antd";
 import React, { useState, useEffect, useRef, useMemo } from "react";
+
 import { createPortal } from "react-dom";
 import dayjs from "dayjs";
 import { useApi } from "@/hooks/useApi";
@@ -55,6 +57,9 @@ const ManageSprintsModal = ({ open, onClose }: Props): React.JSX.Element | null 
   const [form, setForm] = useState(EMPTY_FORM);
   const [lang, setLang] = useState("en");
   const api = useApi();
+
+  //const { message } = App.useApp();
+  
   const containerRef = useRef<HTMLDivElement>(null);
 
   // Load language from localStorage
@@ -110,6 +115,28 @@ const ManageSprintsModal = ({ open, onClose }: Props): React.JSX.Element | null 
     fetchData();
   }, [api, open]);
 
+  const calculateStatus = (startDate: string, endDate: string) => {
+  if (!startDate || !endDate) return "PLANNED";
+  
+  const now = dayjs();
+  const start = dayjs(startDate, "DD.MM.YYYY");
+  const end = dayjs(endDate, "DD.MM.YYYY");
+
+  if (now.isBefore(start, 'day')) return "PLANNED";
+  if (now.isAfter(end, 'day')) return "COMPLETED";
+  return "ACTIVE";
+};
+
+useEffect(() => {
+  if (form.startDate && form.endDate) {
+    const autoStatus = calculateStatus(form.startDate, form.endDate);
+    // Only update if the status actually changed to avoid infinite loops
+    if (autoStatus !== form.status) {
+      setForm(prev => ({ ...prev, status: autoStatus }));
+    }
+  }
+}, [form.startDate, form.endDate, form.status]);
+
   const handleSave = async () => {
     if (!form.name.trim() || !form.startDate || !form.endDate || !form.projectId) {
       message.warning(t.fill);
@@ -157,13 +184,22 @@ const ManageSprintsModal = ({ open, onClose }: Props): React.JSX.Element | null 
           <Title level={3} style={{ margin: 0 }}>{t.header}</Title>
           <Button type="text" onClick={onClose}>✕</Button>
         </Flex>
-
-        {showForm && (
-          <Flex vertical gap={12} style={{ border: "1px solid #e5e7eb", borderRadius: 10, padding: 16, marginBottom: 16 }}>
-            <Flex vertical gap={4}>
-              <Text strong>{t.name}</Text>
-              <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
-            </Flex>
+        <Flex vertical gap={12} style={{ padding: "0 24px 24px 24px" }}>
+          {showForm && (
+            <Flex vertical gap={10} style={{ border: "1px solid #e5e7eb", borderRadius: 10, padding: 16 }}>
+              <Flex vertical gap={4}>
+                <Flex justify="space-between" style={{ marginBottom: 4 }}>
+                  <Text style={{ fontSize: 13, color: "#555" }}>{t.name}</Text>
+                  <span style={{ fontSize: 12, color: form.name.length >= 255 ? "#ef4444" : "#aaa" }}>
+                    {form.name.length}/255
+                  </span>
+                </Flex>
+                <Input
+                  placeholder="Q1 Design Phase"
+                  value={form.name}
+                  onChange={(e) => setForm({ ...form, name: e.target.value })}
+                />
+              </Flex>
 
             <Flex gap={12}>
               <Flex vertical gap={4} style={{ flex: 1 }}>
@@ -176,17 +212,46 @@ const ManageSprintsModal = ({ open, onClose }: Props): React.JSX.Element | null 
                   options={projects.map(p => ({ label: p.name, value: String(p.id) }))}
                 />
               </Flex>
-              <Flex vertical gap={4} style={{ flex: 1 }}>
-                <Text strong>{t.status}</Text>
-                <Select
-                  value={form.status}
-                  onChange={(val) => setForm({ ...form, status: val })}
-                  options={[
-                    { label: t.planned, value: "PLANNED" },
-                    { label: t.active, value: "ACTIVE" },
-                    { label: t.completed, value: "COMPLETED" },
-                  ]}
-                />
+        <Flex vertical gap={4}>
+          <Text style={{ fontSize: 13, color: "#555" }}>{t.status}</Text>
+          <Select
+            value={form.status}
+            style={{ width: "100%" }}
+            onChange={(val) => setForm({ ...form, status: val })}
+            options={[
+              { label: t.planned, value: "PLANNED" },
+              { label: t.active, value: "ACTIVE" },
+              { label: t.completed, value: "COMPLETED" },
+            ]}
+          />
+        </Flex>
+              <Flex gap={12}>
+                <Flex vertical gap={4} style={{ flex: 1 }}>
+                  <Text style={{ fontSize: 13, color: "#555" }}>Start Date</Text>
+                  <DatePicker
+                    style={{ width: "100%" }}
+                    format="DD.MM.YYYY"
+                    getPopupContainer={() => containerRef.current || document.body}
+                    value={form.startDate ? dayjs(form.startDate, "DD.MM.YYYY") : null}
+                    onChange={(_, dateStr) => setForm({ ...form, startDate: Array.isArray(dateStr) ? dateStr[0] : dateStr })}
+                    disabledDate={(current) =>
+                        form.endDate ? current > dayjs(form.endDate, "DD.MM.YYYY") : false
+                    }
+                  />
+                </Flex>
+                <Flex vertical gap={4} style={{ flex: 1 }}>
+                  <Text style={{ fontSize: 13, color: "#555" }}>Due Date</Text>
+                  <DatePicker
+                    style={{ width: "100%" }}
+                    format="DD.MM.YYYY"
+                    getPopupContainer={() => containerRef.current || document.body}
+                    value={form.endDate ? dayjs(form.endDate, "DD.MM.YYYY") : null}
+                    onChange={(_, dateStr) => setForm({ ...form, endDate: Array.isArray(dateStr) ? dateStr[0] : dateStr })}
+                    disabledDate={(current) =>
+                        form.startDate ? current < dayjs(form.startDate, "DD.MM.YYYY") : false
+                    }
+                  />
+                </Flex>
               </Flex>
             </Flex>
 
