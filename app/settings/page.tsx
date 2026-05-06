@@ -1,33 +1,11 @@
 "use client";
 import { GlobalOutlined, SaveOutlined, UserOutlined } from "@ant-design/icons";
-import {
-  Button,
-  Card,
-  Flex,
-  Form,
-  Input,
-  Select,
-  Switch,
-  Typography,
-  message,
-} from "antd";
+import { Button, Card, Flex, Form, Input, Select, Switch, Typography, message } from "antd";
 import React, { useEffect, useState, useMemo } from "react";
-
-// --- ACTUAL PROJECT IMPORTS ---
 import { useRouter } from "next/navigation";
 import useLocalStorage from "@/hooks/useLocalStorage";
 import { useApi } from "@/hooks/useApi";
-// ------------------------------
-
-interface User { 
-  token?: string; 
-  id?: string; 
-  language?: string; 
-  name?: string; 
-  username?: string; 
-  manager?: boolean; 
-  email?: string; 
-}
+import { getSettingsTranslation } from "@/utils/dictionary_settings";
 
 const { Title, Text } = Typography;
 
@@ -52,24 +30,6 @@ const mBartLanguages = [
   { value: "zh", label: "Chinese" }
 ];
 
-const baseText = {
-  profileTitle: "Profile",
-  usernameLabel: "Username",
-  fullNameLabel: "Full name",
-  emailLabel: "Email",
-  newPasswordLabel: "New Password",
-  roleLabel: "Role",
-  managerRole: "Manager",
-  memberRole: "Member",
-  languageTitle: "Language & Translation",
-  preferredLanguageLabel: "Preferred Language",
-  autoTranslateLabel: "Automatic Translation",
-  cancelButton: "Cancel",
-  saveButton: "Save Changes",
-  successMessage: "Profile updated! Logging out to apply changes...",
-  errorMessage: "Failed to save changes."
-};
-
 const Settings = (): React.JSX.Element => {
   const router = useRouter();
   const api = useApi();
@@ -77,188 +37,102 @@ const Settings = (): React.JSX.Element => {
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
   const [username, setUsername] = useState("");
+  const [user, setUser] = useState<any>(null);
   
-  // Storage Hooks
   const { value: id, clear: clearId } = useLocalStorage<string>("id", "");
   const { clear: clearToken } = useLocalStorage<string>("token", "");
-  // Initializing dropdownLanguage from storedLanguage to prevent immediate "English" diversion
   const { value: storedLanguage, set: setStoredLanguage } = useLocalStorage<string>("language", "en");
 
   const [autoTranslate, setAutoTranslate] = useState(true);
-  const [user, setUser] = useState<User | null>(null);
+  const [dropdownLanguage, setDropdownLanguage] = useState<string>("en");
 
-  const [uiText, setUiText] = useState(baseText);
-  const [dropdownLanguage, setDropdownLanguage] = useState<string>(storedLanguage || "en");
-
-  // 1. Fetch User Data and sync backend language if necessary
+  // 1. Fetch User Data
   useEffect(() => {
-    let isMounted = true;
     const fetchUser = async () => {
       try {
-        const currentUser = await api.get<User>(`/users/${id}`);
-        if (!isMounted) return;
-
+        const currentUser = await api.get<any>(`/users/${id}`);
         setUser(currentUser);
         setName(currentUser.name || "");
         setUsername(currentUser.username || "");
         
-        // If the backend has a different language preference than what we have locally, 
-        // and we haven't manually changed the dropdown yet this session, sync them.
-        if (currentUser.language && currentUser.language !== dropdownLanguage) {
-          // If the user's backend language is set, we prioritize it to fix the "divert to English" issue
+        // Sync the dropdown with the database preference
+        if (currentUser.language) {
           setDropdownLanguage(currentUser.language);
-          setStoredLanguage(currentUser.language);
         }
-      } catch (e) {
-        console.error("Failed to fetch user", e);
-      }
+      } catch (e) { console.error("Failed to fetch user", e); }
     };
-    
-    if (id) {
-      fetchUser();
-    }
-    return () => { isMounted = false; };
+    if (id) fetchUser();
   }, [id, api]);
 
-  // 2. Initial Load: Sync dropdown with the stored preference when the hook provides it
-  useEffect(() => {
-    if (storedLanguage && storedLanguage !== dropdownLanguage) {
-      setDropdownLanguage(storedLanguage);
-    }
+  // 2. DICTIONARY HOOK
+  // Watches storedLanguage so the UI reflects the current session's language
+  const ui = useMemo(() => {
+    return getSettingsTranslation(storedLanguage || "en");
   }, [storedLanguage]);
 
-  // 3. Translation logic: Translates UI whenever dropdownLanguage changes
-  useEffect(() => {
-    let isCancelled = false;
-    let authErrorShown = false;
-
-    const translatePage = async () => {
-      // Revert to English instantly if English is selected
-      if (!dropdownLanguage || dropdownLanguage === "en") {
-        setUiText(baseText);
-        return;
-      }
-
-        const translate = async (text: string): Promise<string> => {
-            try {
-                const result = await api.post<{ text?: () => Promise<string> } | string>("/translate", {
-                    text: text,
-                    sourceLanguage: "en",
-                    language: dropdownLanguage,
-                });
-
-                const translated = (result && typeof result === 'object' && typeof result.text === 'function')
-                    ? await result.text()
-                    : result;
-
-                return (typeof translated === 'string' && translated.trim() !== "") ? translated : text;
-            } catch (err) {
-                if (err instanceof Error && err.message.includes("401") && !authErrorShown) {
-                    authErrorShown = true;
-                    message.warning("Translation requires authorization.");
-                }
-                return text;
-            }
-        };
-
-      const keys = Object.keys(baseText) as Array<keyof typeof baseText>;
-      const translations = await Promise.all(keys.map(key => translate(baseText[key])));
-
-      if (isCancelled) return;
-
-      const newUiText = {} as typeof baseText;
-      keys.forEach((key, index) => {
-        newUiText[key] = translations[index] || baseText[key];
-      });
-
-      setUiText(newUiText);
-    };
-
-    translatePage();
-    return () => { isCancelled = true; };
-  }, [dropdownLanguage, api]);
-
   const handleSave = async () => {
-    const hideLoading = message.loading("Saving changes and logging out...", 0);
+    const hideLoading = message.loading(ui.successMessage, 0);
     try {
-      const updateData = {
-        username: username,
-        name: name, 
-        password: password,
-        language: dropdownLanguage 
-      };
-
-      // 1. Update Backend (Permanently change language to "hi" etc.)
-      await api.put(`/users/${id}`, updateData);
+      await api.put(`/users/${id}`, {
+        username,
+        name, 
+        password: password || undefined,
+        language: dropdownLanguage // Save the new choice to the DB
+      });
       
-      // 2. Clear Session Data
+      // Update local storage so the next session uses the new language
+      setStoredLanguage(dropdownLanguage);
+      localStorage.setItem("language", JSON.stringify(dropdownLanguage));
+      
       clearToken();
       clearId();
       
-      // 3. Update Language Preference in storage so it hits the login/dashboard correctly
-      if (typeof window !== "undefined") {
-        setStoredLanguage(dropdownLanguage);
-        localStorage.setItem("language", JSON.stringify(dropdownLanguage));
-      }
-
       hideLoading();
-      message.success(uiText.successMessage);
-      
-      // 4. Redirect to login
+      message.success(ui.successMessage);
       router.push("/login");
     } catch (e) {
       hideLoading();
-      console.error("Failed to save changes:", e);
-      message.error(uiText.errorMessage);
+      message.error(ui.errorMessage);
     }
   };
 
-  const handleCancel = () => {
-    router.push("/dashboard"); 
-  };
-
   return (
-    <Flex
-      vertical
-      align="center"
-      justify="center"
-      style={{ minHeight: "100vh", padding: "30px 16px", background: "#f0f2f5" }}
-    >
+    <Flex vertical align="center" justify="center" style={{ minHeight: "100vh", padding: "30px 16px", background: "#f0f2f5" }}>
       <Flex vertical gap={24} style={{ width: "100%", maxWidth: 854 }}>
-        <Card title={<Flex align="center" gap={8}><UserOutlined />{uiText.profileTitle}</Flex>}>
+        
+        <Card title={<Flex align="center" gap={8}><UserOutlined />{ui.profileTitle}</Flex>}>
           <Form layout="vertical">
-            <Form.Item label={<Text strong>{uiText.usernameLabel}</Text>}>
-              <Input value={username} onChange={(e) => setUsername(e.target.value)} maxLength={255} />
+            <Form.Item label={<Text strong>{ui.usernameLabel}</Text>}>
+              <Input value={username} onChange={(e) => setUsername(e.target.value)} />
             </Form.Item>
-            <Form.Item label={<Text strong>{uiText.fullNameLabel}</Text>}>
-              <Input value={name} onChange={(e) => setName(e.target.value)} maxLength={255} />
+            <Form.Item label={<Text strong>{ui.fullNameLabel}</Text>}>
+              <Input value={name} onChange={(e) => setName(e.target.value)} />
             </Form.Item>
-            <Form.Item label={<Text strong>{uiText.emailLabel}</Text>}>
+            <Form.Item label={<Text strong>{ui.emailLabel}</Text>}>
               <Input value={user?.email || ""} disabled />
             </Form.Item>
-            <Form.Item label={<Text strong>{uiText.newPasswordLabel}</Text>}>
-              <Input.Password value={password} onChange={(e) => setPassword(e.target.value)} maxLength={255} />
+            <Form.Item label={<Text strong>{ui.newPasswordLabel}</Text>}>
+              <Input.Password value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" />
             </Form.Item>
-            <Form.Item label={<Text strong>{uiText.roleLabel}</Text>}>
-              <Input value={user?.manager ? uiText.managerRole : uiText.memberRole} disabled />
+            <Form.Item label={<Text strong>{ui.roleLabel}</Text>}>
+              <Input value={user?.manager ? ui.managerRole : ui.memberRole} disabled />
             </Form.Item>
           </Form>
         </Card>
 
-        <Card title={<Flex align="center" gap={8}><GlobalOutlined />{uiText.languageTitle}</Flex>}>
+        <Card title={<Flex align="center" gap={8}><GlobalOutlined />{ui.languageTitle}</Flex>}>
           <Form layout="vertical">
-            <Form.Item label={<Text strong>{uiText.preferredLanguageLabel}</Text>}>
+            <Form.Item label={<Text strong>{ui.preferredLanguageLabel}</Text>}>
               <Select 
-                value={dropdownLanguage || undefined} 
+                value={dropdownLanguage} 
                 onChange={(val) => setDropdownLanguage(val)}
                 options={mBartLanguages}
                 showSearch
-                filterOption={(input, option) => (option?.label ?? '').toLowerCase().includes(input.toLowerCase())}
               />
             </Form.Item>
             <Form.Item style={{ marginBottom: 0 }}>
               <Flex justify="space-between" align="center">
-                <Text>{uiText.autoTranslateLabel}</Text>
+                <Text>{ui.autoTranslateLabel}</Text>
                 <Switch checked={autoTranslate} onChange={setAutoTranslate} />
               </Flex>
             </Form.Item>
@@ -266,9 +140,9 @@ const Settings = (): React.JSX.Element => {
         </Card>
 
         <Flex justify="flex-end" gap={12}>
-          <Button onClick={handleCancel}>{uiText.cancelButton}</Button>
-          <Button type="primary" icon={<SaveOutlined />} onClick={handleSave}>
-            {uiText.saveButton}
+          <Button onClick={() => router.push("/dashboard")}>{ui.cancelButton}</Button>
+          <Button type="primary" icon={<SaveOutlined />} onClick={handleSave} style={{ background: "#4f46e5", border: "none" }}>
+            {ui.saveButton}
           </Button>
         </Flex>
       </Flex>
