@@ -111,7 +111,7 @@ const KanbanColumn: React.FC<KanbanColumnProps> = ({
             onDragStart={onDragStart}
             onEdit={onEdit}
             onDelete={onDelete}
-            projectId={projectId} sprints={[]}          />
+            projectId={String(projectId)}          />
         ))}
       </div>
     </div>

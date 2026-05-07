@@ -1,6 +1,6 @@
 "use client";
 import { ArrowLeftOutlined, PlusOutlined } from "@ant-design/icons";
-import { Button, Layout, Typography, Spin } from "antd";
+import { Button, Layout, Typography, Spin, message } from "antd";
 import React, { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import SideBarSection from "@/dashboard/SideBarSection";
@@ -19,26 +19,23 @@ const { Content, Sider } = Layout;
 const { Title } = Typography;
 
 const ProjectPage: React.FC = () => {
-  // 1. Data States
   const [tasks, setTasks] = useState<Task[]>([]);
   const [project, setProject] = useState<ProjectDTO | null>(null);
+  const [sprints, setSprints] = useState<Sprint[]>([]);
   const [loading, setLoading] = useState(true);
   const [targetLanguage, setTargetLanguage] = useState("en");
   
-  // 2. UI States
   const [modalOpen, setModalOpen] = useState(false);
   const [modalColumn, setModalColumn] = useState<TaskColumn>("TODO");
   const [editingTask, setEditingTask] = useState<Task | null>(null);
-
   const [selectedMembers, setSelectedMembers] = useState<number[]>([]);
   
   const apiService = useMemo(() => new ApiService(), []);
   const dragTaskId = useRef<string | null>(null);
   const params = useParams();
   const router = useRouter();
-  const projectId = (params?.id as string) ?? "1";
+  const projectId = (params?.id as string) ?? "";
 
-  // 3. Safe Language Loading (Prevents SSR / Vercel Crash)
   useEffect(() => {
     if (typeof window !== "undefined") {
       const savedLang = localStorage.getItem("language")?.replace(/"/g, '') || "en";
@@ -46,26 +43,22 @@ const ProjectPage: React.FC = () => {
     }
   }, []);
 
-  // 4. Memoized UI Translations
   const uiText = useMemo(() => ({
     back: getPageTranslation("Back to dashboard", targetLanguage),
     boardTitle: getPageTranslation("Task board", targetLanguage),
     addTask: getPageTranslation("Add Task", targetLanguage),
   }), [targetLanguage]);
 
-  const [sprints, setSprints] = useState<Sprint[]>([]);
-
-  // 5. Data Fetching
   const fetchProject = useCallback(async () => {
+    if (!projectId) return;
     try {
       const data = await apiService.get<ProjectDTO>(`/projects/${projectId}`);
       setProject(data);
-      if (data.tasks) {
-        setTasks(data.tasks);
-      }
+      setTasks(data.tasks || []);
       setSprints(data.sprints || []);
     } catch (error) {
       console.error("Failed to refresh data:", error);
+      message.error("Failed to load project tasks");
     }
   }, [apiService, projectId]);
 
@@ -74,16 +67,15 @@ const ProjectPage: React.FC = () => {
     fetchProject().finally(() => setLoading(false));
   }, [fetchProject]);
 
-  // 6. Stats Calculation
-  const totalTasks = tasks.length;
-  const doneTasks = tasks.filter((t) => t.status === "DONE").length;
+  const filteredTasks = useMemo(() => {
+    return tasks.filter((task) =>
+      selectedMembers.length === 0 ||
+      task.assignedUsers?.some((u) => selectedMembers.includes(u.id))
+    );
+  }, [tasks, selectedMembers]);
 
-  const filteredTasks = tasks.filter((task) =>
-    selectedMembers.length === 0 ||
-    task.assignedUsers?.some((u) => selectedMembers.includes(u.id))
-  );
+  // --- Handlers ---
 
-  // 7. Event Handlers
   const handleDragStart = (e: React.DragEvent, taskId: number) => {
     dragTaskId.current = taskId.toString();
     e.dataTransfer.effectAllowed = "move";
@@ -99,28 +91,18 @@ const ProjectPage: React.FC = () => {
     const taskToUpdate = tasks.find(t => t.id === numericId);
     if (!taskToUpdate || taskToUpdate.status === targetStatus) return;
 
-    // Optimistic Update
     setTasks((prev) =>
       prev.map((t) => (t.id === numericId ? { ...t, status: targetStatus } : t))
     );
 
     try {
-      const postBody = {
-        name: taskToUpdate.name,
-        description: taskToUpdate.description,
-        priority: taskToUpdate.priority,
+      await apiService.put(`/tasks/${numericId}`, {
+        ...taskToUpdate,
         status: targetStatus,
-        dueDate: taskToUpdate.dueDate ? dayjs(taskToUpdate.dueDate).format("YYYY-MM-DDTHH:mm:ss") : null,
-        timeEstimate: taskToUpdate.timeEstimate,
-        tagIds: taskToUpdate.tags?.map(t => t.id) || [],
-        assignedUserIds: taskToUpdate.assignedUsers?.map(u => u.id) || [],
-        projectId: Number(projectId),
-      };
-
-      await apiService.put(`/tasks/${numericId}`, postBody);
+        projectId: Number(projectId)
+      });
     } catch (error) {
-      console.error("Failed to update task status:", error);
-      fetchProject(); // Revert on failure
+      fetchProject(); 
     }
   };
 
@@ -130,77 +112,52 @@ const ProjectPage: React.FC = () => {
     setModalOpen(true);
   };
 
+  // This was the missing function!
   const handleEditTask = (task: Task) => {
     setEditingTask(task);
     setModalColumn(task.status);
     setModalOpen(true);
   };
 
-  const handleDeleteTask = (taskId: number) => {
-    setTasks((prev) => prev.filter((t) => t.id !== taskId));
-    apiService.delete(`/tasks/${taskId}`);
-  };
-
-  const handleSaveTask = async (taskData: Omit<Task, "id">) => {
+  const handleSaveTask = async (taskData: any) => {
     try {
-      const postBody = {
-        name: taskData.name,
-        description: taskData.description,
-        priority: taskData.priority,
-        status: taskData.status,
-        dueDate: taskData.dueDate ? dayjs(taskData.dueDate).format("YYYY-MM-DDTHH:mm:ss") : null,
-        timeEstimate: taskData.timeEstimate,
-        tagIds: taskData.tags?.map(t => t.id) || [],
-        assignedUserIds: taskData.assignedUsers?.map(u => u.id) || [],
+      const payload = {
+        ...taskData,
         projectId: Number(projectId),
-        sprintId: taskData.sprintId,
+        tagIds: taskData.tags?.map((t: any) => t.id) || [],
+        assignedUserIds: taskData.assignedUsers?.map((u: any) => u.id) || [],
+        sprintId: taskData.sprintId ? Number(taskData.sprintId) : null,
       };
 
       if (editingTask) {
-        await apiService.put(`/tasks/${editingTask.id}`, postBody);
+        await apiService.put(`/tasks/${editingTask.id}`, payload);
       } else {
-        await apiService.post(`/tasks`, postBody);
+        await apiService.post(`/tasks`, payload);
       }
       
+      message.success("Task saved");
       await fetchProject(); 
       setModalOpen(false);
       setEditingTask(null);
     } catch (error) {
-      console.error("Save failed:", error);
+      message.error("Save failed");
     }
   };
 
   if (loading) {
-    return (
-      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
-        <Spin size="large" />
-      </div>
-    );
+    return <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}><Spin size="large" /></div>;
   }
 
   return (
     <TagsProvider>
       <Layout style={{ minHeight: "100vh", background: "#f5f5f5" }}>
-        <Sider
-          width={220}
-          theme="light"
-          style={{
-            position: "fixed", left: 0, top: 0, bottom: 0,
-            height: "100vh", boxShadow: "2px 0 6px rgba(0,0,0,0.03)",
-            zIndex: 10,
-          }}
-        >
+        <Sider width={220} theme="light" style={{ position: "fixed", left: 0, top: 0, bottom: 0, height: "100vh", zIndex: 10 }}>
           <SideBarSection />
         </Sider>
 
         <Layout style={{ marginLeft: 220 }}>
-          <Content style={{ padding: "12px 24px", background: "#f5f5f5" }}>
-            <Button
-              type="text"
-              icon={<ArrowLeftOutlined />}
-              onClick={() => router.push('/dashboard')}
-              style={{ marginBottom: 16, color: "#6b7280", paddingLeft: 0 }}
-            >
+          <Content style={{ padding: "12px 24px" }}>
+            <Button type="text" icon={<ArrowLeftOutlined />} onClick={() => router.push('/dashboard')} style={{ marginBottom: 16, color: "#6b7280" }}>
               {uiText.back}
             </Button>
 
@@ -212,24 +169,18 @@ const ProjectPage: React.FC = () => {
                   members: project.members || [],
                   originalLanguage: project.originalLanguage || "en"
                 }}
-                totalTasks={totalTasks}
-                doneTasks={doneTasks}
+                totalTasks={tasks.length}
+                doneTasks={tasks.filter((t) => t.status?.toUpperCase() === "DONE").length}
               />
             )}
 
-            <FilterBar
-              members={project?.members || []}
-              selectedMembers={selectedMembers}
-              onMembersChange={setSelectedMembers}
-            />
+            <FilterBar members={project?.members || []} selectedMembers={selectedMembers} onMembersChange={setSelectedMembers} tags={[]} selectedTags={[]} onTagsChange={function (val: number[]): void {
+              throw new Error("Function not implemented.");
+            } } />
+            
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
               <Title level={4} style={{ margin: 0 }}>{uiText.boardTitle}</Title>
-              <Button
-                type="primary"
-                icon={<PlusOutlined />}
-                onClick={() => handleAddTask("TODO")}
-                style={{ background: "#6066FF", borderRadius: 8 }}
-              >
+              <Button type="primary" icon={<PlusOutlined />} onClick={() => handleAddTask("TODO")} style={{ background: "#6066FF" }}>
                 {uiText.addTask}
               </Button>
             </div>
@@ -239,11 +190,12 @@ const ProjectPage: React.FC = () => {
                 <KanbanColumn
                   key={col.key}
                   column={col}
-                  tasks={filteredTasks.filter((t) => t.status === col.key)}
+                  tasks={filteredTasks.filter((t) => t.status?.toUpperCase() === col.key.toUpperCase())}
+                  //sprints={sprints} // Ensure KanbanColumn.tsx interface includes sprints!
                   onDragStart={handleDragStart}
                   onDrop={handleDrop}
                   onEdit={handleEditTask}
-                  onDelete={handleDeleteTask}
+                  onDelete={(id) => { apiService.delete(`/tasks/${id}`).then(() => fetchProject()); }}
                   onAddTask={handleAddTask}
                   projectId={Number(projectId)}
                 />

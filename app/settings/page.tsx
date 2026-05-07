@@ -48,21 +48,24 @@ const Settings = (): React.JSX.Element => {
 
   // 1. Fetch User Data
   useEffect(() => {
-    const fetchUser = async () => {
-      try {
-        const currentUser = await api.get<any>(`/users/${id}`);
-        setUser(currentUser);
-        setName(currentUser.name || "");
-        setUsername(currentUser.username || "");
-        
-        // Sync the dropdown with the database preference
-        if (currentUser.language) {
-          setDropdownLanguage(currentUser.language);
-        }
-      } catch (e) { console.error("Failed to fetch user", e); }
-    };
-    if (id) fetchUser();
-  }, [id, api]);
+  const fetchUser = async () => {
+    try {
+      const currentUser = await api.get<any>(`/users/${id}`);
+      setUser(currentUser);
+      setName(currentUser.name || "");
+      setUsername(currentUser.username || "");
+      
+      // Sync the Auto-Translate switch with the DB
+      // We use '?? true' as a fallback just in case the DB returns null
+      setAutoTranslate(currentUser.autoTranslate ?? true);
+      
+      if (currentUser.language) {
+        setDropdownLanguage(currentUser.language);
+      }
+    } catch (e) { console.error(e); }
+  };
+  if (id) fetchUser();
+}, [id, api]);
 
   // 2. DICTIONARY HOOK
   // Watches storedLanguage so the UI reflects the current session's language
@@ -71,14 +74,20 @@ const Settings = (): React.JSX.Element => {
   }, [storedLanguage]);
 
   const handleSave = async () => {
-    const hideLoading = message.loading(ui.successMessage, 0);
-    try {
-      await api.put(`/users/${id}`, {
-        username,
-        name, 
-        password: password || undefined,
-        language: dropdownLanguage // Save the new choice to the DB
-      });
+  const hideLoading = message.loading(ui.successMessage, 0);
+  try {
+    await api.put(`/users/${id}`, {
+      username,
+      name, 
+      password: password || undefined,
+      language: dropdownLanguage,
+      autoTranslate: autoTranslate // Now sending the boolean to the backend
+    });
+    
+    // Crucial: Update the local storage so the Dashboard sees the change instantly
+    localStorage.setItem("autoTranslate", JSON.stringify(autoTranslate));
+    setStoredLanguage(dropdownLanguage);
+    
       
       // Update local storage so the next session uses the new language
       setStoredLanguage(dropdownLanguage);
