@@ -138,7 +138,7 @@ useEffect(() => {
       projectId: Number(form.projectId),
     };
 
-    try {
+ try {
       if (editingId !== null) {
         await api.put(`/sprints/${editingId}`, payload);
         message.success("Sprint updated");
@@ -152,16 +152,28 @@ useEffect(() => {
       setForm(EMPTY_FORM);
       setEditingId(null);
 
+      // --- THE FIX STARTS HERE ---
       const refreshed = await api.get<ApiSprint[]>("/sprints");
-      setSprints(refreshed.map(s => ({
+      
+      // We need to know which projects we are allowed to see
+      // We can use the 'projects' state we already have!
+      const myProjectIds = projects.map(p => p.id);
+
+      const filtered = refreshed.filter(s => 
+        myProjectIds.includes(Number(s.projectId))
+      );
+
+      setSprints(filtered.map(s => ({
         id: s.id,
         name: s.name,
         status: s.sprintStatus,
         startDate: dayjs(s.startTime).format("DD.MM.YYYY"),
         endDate: dayjs(s.endTime).format("DD.MM.YYYY"),
-        projectId: s.projectId,
+        projectId: String(s.projectId),
         projectName: s.projectName
       })));
+      // --- THE FIX ENDS HERE ---
+
     } catch (e) {
       message.error("Failed to save sprint");
     }
