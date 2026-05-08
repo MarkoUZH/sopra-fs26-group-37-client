@@ -17,6 +17,7 @@ interface SprintGetDTO {
   projectName: string;
   totalTasks: number;
   completedTasks: number;
+  memberIds: number[];
 }
 
 export default function ProjectListSection(): React.JSX.Element {
@@ -50,6 +51,8 @@ export default function ProjectListSection(): React.JSX.Element {
   // Fetch logic
   const fetchSprints = async () => {
     try {
+      const storedUser = localStorage.getItem("id");
+      
       const fetchedSprints = await api.get<SprintGetDTO[]>("/sprints");
       const now = new Date();
       // Logic: Only show sprints that have started and haven't ended yet
