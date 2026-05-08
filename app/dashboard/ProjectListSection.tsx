@@ -17,6 +17,14 @@ interface SprintGetDTO {
   projectName: string;
   totalTasks: number;
   completedTasks: number;
+  memberIds: number[];
+}
+
+interface ProjectGetDTO {
+  id: number;
+  projectName: string;
+  // Add other fields from your Java ProjectGetDTO if you need them, 
+  // but 'id' is the critical one for filtering.
 }
 
 export default function ProjectListSection(): React.JSX.Element {
@@ -48,21 +56,44 @@ export default function ProjectListSection(): React.JSX.Element {
   }, [targetLanguage]);
 
   // Fetch logic
-  const fetchSprints = async () => {
-    try {
-      const fetchedSprints = await api.get<SprintGetDTO[]>("/sprints");
-      const now = new Date();
-      // Logic: Only show sprints that have started and haven't ended yet
-      const activeSprints = fetchedSprints.filter((sprint) => {
-        const startDate = new Date(sprint.startTime);
-        const endDate = new Date(sprint.endTime);
-        return startDate <= now && endDate >= now;
-      });
-      setSprints(activeSprints);
-    } catch (e) {
-      console.error("Failed to fetch sprints", e);
-    }
-  };
+ const fetchSprints = async () => {
+  try {
+    // 1. Get the current User ID from storage
+    const userData = localStorage.getItem("id");
+
+
+    // 2. Fetch data in parallel: 
+    // - Sprints from the general endpoint
+    // - Projects specifically for this user
+    const [allSprints, userProjects] = await Promise.all([
+      api.get<SprintGetDTO[]>("/sprints"),
+      api.get<ProjectGetDTO[]>(`/projects/users/${userData}`)
+    ]);
+
+    // 3. Create a list of IDs for projects the user belongs to
+    const myProjectIds = userProjects.map(project => project.id);
+
+    const now = new Date();
+
+    // 4. Perform the Frontend Filter
+    const activeAndMySprints = allSprints.filter((sprint) => {
+      const startDate = new Date(sprint.startTime);
+      const endDate = new Date(sprint.endTime);
+      
+      // Condition A: Time-based (Active now)
+      const isActive = startDate <= now && endDate >= now;
+      
+      // Condition B: Membership-based (Is the sprint's project in my project list?)
+      const isMyProject = myProjectIds.includes(sprint.projectId);
+
+      return isActive && isMyProject;
+    });
+
+    setSprints(activeAndMySprints);
+  } catch (e) {
+    console.error("Failed to fetch or filter sprints", e);
+  }
+};
 
   useEffect(() => {
     fetchSprints();
