@@ -56,40 +56,52 @@ const ManageSprintsModal = ({ open, onClose }: Props): React.JSX.Element | null 
   const api = useApi();
   
   const containerRef = useRef<HTMLDivElement>(null);
+useEffect(() => {
+  if (!open) return;
+  let isMounted = true;
 
-  useEffect(() => {
-    if (!open) return;
-    let isMounted = true;
+  const fetchData = async () => {
+    try {
+      // 1. Get current User ID from storage
+      const userData = localStorage.getItem("id");
 
-    const fetchData = async () => {
-      try {
-        // Explicitly typing the API response in Promise.all
-        const [sprintData, projectData] = await Promise.all([
-          api.get<ApiSprint[]>("/sprints"),
-          api.get<ApiProject[]>("/projects")
-        ]);
 
-        if (!isMounted) return;
+      // 2. Fetch Sprints and only Projects the user is part of
+      const [sprintData, userProjects] = await Promise.all([
+        api.get<ApiSprint[]>("/sprints"),
+        api.get<ApiProject[]>(`/projects/users/${userData}`)
+      ]);
 
-        setProjects(projectData.map(p => ({ id: p.id, name: p.name })));
-        setSprints(sprintData.map((s) => ({
-          id: s.id,
-          name: s.name,
-          status: s.sprintStatus,
-          startDate: dayjs(s.startTime).format("DD.MM.YYYY"),
-          endDate: dayjs(s.endTime).format("DD.MM.YYYY"),
-          projectId: s.projectId,
-          projectName: s.projectName
-        })));
-      } catch (e) {
-        console.error("Failed to fetch data", e);
-      }
-    };
+      if (!isMounted) return;
 
-    fetchData();
-    return () => { isMounted = false; };
-  }, [api, open]);
+      // 3. Create a whitelist of Project IDs
+      const myProjectIds = userProjects.map(p => p.id);
 
+      // 4. Update Project Select Options (User can only pick projects they belong to)
+      setProjects(userProjects.map(p => ({ id: p.id, name: p.name || p.name })));
+
+      // 5. Filter Sprints list to only show sprints belonging to those projects
+      const filteredSprints = sprintData.filter(s => 
+        myProjectIds.includes(Number(s.projectId))
+      );
+
+      setSprints(filteredSprints.map((s) => ({
+        id: s.id,
+        name: s.name,
+        status: s.sprintStatus,
+        startDate: dayjs(s.startTime).format("DD.MM.YYYY"),
+        endDate: dayjs(s.endTime).format("DD.MM.YYYY"),
+        projectId: String(s.projectId),
+        projectName: s.projectName
+      })));
+    } catch (e) {
+      console.error("Failed to fetch filtered management data", e);
+    }
+  };
+
+  fetchData();
+  return () => { isMounted = false; };
+}, [api, open]);
   const calculateStatus = (startDate: string, endDate: string) => {
   if (!startDate || !endDate) return "PLANNED";
   
