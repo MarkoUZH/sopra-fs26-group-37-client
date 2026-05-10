@@ -8,7 +8,7 @@ import ProjectHeader from "@/projects/ProjectHeader";
 import KanbanColumn from "@/projects/KanbanColumn";
 import TaskModal from "@/projects/TaskModal";
 import { KANBAN_COLUMNS, Task, TaskColumn } from "@/projects/taskTypes";
-import { TagsProvider } from "@/dashboard/TagsContext";
+import { TagsProvider, useTags, TagItem } from "@/dashboard/TagsContext";
 import { ApiService } from "@/api/apiService";
 import dayjs from "dayjs";
 import { ProjectDTO, Sprint } from "@/projects/projectTypes";
@@ -18,27 +18,33 @@ import FilterBar from "@/projects/FilterBar";
 const { Content, Sider } = Layout;
 const { Title } = Typography;
 
-const ProjectPage: React.FC = () => {
+const ProjectPageInner: React.FC = () => {
   // 1. Data States
   const [tasks, setTasks] = useState<Task[]>([]);
   const [project, setProject] = useState<ProjectDTO | null>(null);
   const [loading, setLoading] = useState(true);
   const [targetLanguage, setTargetLanguage] = useState("en");
-  
+
   // 2. UI States
   const [modalOpen, setModalOpen] = useState(false);
   const [modalColumn, setModalColumn] = useState<TaskColumn>("TODO");
   const [editingTask, setEditingTask] = useState<Task | null>(null);
 
+  // 3. Filter States
   const [selectedMembers, setSelectedMembers] = useState<number[]>([]);
-  
+  const [selectedTags, setSelectedTags] = useState<number[]>([]);
+  const [selectedSprint, setSelectedSprint] = useState<number | null>(null);
+  const [projectTags, setProjectTags] = useState<TagItem[]>([]);
+  const [sprints, setSprints] = useState<Sprint[]>([]);
+
+  const { getTagsForProject } = useTags();
   const apiService = useMemo(() => new ApiService(), []);
   const dragTaskId = useRef<string | null>(null);
   const params = useParams();
   const router = useRouter();
   const projectId = (params?.id as string) ?? "1";
 
-  // 3. Safe Language Loading (Prevents SSR / Vercel Crash)
+  // 4. Safe Language Loading
   useEffect(() => {
     if (typeof window !== "undefined") {
       const savedLang = localStorage.getItem("language")?.replace(/"/g, '') || "en";
@@ -46,23 +52,19 @@ const ProjectPage: React.FC = () => {
     }
   }, []);
 
-  // 4. Memoized UI Translations
+  // 5. Memoized UI Translations
   const uiText = useMemo(() => ({
     back: getPageTranslation("Back to dashboard", targetLanguage),
     boardTitle: getPageTranslation("Task board", targetLanguage),
     addTask: getPageTranslation("Add Task", targetLanguage),
   }), [targetLanguage]);
 
-  const [sprints, setSprints] = useState<Sprint[]>([]);
-
-  // 5. Data Fetching
+  // 6. Data Fetching
   const fetchProject = useCallback(async () => {
     try {
       const data = await apiService.get<ProjectDTO>(`/projects/${projectId}`);
       setProject(data);
-      if (data.tasks) {
-        setTasks(data.tasks);
-      }
+      if (data.tasks) setTasks(data.tasks);
       setSprints(data.sprints || []);
     } catch (error) {
       console.error("Failed to refresh data:", error);
@@ -74,16 +76,41 @@ const ProjectPage: React.FC = () => {
     fetchProject().finally(() => setLoading(false));
   }, [fetchProject]);
 
-  // 6. Stats Calculation
+  // 7. Load Tags for Project
+  useEffect(() => {
+    const loadTags = async () => {
+      try {
+        const tags = await getTagsForProject(projectId);
+        setProjectTags(tags);
+      } catch (e) {
+        console.error("Failed to load tags", e);
+      }
+    };
+    if (projectId) loadTags();
+  }, [projectId, getTagsForProject]);
+
+  // 8. Stats Calculation
   const totalTasks = tasks.length;
   const doneTasks = tasks.filter((t) => t.status === "DONE").length;
 
-  const filteredTasks = tasks.filter((task) =>
-    selectedMembers.length === 0 ||
-    task.assignedUsers?.some((u) => selectedMembers.includes(u.id))
-  );
+  // 9. Filtered Tasks
+  const filteredTasks = tasks.filter((task) => {
+    const memberMatch =
+      selectedMembers.length === 0 ||
+      task.assignedUsers?.some((u) => selectedMembers.includes(u.id));
 
-  // 7. Event Handlers
+    const tagMatch =
+      selectedTags.length === 0 ||
+      task.tags?.some((t) => selectedTags.includes(t.id));
+
+    const sprintMatch =
+      selectedSprint === null ||
+      Number(task.sprintId) === selectedSprint;
+
+    return memberMatch && tagMatch && sprintMatch;
+  });
+
+  // 10. Event Handlers
   const handleDragStart = (e: React.DragEvent, taskId: number) => {
     dragTaskId.current = taskId.toString();
     e.dataTransfer.effectAllowed = "move";
@@ -92,14 +119,13 @@ const ProjectPage: React.FC = () => {
   const handleDrop = async (e: React.DragEvent, targetStatus: TaskColumn) => {
     e.preventDefault();
     if (!dragTaskId.current) return;
-    
+
     const numericId = Number(dragTaskId.current);
     dragTaskId.current = null;
 
     const taskToUpdate = tasks.find(t => t.id === numericId);
     if (!taskToUpdate || taskToUpdate.status === targetStatus) return;
 
-    // Optimistic Update
     setTasks((prev) =>
       prev.map((t) => (t.id === numericId ? { ...t, status: targetStatus } : t))
     );
@@ -120,7 +146,7 @@ const ProjectPage: React.FC = () => {
       await apiService.put(`/tasks/${numericId}`, postBody);
     } catch (error) {
       console.error("Failed to update task status:", error);
-      fetchProject(); // Revert on failure
+      fetchProject();
     }
   };
 
@@ -161,8 +187,8 @@ const ProjectPage: React.FC = () => {
       } else {
         await apiService.post(`/tasks`, postBody);
       }
-      
-      await fetchProject(); 
+
+      await fetchProject();
       setModalOpen(false);
       setEditingTask(null);
     } catch (error) {
@@ -179,94 +205,105 @@ const ProjectPage: React.FC = () => {
   }
 
   return (
-    <TagsProvider>
-      <Layout style={{ minHeight: "100vh", background: "#f5f5f5" }}>
-        <Sider
-          width={220}
-          theme="light"
-          style={{
-            position: "fixed", left: 0, top: 0, bottom: 0,
-            height: "100vh", boxShadow: "2px 0 6px rgba(0,0,0,0.03)",
-            zIndex: 10,
-          }}
-        >
-          <SideBarSection />
-        </Sider>
+    <Layout style={{ minHeight: "100vh", background: "#f5f5f5" }}>
+      <Sider
+        width={220}
+        theme="light"
+        style={{
+          position: "fixed", left: 0, top: 0, bottom: 0,
+          height: "100vh", boxShadow: "2px 0 6px rgba(0,0,0,0.03)",
+          zIndex: 10,
+        }}
+      >
+        <SideBarSection />
+      </Sider>
 
-        <Layout style={{ marginLeft: 220 }}>
-          <Content style={{ padding: "12px 24px", background: "#f5f5f5" }}>
-            <Button
-              type="text"
-              icon={<ArrowLeftOutlined />}
-              onClick={() => router.push('/dashboard')}
-              style={{ marginBottom: 16, color: "#6b7280", paddingLeft: 0 }}
-            >
-              {uiText.back}
-            </Button>
+      <Layout style={{ marginLeft: 220 }}>
+        <Content style={{ padding: "12px 24px", background: "#f5f5f5" }}>
+          <Button
+            type="text"
+            icon={<ArrowLeftOutlined />}
+            onClick={() => router.push('/dashboard')}
+            style={{ marginBottom: 16, color: "#6b7280", paddingLeft: 0 }}
+          >
+            {uiText.back}
+          </Button>
 
-            {project && (
-              <ProjectHeader
-                project={{
-                  name: project.name,
-                  description: project.description,
-                  members: project.members || [],
-                  originalLanguage: project.originalLanguage || "en"
-                }}
-                totalTasks={totalTasks}
-                doneTasks={doneTasks}
-              />
-            )}
-
-            <FilterBar
-              members={project?.members || []}
-              selectedMembers={selectedMembers}
-              onMembersChange={setSelectedMembers}
+          {project && (
+            <ProjectHeader
+              project={{
+                name: project.name,
+                description: project.description,
+                members: project.members || [],
+                originalLanguage: project.originalLanguage || "en"
+              }}
+              totalTasks={totalTasks}
+              doneTasks={doneTasks}
             />
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
-              <Title level={4} style={{ margin: 0 }}>{uiText.boardTitle}</Title>
-              <Button
-                type="primary"
-                icon={<PlusOutlined />}
-                onClick={() => handleAddTask("TODO")}
-                style={{ background: "#6066FF", borderRadius: 8 }}
-              >
-                {uiText.addTask}
-              </Button>
-            </div>
+          )}
 
-            <div style={{ display: "flex", gap: 16, alignItems: "flex-start", overflowX: "auto", paddingBottom: 24 }}>
-              {KANBAN_COLUMNS.map((col) => (
-                <KanbanColumn
-                  key={col.key}
-                  column={col}
-                  tasks={filteredTasks.filter((t) => t.status === col.key)}
-                  onDragStart={handleDragStart}
-                  onDrop={handleDrop}
-                  onEdit={handleEditTask}
-                  onDelete={handleDeleteTask}
-                  onAddTask={handleAddTask}
-                  projectId={Number(projectId)}
-                />
-              ))}
-            </div>
-          </Content>
-        </Layout>
-
-        {project && (
-          <TaskModal
-            open={modalOpen}
-            initialColumn={modalColumn}
-            editingTask={editingTask}
+          <FilterBar
+            members={project?.members || []}
+            tags={projectTags}
             sprints={sprints}
-            team={project.members || []}
-            onClose={() => { setModalOpen(false); setEditingTask(null); }}
-            onSave={handleSaveTask}
-            projectId={projectId}
+            selectedMembers={selectedMembers}
+            selectedTags={selectedTags}
+            selectedSprint={selectedSprint}
+            onMembersChange={setSelectedMembers}
+            onTagsChange={setSelectedTags}
+            onSprintChange={setSelectedSprint}
           />
-        )}
+
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+            <Title level={4} style={{ margin: 0 }}>{uiText.boardTitle}</Title>
+            <Button
+              type="primary"
+              icon={<PlusOutlined />}
+              onClick={() => handleAddTask("TODO")}
+              style={{ background: "#6066FF", borderRadius: 8 }}
+            >
+              {uiText.addTask}
+            </Button>
+          </div>
+
+          <div style={{ display: "flex", gap: 16, alignItems: "flex-start", overflowX: "auto", paddingBottom: 24 }}>
+            {KANBAN_COLUMNS.map((col) => (
+              <KanbanColumn
+                key={col.key}
+                column={col}
+                tasks={filteredTasks.filter((t) => t.status === col.key)}
+                onDragStart={handleDragStart}
+                onDrop={handleDrop}
+                onEdit={handleEditTask}
+                onDelete={handleDeleteTask}
+                onAddTask={handleAddTask}
+                projectId={Number(projectId)}
+              />
+            ))}
+          </div>
+        </Content>
       </Layout>
-    </TagsProvider>
+
+      {project && (
+        <TaskModal
+          open={modalOpen}
+          initialColumn={modalColumn}
+          editingTask={editingTask}
+          sprints={sprints}
+          team={project.members || []}
+          onClose={() => { setModalOpen(false); setEditingTask(null); }}
+          onSave={handleSaveTask}
+          projectId={projectId}
+        />
+      )}
+    </Layout>
   );
 };
+
+const ProjectPage: React.FC = () => (
+  <TagsProvider>
+    <ProjectPageInner />
+  </TagsProvider>
+);
 
 export default ProjectPage;

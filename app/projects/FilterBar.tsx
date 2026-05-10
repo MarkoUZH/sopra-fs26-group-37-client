@@ -3,26 +3,32 @@ import { FilterOutlined, UserOutlined, TagsOutlined, RocketOutlined } from "@ant
 import { Flex, Select, Typography } from "antd";
 import React from "react";
 import { TagItem } from "@/dashboard/TagsContext";
-import { TeamMember } from "@/projects/projectTypes";
+import { TeamMember, Sprint } from "@/projects/projectTypes";
 
 const { Text } = Typography;
 
 interface FilterBarProps {
   members: TeamMember[];
   tags: TagItem[];
+  sprints: Sprint[];
   selectedMembers: number[];
   selectedTags: number[];
+  selectedSprint: number | null;
   onMembersChange: (val: number[]) => void;
   onTagsChange: (val: number[]) => void;
+  onSprintChange: (val: number | null) => void;
 }
 
 const FilterBar: React.FC<FilterBarProps> = ({
   members,
   tags,
+  sprints,
   selectedMembers,
   selectedTags,
+  selectedSprint,
   onMembersChange,
   onTagsChange,
+  onSprintChange,
 }) => {
   return (
     <div style={{
@@ -62,31 +68,45 @@ const FilterBar: React.FC<FilterBarProps> = ({
           />
         </Flex>
 
-        {/* Tags Filter - placeholder for now */}
+        {/* Tags Filter */}
         <Flex vertical gap={4} style={{ flex: 1 }}>
           <Flex align="center" gap={4}>
             <TagsOutlined style={{ fontSize: 12, color: "#6b7280" }} />
             <span style={{ fontSize: 12, color: "#6b7280" }}>Tags</span>
           </Flex>
           <Select
+            mode="multiple"
+            allowClear
             placeholder=" "
-            disabled
+            value={selectedTags}
+            onChange={onTagsChange}
             style={{ width: "100%" }}
+            maxTagCount="responsive"
             getPopupContainer={(trigger) => trigger.parentElement!}
+            options={tags.map((t) => ({
+              label: t.name,
+              value: t.id,
+            }))}
           />
         </Flex>
 
-        {/* Sprint Filter - placeholder for now */}
+        {/* Sprint Filter */}
         <Flex vertical gap={4} style={{ flex: 1 }}>
           <Flex align="center" gap={4}>
             <RocketOutlined style={{ fontSize: 12, color: "#6b7280" }} />
             <span style={{ fontSize: 12, color: "#6b7280" }}>Sprint</span>
           </Flex>
           <Select
+            allowClear
             placeholder=" "
-            disabled
+            value={selectedSprint ?? undefined}
+            onChange={(val) => onSprintChange(val ?? null)}
             style={{ width: "100%" }}
             getPopupContainer={(trigger) => trigger.parentElement!}
+            options={sprints.map((s) => ({
+              label: s.name,
+              value: s.id,
+            }))}
           />
         </Flex>
       </Flex>
