@@ -28,12 +28,14 @@ const { Title, Text } = Typography;
 
 const Dashboard = (): React.JSX.Element => {
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const { tasks } = useTaskWebSocket();
+  //const { tasks } = useTaskWebSocket();
   const [targetLanguage, setTargetLanguage] = useState("en");
   const apiService = useMemo(() => new ApiService(), []);
   const [sprintUpdateTrigger, setSprintUpdateTrigger] = useState(0);
+  const [tasks, setTasks] = useState<Task[]>([]);
 
-  // 1. Read preferred language from localStorage on mount
+
+    // 1. Read preferred language from localStorage on mount
   useEffect(() => {
     if (typeof window !== "undefined") {
       const savedLang = localStorage.getItem("language");
@@ -172,7 +174,6 @@ const statsData = [
               ))}
             </Row>
             <ProjectListSection />
-            <TaskSummarySection />
             <CreateProjectModal
               open={isModalOpen}
               onClose={() => setIsModalOpen(false)}

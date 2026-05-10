@@ -55,7 +55,6 @@ const ProjectPage: React.FC = () => {
     addTask: getPageTranslation("Add Task", targetLanguage),
   }), [targetLanguage]);
 
-  // 5. Fetch project metadata (members, name, description, sprints)
   const fetchProject = useCallback(async () => {
     try {
       const data = await apiService.get<ProjectDTO>(`/projects/${projectId}`);

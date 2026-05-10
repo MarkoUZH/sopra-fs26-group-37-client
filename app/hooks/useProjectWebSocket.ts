@@ -1,40 +1,69 @@
+import { useState, useEffect } from "react";
 import { Client } from "@stomp/stompjs";
 import SockJS from "sockjs-client";
-import {ProjectDTO} from "@/projects/projectTypes";
-import {useEffect, useState} from "react";
-import {getApiDomain} from "@/utils/domain";
+import {Project, ProjectDTO} from "@/projects/projectTypes";
+import { ApiService } from "@/api/apiService";
+import { getApiDomain } from "@/utils/domain";
 
-export function useProjectWebSocket() {
-    const [projects, setProjects] = useState<ProjectDTO[]>([]);
-    const [status, setStatus] = useState<"connecting"|"open"|"closed">("connecting");
+export function useProjectWebSocket(userId: string | null) {
+    const [projects, setProjects] = useState<Project[]>([]);
+    const [isManager, setIsManager] = useState(false);
+    const [status, setStatus] = useState<"loading" | "ready">("loading");
 
+    // REST seed — runs whenever userId becomes available
     useEffect(() => {
-        const client = new Client({
-            webSocketFactory: () => new SockJS(`${getApiDomain()}/ws/projects`),
-            onConnect: () => {
-                setStatus("open");
+        const id = localStorage.getItem("id");
+        if (!id) return;
 
-                // Subscribe to broadcasts
+        const api = new ApiService();
+        Promise.all([
+            api.get<{ manager: boolean }>(`/users/${id}`),
+            api.get<ProjectDTO[]>(`/projects/users/${id}`),
+        ]).then(([userData, projectData]) => {
+            console.log("projects loaded:", projectData);
+            setIsManager(userData.manager); // add this state back temporarily
+            setProjects(projectData ?? []);
+        });
+    }, []); // re-runs when userId goes from null → "123"
+
+    // WebSocket — real-time updates only, separate from REST
+    useEffect(() => {
+        if (!userId) return;
+
+        const client = new Client({
+            webSocketFactory: () =>
+                new SockJS(`${getApiDomain()}/ws/projects`),
+            onConnect: () => {
                 client.subscribe("/topic/projects", (msg) => {
                     const { type, payload } = JSON.parse(msg.body);
                     switch (type) {
-                        case "projects_snapshot": setProjects(payload); break;
-                        case "project_created":   setProjects(p => [...p, payload]); break;
-                        case "project_updated":   setProjects(p => p.map(x => x.id === payload.id ? payload : x)); break;
-                        case "project_deleted":   setProjects(p => p.filter(x => x.id !== payload.id)); break;
+                        case "project_created":
+                            if ((payload as ProjectDTO).members?.some((m) => String(m.id) === userId)) {
+                                setProjects((prev) => [...prev, payload]);
+                            }
+                            break;
+                        case "project_updated":
+                            setProjects((prev) =>
+                                prev.map((p) => (p.id === payload.id ? payload : p))
+                            );
+                            break;
+                        case "project_deleted":
+                            setProjects((prev) => prev.filter((p) => p.id !== payload.id));
+                            break;
                     }
                 });
-
-                // Request initial snapshot
-                client.publish({ destination: "/app/subscribe_projects", body: "{}" });
+                // Publish so backend registers this client for future broadcasts
+                client.publish({
+                    destination: "/app/subscribe_projects",
+                    body: JSON.stringify({ userId }),
+                });
             },
-            onDisconnect: () => setStatus("closed"),
             reconnectDelay: 3000,
         });
 
         client.activate();
         return () => { client.deactivate(); };
-    }, []);
+    }, [userId]);
 
-    return { projects, status };
+    return { projects, setProjects, isManager, status };
 }

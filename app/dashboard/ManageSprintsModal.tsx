@@ -307,6 +307,7 @@ useEffect(() => {
             <Button type="primary" icon={<PlusOutlined />} onClick={() => { setForm(EMPTY_FORM); setEditingId(null); setShowForm(true); }} style={{ background: "#4f46e5" }}>{t.add}</Button>
           )}
         </Flex>
+        </Flex>
       </div>
     </div>,
     document.body
