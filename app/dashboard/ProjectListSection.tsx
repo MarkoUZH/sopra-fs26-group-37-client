@@ -13,7 +13,27 @@ import { getApiDomain } from "@/utils/domain";
 
 const { Title, Text } = Typography;
 
-const ProjectListSection = (): React.JSX.Element => {
+interface SprintGetDTO {
+  id: number;
+  name: string;
+  sprintStatus: string;
+  startTime: string; 
+  endTime: string;   
+  projectId: number;
+  projectName: string;
+  totalTasks: number;
+  completedTasks: number;
+  memberIds: number[];
+}
+
+interface ProjectGetDTO {
+  id: number;
+  projectName: string;
+  // Add other fields from your Java ProjectGetDTO if you need them, 
+  // but 'id' is the critical one for filtering.
+}
+
+ const ProjectListSection = (): React.JSX.Element => {
     const [userId, setUserId] = useState<string | null>(null);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [selectedProject, setSelectedProject] = useState<ProjectDTO | null>(null);
@@ -21,6 +41,8 @@ const ProjectListSection = (): React.JSX.Element => {
     const [projects, setProjects] = useState<ProjectDTO[]>([]);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [status, setStatus] = useState<"loading" | "ready">("loading");
+    const [sprints, setSprints] = useState<SprintGetDTO[]>([]);
+    const [targetLanguage, setTargetLanguage] = useState("en");
 
     const router = useRouter();
     const api = useMemo(() => new ApiService(), []);
@@ -28,6 +50,78 @@ const ProjectListSection = (): React.JSX.Element => {
     const handleEditClick = (project: ProjectDTO) => {
         setSelectedProject(project);
         setIsEditModalOpen(true);
+  
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const savedLang = localStorage.getItem("language");
+      if (savedLang) {
+        try {
+          setTargetLanguage(JSON.parse(savedLang));
+        } catch {
+          setTargetLanguage(savedLang);
+        }
+      }
+    }
+  }, []);
+
+  const uiText = useMemo(() => {
+    return {
+      activeSprintsTitle: getSprintTranslation("Active Sprints", targetLanguage),
+      projectLabel: getSprintTranslation("Project", targetLanguage),
+      daysRemaining: getSprintTranslation("days remaining", targetLanguage),
+      ended: getSprintTranslation("Ended", targetLanguage),
+      noSprintsText: getSprintTranslation("No active sprints available.", targetLanguage)
+    };
+  }, [targetLanguage]);
+
+  // Fetch logic
+ const fetchSprints = async () => {
+  try {
+    // 1. Get the current User ID from storage
+    const userData = localStorage.getItem("id");
+
+
+    // 2. Fetch data in parallel: 
+    // - Sprints from the general endpoint
+    // - Projects specifically for this user
+    const [allSprints, userProjects] = await Promise.all([
+      api.get<SprintGetDTO[]>("/sprints"),
+      api.get<ProjectGetDTO[]>(`/projects/users/${userData}`)
+    ]);
+
+    // 3. Create a list of IDs for projects the user belongs to
+    const myProjectIds = userProjects.map(project => project.id);
+
+    const now = new Date();
+
+    // 4. Perform the Frontend Filter
+    const activeAndMySprints = allSprints.filter((sprint) => {
+      const startDate = new Date(sprint.startTime);
+      const endDate = new Date(sprint.endTime);
+      
+      // Condition A: Time-based (Active now)
+      const isActive = startDate <= now && endDate >= now;
+      
+      // Condition B: Membership-based (Is the sprint's project in my project list?)
+      const isMyProject = myProjectIds.includes(sprint.projectId);
+
+      return isActive && isMyProject;
+    });
+
+    setSprints(activeAndMySprints);
+  } catch (e) {
+    console.error("Failed to fetch or filter sprints", e);
+  }
+};
+
+  useEffect(() => {
+    fetchSprints();
+
+    const handleRefresh = () => fetchSprints();
+    window.addEventListener("sprintCreated", handleRefresh);
+    
+    return () => {
+      window.removeEventListener("sprintCreated", handleRefresh);
     };
 
     // 1. Read userId from localStorage after mount
