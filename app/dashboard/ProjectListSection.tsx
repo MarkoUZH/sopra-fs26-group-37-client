@@ -14,26 +14,29 @@ import { getApiDomain } from "@/utils/domain";
 const { Title, Text } = Typography;
 
 interface SprintGetDTO {
-  id: number;
-  name: string;
-  sprintStatus: string;
-  startTime: string; 
-  endTime: string;   
-  projectId: number;
-  projectName: string;
-  totalTasks: number;
-  completedTasks: number;
-  memberIds: number[];
+    id: number;
+    name: string;
+    sprintStatus: string;
+    startTime: string;
+    endTime: string;
+    projectId: number;
+    projectName: string;
+    totalTasks: number;
+    completedTasks: number;
+    memberIds: number[];
 }
 
 interface ProjectGetDTO {
-  id: number;
-  projectName: string;
-  // Add other fields from your Java ProjectGetDTO if you need them, 
-  // but 'id' is the critical one for filtering.
+    id: number;
+    projectName: string;
 }
 
- const ProjectListSection = (): React.JSX.Element => {
+// Stub — replace with your real implementation
+function getSprintTranslation(text: string, _lang: string): string {
+    return text;
+}
+
+const ProjectListSection = (): React.JSX.Element => {
     const [userId, setUserId] = useState<string | null>(null);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [selectedProject, setSelectedProject] = useState<ProjectDTO | null>(null);
@@ -47,89 +50,79 @@ interface ProjectGetDTO {
     const router = useRouter();
     const api = useMemo(() => new ApiService(), []);
 
+    // FIX 1: handleEditClick is now a proper standalone function
     const handleEditClick = (project: ProjectDTO) => {
         setSelectedProject(project);
         setIsEditModalOpen(true);
-  
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      const savedLang = localStorage.getItem("language");
-      if (savedLang) {
-        try {
-          setTargetLanguage(JSON.parse(savedLang));
-        } catch {
-          setTargetLanguage(savedLang);
+    };
+
+    useEffect(() => {
+        if (typeof window !== "undefined") {
+            const savedLang = localStorage.getItem("language");
+            if (savedLang) {
+                try {
+                    setTargetLanguage(JSON.parse(savedLang));
+                } catch {
+                    setTargetLanguage(savedLang);
+                }
+            }
         }
-      }
-    }
-  }, []);
+    }, []);
 
-  const uiText = useMemo(() => {
-    return {
-      activeSprintsTitle: getSprintTranslation("Active Sprints", targetLanguage),
-      projectLabel: getSprintTranslation("Project", targetLanguage),
-      daysRemaining: getSprintTranslation("days remaining", targetLanguage),
-      ended: getSprintTranslation("Ended", targetLanguage),
-      noSprintsText: getSprintTranslation("No active sprints available.", targetLanguage)
-    };
-  }, [targetLanguage]);
+    const uiText = useMemo(() => {
+        return {
+            activeSprintsTitle: getSprintTranslation("Active Sprints", targetLanguage),
+            projectLabel: getSprintTranslation("Project", targetLanguage),
+            daysRemaining: getSprintTranslation("days remaining", targetLanguage),
+            ended: getSprintTranslation("Ended", targetLanguage),
+            noSprintsText: getSprintTranslation("No active sprints available.", targetLanguage),
+        };
+    }, [targetLanguage]);
 
-  // Fetch logic
- const fetchSprints = async () => {
-  try {
-    // 1. Get the current User ID from storage
-    const userData = localStorage.getItem("id");
+    const fetchSprints = async () => {
+        try {
+            const userData = localStorage.getItem("id");
 
+            const [allSprints, userProjects] = await Promise.all([
+                api.get<SprintGetDTO[]>("/sprints"),
+                api.get<ProjectGetDTO[]>(`/projects/users/${userData}`),
+            ]);
 
-    // 2. Fetch data in parallel: 
-    // - Sprints from the general endpoint
-    // - Projects specifically for this user
-    const [allSprints, userProjects] = await Promise.all([
-      api.get<SprintGetDTO[]>("/sprints"),
-      api.get<ProjectGetDTO[]>(`/projects/users/${userData}`)
-    ]);
+            const myProjectIds = userProjects.map((project) => project.id);
+            const now = new Date();
 
-    // 3. Create a list of IDs for projects the user belongs to
-    const myProjectIds = userProjects.map(project => project.id);
+            const activeAndMySprints = allSprints.filter((sprint) => {
+                const startDate = new Date(sprint.startTime);
+                const endDate = new Date(sprint.endTime);
+                const isActive = startDate <= now && endDate >= now;
+                const isMyProject = myProjectIds.includes(sprint.projectId);
+                return isActive && isMyProject;
+            });
 
-    const now = new Date();
-
-    // 4. Perform the Frontend Filter
-    const activeAndMySprints = allSprints.filter((sprint) => {
-      const startDate = new Date(sprint.startTime);
-      const endDate = new Date(sprint.endTime);
-      
-      // Condition A: Time-based (Active now)
-      const isActive = startDate <= now && endDate >= now;
-      
-      // Condition B: Membership-based (Is the sprint's project in my project list?)
-      const isMyProject = myProjectIds.includes(sprint.projectId);
-
-      return isActive && isMyProject;
-    });
-
-    setSprints(activeAndMySprints);
-  } catch (e) {
-    console.error("Failed to fetch or filter sprints", e);
-  }
-};
-
-  useEffect(() => {
-    fetchSprints();
-
-    const handleRefresh = () => fetchSprints();
-    window.addEventListener("sprintCreated", handleRefresh);
-    
-    return () => {
-      window.removeEventListener("sprintCreated", handleRefresh);
+            setSprints(activeAndMySprints);
+        } catch (e) {
+            console.error("Failed to fetch or filter sprints", e);
+        }
     };
 
-    // 1. Read userId from localStorage after mount
+    // FIX 2: fetchSprints effect is now its own top-level useEffect
+    useEffect(() => {
+        fetchSprints();
+
+        const handleRefresh = () => fetchSprints();
+        window.addEventListener("sprintCreated", handleRefresh);
+
+        return () => {
+            window.removeEventListener("sprintCreated", handleRefresh);
+        };
+    }, []);
+
+    // FIX 3: userId effect is now a proper top-level useEffect
     useEffect(() => {
         setUserId(localStorage.getItem("id"));
     }, []);
 
-    // 2. REST seed — runs when userId becomes available
+    // FIX 4: seed/REST effect is now a proper top-level useEffect
     useEffect(() => {
         if (!userId) return;
 
@@ -151,13 +144,12 @@ interface ProjectGetDTO {
         seed();
     }, [userId, api]);
 
-    // 3. WebSocket — real-time updates only, no snapshot handling
+    // FIX 5: WebSocket effect is now a proper top-level useEffect
     useEffect(() => {
         if (!userId) return;
 
         const client = new Client({
-            webSocketFactory: () =>
-                new SockJS(`${getApiDomain()}/ws/projects`),
+            webSocketFactory: () => new SockJS(`${getApiDomain()}/ws/projects`),
             onConnect: () => {
                 client.subscribe("/topic/projects", (msg) => {
                     const { type, payload } = JSON.parse(msg.body);
@@ -168,9 +160,7 @@ interface ProjectGetDTO {
                             }
                             break;
                         case "project_updated":
-                            setProjects((prev) =>
-                                prev.map((p) => (p.id === payload.id ? payload : p))
-                            );
+                            setProjects((prev) => prev.map((p) => (p.id === payload.id ? payload : p)));
                             break;
                         case "project_deleted":
                             setProjects((prev) => prev.filter((p) => p.id !== payload.id));
@@ -186,15 +176,27 @@ interface ProjectGetDTO {
         });
 
         client.activate();
-        return () => { client.deactivate(); };
+        return () => {
+            client.deactivate();
+        };
     }, [userId]);
 
     return (
-        <Card style={{ borderRadius: 12, width: "100%", background: "#ffffff", boxShadow: "0 1px 2px 0 rgba(0, 0, 0, 0.03), 0 1px 6px -1px rgba(0, 0, 0, 0.02), 0 2px 4px 0 rgba(0, 0, 0, 0.02)" }}>
+        <Card
+            style={{
+                borderRadius: 12,
+                width: "100%",
+                background: "#ffffff",
+                boxShadow:
+                    "0 1px 2px 0 rgba(0, 0, 0, 0.03), 0 1px 6px -1px rgba(0, 0, 0, 0.02), 0 2px 4px 0 rgba(0, 0, 0, 0.02)",
+            }}
+        >
             <Flex justify="space-between" align="center" style={{ marginBottom: 16 }}>
                 <Flex align="center" gap={8}>
                     <FolderOutlined style={{ fontSize: 20 }} />
-                    <Title level={4} style={{ margin: 0 }}>Projects</Title>
+                    <Title level={4} style={{ margin: 0 }}>
+                        Projects
+                    </Title>
                 </Flex>
                 {isManager && (
                     <Button type="primary" icon={<PlusOutlined />} onClick={() => setIsModalOpen(true)}>
@@ -206,20 +208,31 @@ interface ProjectGetDTO {
             <Row gutter={[16, 16]}>
                 {projects.map((project) => {
                     const totalTasks = project.tasks?.length || 0;
-                    const completedTasks = project.tasks?.filter(t => t.status === "DONE").length || 0;
-                    const inProgressTasks = project.tasks?.filter(t => t.status === "IN_PROGRESS").length || 0;
+                    const completedTasks = project.tasks?.filter((t) => t.status === "DONE").length || 0;
+                    const inProgressTasks = project.tasks?.filter((t) => t.status === "IN_PROGRESS").length || 0;
                     const percentage = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
 
                     return (
                         <Col xs={24} sm={12} lg={8} key={project.id} style={{ display: "flex" }}>
-                            <Card size="small" style={{ borderRadius: 12, width: "100%", display: "flex", flexDirection: "column" }}>
+                            <Card
+                                size="small"
+                                style={{ borderRadius: 12, width: "100%", display: "flex", flexDirection: "column" }}
+                            >
                                 <Flex justify="space-between" align="center">
-                                    <Title level={5} style={{ margin: 0 }}>{project.name}</Title>
+                                    <Title level={5} style={{ margin: 0 }}>
+                                        {project.name}
+                                    </Title>
                                     <Flex gap={8} align="center">
                                         {isManager && (
                                             <Dropdown
                                                 menu={{
-                                                    items: [{ key: "edit", label: "Edit Project", onClick: () => handleEditClick(project) }],
+                                                    items: [
+                                                        {
+                                                            key: "edit",
+                                                            label: "Edit Project",
+                                                            onClick: () => handleEditClick(project),
+                                                        },
+                                                    ],
                                                 }}
                                                 trigger={["click"]}
                                             >
@@ -238,7 +251,9 @@ interface ProjectGetDTO {
                                 </Text>
 
                                 <Flex justify="space-between" align="center">
-                                    <Text style={{ color: "#4A5565" }}>{completedTasks}/{totalTasks} tasks</Text>
+                                    <Text style={{ color: "#4A5565" }}>
+                                        {completedTasks}/{totalTasks} tasks
+                                    </Text>
                                     <Text style={{ color: "#4A5565" }}>{percentage}%</Text>
                                 </Flex>
 
@@ -257,9 +272,7 @@ interface ProjectGetDTO {
 
             {projects.length === 0 && (
                 <Flex justify="center" style={{ padding: "20px" }}>
-                    <Text type="secondary">
-                        {status === "loading" ? "Loading…" : "No projects found."}
-                    </Text>
+                    <Text type="secondary">{status === "loading" ? "Loading…" : "No projects found."}</Text>
                 </Flex>
             )}
 
@@ -268,7 +281,10 @@ interface ProjectGetDTO {
                 <EditProjectModal
                     open={isEditModalOpen}
                     project={selectedProject}
-                    onClose={() => { setIsEditModalOpen(false); setSelectedProject(null); }}
+                    onClose={() => {
+                        setIsEditModalOpen(false);
+                        setSelectedProject(null);
+                    }}
                 />
             )}
         </Card>

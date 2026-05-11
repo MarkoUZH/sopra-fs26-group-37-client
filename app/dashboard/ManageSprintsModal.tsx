@@ -309,7 +309,6 @@ useEffect(() => {
             )}
           </Flex>
         </Flex>
-        </Flex>
       </div>
     </div>,
     document.body
