@@ -82,7 +82,6 @@ const EditProjectModal = ({ open, onClose, project }: Props): React.JSX.Element 
 
       await api.put(`/projects/${project.id}`, projectData);
       onClose();
-      window.location.reload();
     } catch (error) {
       console.error("Failed to update project:", error);
       alert(uiText.errorMsg);

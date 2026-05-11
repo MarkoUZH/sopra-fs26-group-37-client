@@ -57,7 +57,6 @@ const [selectValue, setSelectValue] = useState<number | null>(null);
 
       await api.put(`/projects/${project.id}`, projectData);
       onClose();
-      window.location.reload(); 
     } catch (error) {
       console.error("Failed to update project:", error);
     }

@@ -13,32 +13,34 @@ import { ApiService } from "@/api/apiService";
 import dayjs from "dayjs";
 import { ProjectDTO, Sprint } from "@/projects/projectTypes";
 import { getPageTranslation } from "@/utils/dictionary_projectPage";
+import { useTaskWebSocket } from "@/hooks/useTaskWebSocket";
 import FilterBar from "@/projects/FilterBar";
 
 const { Content, Sider } = Layout;
 const { Title } = Typography;
 
 const ProjectPage: React.FC = () => {
-  // 1. Data States
-  const [tasks, setTasks] = useState<Task[]>([]);
-  const [project, setProject] = useState<ProjectDTO | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [targetLanguage, setTargetLanguage] = useState("en");
-  
-  // 2. UI States
-  const [modalOpen, setModalOpen] = useState(false);
-  const [modalColumn, setModalColumn] = useState<TaskColumn>("TODO");
-  const [editingTask, setEditingTask] = useState<Task | null>(null);
-
-  const [selectedMembers, setSelectedMembers] = useState<number[]>([]);
-  
-  const apiService = useMemo(() => new ApiService(), []);
-  const dragTaskId = useRef<string | null>(null);
   const params = useParams();
   const router = useRouter();
   const projectId = (params?.id as string) ?? "1";
 
-  // 3. Safe Language Loading (Prevents SSR / Vercel Crash)
+  // 1. Data States
+  const [project, setProject] = useState<ProjectDTO | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [targetLanguage, setTargetLanguage] = useState("en");
+  const [sprints, setSprints] = useState<Sprint[]>([]);
+  const { tasks, setTasks, status } = useTaskWebSocket(projectId);
+
+  // 2. UI States
+  const [modalOpen, setModalOpen] = useState(false);
+  const [modalColumn, setModalColumn] = useState<TaskColumn>("TODO");
+  const [editingTask, setEditingTask] = useState<Task | null>(null);
+  const [selectedMembers, setSelectedMembers] = useState<number[]>([]);
+
+  const apiService = useMemo(() => new ApiService(), []);
+  const dragTaskId = useRef<string | null>(null);
+
+  // 3. Language Loading
   useEffect(() => {
     if (typeof window !== "undefined") {
       const savedLang = localStorage.getItem("language")?.replace(/"/g, '') || "en";
@@ -53,28 +55,26 @@ const ProjectPage: React.FC = () => {
     addTask: getPageTranslation("Add Task", targetLanguage),
   }), [targetLanguage]);
 
-  const [sprints, setSprints] = useState<Sprint[]>([]);
-
-  // 5. Data Fetching
   const fetchProject = useCallback(async () => {
     try {
       const data = await apiService.get<ProjectDTO>(`/projects/${projectId}`);
       setProject(data);
-      if (data.tasks) {
+      setSprints(data.sprints || []);
+
+      if (data.tasks && data.tasks.length > 0) {
         setTasks(data.tasks);
       }
-      setSprints(data.sprints || []);
     } catch (error) {
-      console.error("Failed to refresh data:", error);
+      console.error("Failed to fetch project:", error);
     }
-  }, [apiService, projectId]);
+  }, [apiService, projectId, setTasks]);
 
   useEffect(() => {
     setLoading(true);
     fetchProject().finally(() => setLoading(false));
   }, [fetchProject]);
 
-  // 6. Stats Calculation
+  // 6. Stats
   const totalTasks = tasks.length;
   const doneTasks = tasks.filter((t) => t.status === "DONE").length;
 
@@ -83,7 +83,7 @@ const ProjectPage: React.FC = () => {
     task.assignedUsers?.some((u) => selectedMembers.includes(u.id))
   );
 
-  // 7. Event Handlers
+  // 7. Drag & Drop
   const handleDragStart = (e: React.DragEvent, taskId: number) => {
     dragTaskId.current = taskId.toString();
     e.dataTransfer.effectAllowed = "move";
@@ -92,41 +92,47 @@ const ProjectPage: React.FC = () => {
   const handleDrop = async (e: React.DragEvent, targetStatus: TaskColumn) => {
     e.preventDefault();
     if (!dragTaskId.current) return;
-    
+
     const numericId = Number(dragTaskId.current);
     dragTaskId.current = null;
 
-    const taskToUpdate = tasks.find(t => t.id === numericId);
+    const taskToUpdate = tasks.find((t) => t.id === numericId);
     if (!taskToUpdate || taskToUpdate.status === targetStatus) return;
 
-    // Optimistic Update
+    // Optimistic update — WebSocket will confirm with task_updated broadcast
     setTasks((prev) =>
       prev.map((t) => (t.id === numericId ? { ...t, status: targetStatus } : t))
     );
 
     try {
-      const postBody = {
+      await apiService.put(`/tasks/${numericId}`, {
         name: taskToUpdate.name,
         description: taskToUpdate.description,
         priority: taskToUpdate.priority,
         status: targetStatus,
-        dueDate: taskToUpdate.dueDate ? dayjs(taskToUpdate.dueDate).format("YYYY-MM-DDTHH:mm:ss") : null,
+        dueDate: taskToUpdate.dueDate
+          ? dayjs(taskToUpdate.dueDate).format("YYYY-MM-DDTHH:mm:ss")
+          : null,
         timeEstimate: taskToUpdate.timeEstimate,
-        tagIds: taskToUpdate.tags?.map(t => t.id) || [],
-        assignedUserIds: taskToUpdate.assignedUsers?.map(u => u.id) || [],
+        tagIds: taskToUpdate.tags?.map((t) => t.id) || [],
+        assignedUserIds: taskToUpdate.assignedUsers?.map((u) => u.id) || [],
         projectId: Number(projectId),
-      };
-
-      await apiService.put(`/tasks/${numericId}`, postBody);
+      });
     } catch (error) {
       console.error("Failed to update task status:", error);
-      fetchProject(); // Revert on failure
+      // Revert optimistic update on failure
+      setTasks((prev) =>
+        prev.map((t) =>
+          t.id === numericId ? { ...t, status: taskToUpdate.status } : t
+        )
+      );
     }
   };
 
+  // 8. Modal helpers
   const handleAddTask = (column: TaskColumn) => {
-    setEditingTask(null);
     setModalColumn(column);
+    setEditingTask(null);
     setModalOpen(true);
   };
 
@@ -136,11 +142,7 @@ const ProjectPage: React.FC = () => {
     setModalOpen(true);
   };
 
-  const handleDeleteTask = (taskId: number) => {
-    setTasks((prev) => prev.filter((t) => t.id !== taskId));
-    apiService.delete(`/tasks/${taskId}`);
-  };
-
+  // 9. Save Task (create or update) — REST only, WebSocket broadcasts back
   const handleSaveTask = async (taskData: Omit<Task, "id">) => {
     try {
       const postBody = {
@@ -148,10 +150,12 @@ const ProjectPage: React.FC = () => {
         description: taskData.description,
         priority: taskData.priority,
         status: taskData.status,
-        dueDate: taskData.dueDate ? dayjs(taskData.dueDate).format("YYYY-MM-DDTHH:mm:ss") : null,
+        dueDate: taskData.dueDate
+          ? dayjs(taskData.dueDate).format("YYYY-MM-DDTHH:mm:ss")
+          : null,
         timeEstimate: taskData.timeEstimate,
-        tagIds: taskData.tags?.map(t => t.id) || [],
-        assignedUserIds: taskData.assignedUsers?.map(u => u.id) || [],
+        tagIds: taskData.tags?.map((t) => t.id) || [],
+        assignedUserIds: taskData.assignedUsers?.map((u) => u.id) || [],
         projectId: Number(projectId),
         sprintId: taskData.sprintId,
       };
@@ -161,8 +165,7 @@ const ProjectPage: React.FC = () => {
       } else {
         await apiService.post(`/tasks`, postBody);
       }
-      
-      await fetchProject(); 
+
       setModalOpen(false);
       setEditingTask(null);
     } catch (error) {
@@ -170,9 +173,18 @@ const ProjectPage: React.FC = () => {
     }
   };
 
+  // 10. Delete Task — REST only, WebSocket broadcasts back
+  const handleDeleteTask = async (taskId: number) => {
+    try {
+      await apiService.delete(`/tasks/${taskId}`);
+    } catch (error) {
+      console.error("Delete failed:", error);
+    }
+  };
+
   if (loading) {
     return (
-      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+      <div style={{ display: "flex", justifyContent: "center", alignItems: "center", height: "100vh" }}>
         <Spin size="large" />
       </div>
     );
@@ -198,7 +210,7 @@ const ProjectPage: React.FC = () => {
             <Button
               type="text"
               icon={<ArrowLeftOutlined />}
-              onClick={() => router.push('/dashboard')}
+              onClick={() => router.push("/dashboard")}
               style={{ marginBottom: 16, color: "#6b7280", paddingLeft: 0 }}
             >
               {uiText.back}
@@ -210,7 +222,7 @@ const ProjectPage: React.FC = () => {
                   name: project.name,
                   description: project.description,
                   members: project.members || [],
-                  originalLanguage: project.originalLanguage || "en"
+                  originalLanguage: project.originalLanguage || "en",
                 }}
                 totalTasks={totalTasks}
                 doneTasks={doneTasks}
@@ -222,6 +234,7 @@ const ProjectPage: React.FC = () => {
               selectedMembers={selectedMembers}
               onMembersChange={setSelectedMembers}
             />
+
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
               <Title level={4} style={{ margin: 0 }}>{uiText.boardTitle}</Title>
               <Button

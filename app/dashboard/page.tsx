@@ -10,7 +10,6 @@ import {
 import { Card, Col, Layout, Row, Typography } from "antd";
 import React from "react";
 import { TagsProvider } from "@/dashboard/TagsContext";
-
 // --- DICTIONARY IMPORT ---
 import { getTranslation } from "@/utils/dictionary_top_section";
 
@@ -21,6 +20,7 @@ import TaskSummarySection from "./TaskSummarySection";
 import CreateProjectModal from "./CreateProjectModal";
 import { ApiService } from "@/api/apiService";
 import { Task } from "@/projects/taskTypes";
+import {useTaskWebSocket} from "@/hooks/useTaskWebSocket";
 // ------------------------------
 
 const { Content, Sider } = Layout;
@@ -28,12 +28,14 @@ const { Title, Text } = Typography;
 
 const Dashboard = (): React.JSX.Element => {
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [tasks, setTasks] = useState<Task[]>([]);
+  //const { tasks } = useTaskWebSocket();
   const [targetLanguage, setTargetLanguage] = useState("en");
   const apiService = useMemo(() => new ApiService(), []);
   const [sprintUpdateTrigger, setSprintUpdateTrigger] = useState(0);
+  const [tasks, setTasks] = useState<Task[]>([]);
 
-  // 1. Read preferred language from localStorage on mount
+
+    // 1. Read preferred language from localStorage on mount
   useEffect(() => {
     if (typeof window !== "undefined") {
       const savedLang = localStorage.getItem("language");
@@ -107,6 +109,7 @@ const statsData = [
     value: userTasks.filter((t) => t.status === "DONE").length.toString(),
     label: uiText.completed,
   },
+
     {
       icon: <ThunderboltOutlined style={{ fontSize: 24, color: "#fff" }} />,
       iconBg: "#ad46ff",
@@ -171,7 +174,6 @@ const statsData = [
               ))}
             </Row>
             <ProjectListSection />
-            <TaskSummarySection />
             <CreateProjectModal
               open={isModalOpen}
               onClose={() => setIsModalOpen(false)}
