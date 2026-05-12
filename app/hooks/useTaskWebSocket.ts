@@ -1,43 +1,26 @@
-import { useState, useEffect } from "react";
+import { useEffect } from "react";
 import { Client } from "@stomp/stompjs";
 import SockJS from "sockjs-client";
 import { Task } from "@/projects/taskTypes";
-import { ApiService } from "@/api/apiService";
 import { getApiDomain } from "@/utils/domain";
 
-export function useTaskWebSocket(projectId: string | number) {
-    const [tasks, setTasks] = useState<Task[]>([]);
-    const [status, setStatus] = useState<"loading" | "ready">("loading");
 
+export function useTaskWebSocket(
+    projectId: string | number,
+    setTasks: React.Dispatch<React.SetStateAction<Task[]>>
+) {
     useEffect(() => {
         if (!projectId) return;
-        const api = new ApiService();
 
-        // 1. REST — initial load on mount/refresh
-        const seed = async () => {
-            try {
-                const data = await api.get<{ tasks: Task[] }>(`/projects/${projectId}`);
-                setTasks(data.tasks ?? []);
-            } catch (e) {
-                console.error("Initial task fetch failed:", e);
-            } finally {
-                setStatus("ready");
-            }
-        };
-
-        seed();
-
-        // 2. WebSocket — real-time updates after initial load
         const client = new Client({
-            webSocketFactory: () =>
-                new SockJS(`${getApiDomain()}/ws/tasks`),
+            webSocketFactory: () => new SockJS(`${getApiDomain()}/ws/tasks`),
             onConnect: () => {
                 client.subscribe("/topic/tasks", (msg) => {
                     const { type, payload } = JSON.parse(msg.body);
                     switch (type) {
-                        // Ignore snapshot — REST already seeded state
                         case "task_created":
-                            if (String((payload as any).projectId) === String(projectId)) {
+                            // Only add if it belongs to this project
+                            if (String(payload?.projectId ?? payload?.project?.id) === String(projectId)) {
                                 setTasks((prev) => [...prev, payload]);
                             }
                             break;
@@ -56,13 +39,12 @@ export function useTaskWebSocket(projectId: string | number) {
                     body: JSON.stringify({ projectId }),
                 });
             },
-            onDisconnect: () => {},
             reconnectDelay: 3000,
         });
 
         client.activate();
-        return () => { client.deactivate(); };
-    }, [projectId]);
-
-    return { tasks, setTasks, status };
+        return () => {
+            client.deactivate();
+        };
+    }, [projectId, setTasks]);
 }

@@ -15,7 +15,7 @@ import { Avatar, Button, DatePicker, Flex, Input, InputNumber, Select, Typograph
 import dayjs from "dayjs";
 import { TeamMember } from "@/projects/projectTypes";
 import { Task, TaskColumn } from "@/projects/taskTypes";
-import { useTags } from "@/dashboard/TagsContext";
+import {TagItem, useTags} from "@/dashboard/TagsContext";
 import { getModalTranslation } from "@/utils/dictionary_task_modal";
 
 const { Title, Text } = Typography;
@@ -43,7 +43,7 @@ const TaskModal: React.FC<TaskModalProps> = ({
 }) => {
   const { getTagsForProject } = useTags();
   const [targetLanguage, setTargetLanguage] = useState("en");
-  const [availableTags, setAvailableTags] = useState<any[]>([]);
+  const [availableTags, setAvailableTags] = useState<TagItem[]>([]);
   
   const [form, setForm] = useState({
     name: "",
@@ -104,7 +104,7 @@ const TaskModal: React.FC<TaskModalProps> = ({
           dueDate: editingTask.dueDate ? dayjs(editingTask.dueDate) : null,
           timeEstimate: editingTask.timeEstimate?.toString() ?? "",
           // Normalize to strings for the Select matcher
-          tags: editingTask.tags?.map((t: any) => String(t.name)) ?? [],
+          tags: editingTask.tags?.map((t) => String(t.name)) ?? [],
           sprintId: editingTask.sprintId ? Number(editingTask.sprintId) : undefined,
         });
       } else {
@@ -122,7 +122,7 @@ const TaskModal: React.FC<TaskModalProps> = ({
     if (!form.name.trim()) return;
     
     const projectTags = await getTagsForProject(projectId);
-    const selectedTags = projectTags.filter((t: any) => form.tags.includes(t.name));
+    const selectedTags = projectTags.filter((t: TagItem) => form.tags.includes(t.name));
 
     onSave({
       name: form.name,

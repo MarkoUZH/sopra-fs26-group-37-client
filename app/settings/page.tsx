@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import useLocalStorage from "@/hooks/useLocalStorage";
 import { useApi } from "@/hooks/useApi";
 import { getSettingsTranslation } from "@/utils/dictionary_settings";
+import {User} from "@/types/user";
 
 const { Title, Text } = Typography;
 
@@ -37,7 +38,7 @@ const Settings = (): React.JSX.Element => {
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
   const [username, setUsername] = useState("");
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<User>(null);
   
   const { value: id, clear: clearId } = useLocalStorage<string>("id", "");
   const { clear: clearToken } = useLocalStorage<string>("token", "");
@@ -50,7 +51,7 @@ const Settings = (): React.JSX.Element => {
   useEffect(() => {
     const fetchUser = async () => {
       try {
-        const currentUser = await api.get<any>(`/users/${id}`);
+        const currentUser = await api.get<User>(`/users/${id}`);
         setUser(currentUser);
         setName(currentUser.name || "");
         setUsername(currentUser.username || "");
