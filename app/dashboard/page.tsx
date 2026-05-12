@@ -190,6 +190,7 @@ const Dashboard = (): React.JSX.Element => {
               open={isModalOpen}
               onClose={() => setIsModalOpen(false)}
             />
+            <TaskSummarySection />
           </Content>
         </Layout>
       </Layout>
