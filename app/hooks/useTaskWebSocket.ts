@@ -4,13 +4,7 @@ import SockJS from "sockjs-client";
 import { Task } from "@/projects/taskTypes";
 import { getApiDomain } from "@/utils/domain";
 
-/**
- * Handles WebSocket live-updates for tasks only.
- * REST seeding is the caller's responsibility (ProjectPage.fetchProject).
- *
- * @param projectId - filters task_created events to this project
- * @param setTasks  - the useState setter from the parent component
- */
+
 export function useTaskWebSocket(
     projectId: string | number,
     setTasks: React.Dispatch<React.SetStateAction<Task[]>>
@@ -26,7 +20,7 @@ export function useTaskWebSocket(
                     switch (type) {
                         case "task_created":
                             // Only add if it belongs to this project
-                            if (String((payload as Task).project.id) === String(projectId)) {
+                            if (String(payload?.projectId ?? payload?.project?.id) === String(projectId)) {
                                 setTasks((prev) => [...prev, payload]);
                             }
                             break;
