@@ -104,17 +104,27 @@ useEffect(() => {
 }, [targetLanguage, projects, translateText]);
 
   // 4. Fetch Projects
-    useEffect(() => {
-        const fetchUserRole = async () => {
-            const userId = localStorage.getItem("id");
-            if (!userId) return;
-            try {
-                const userData = await api.get<{ manager: boolean }>(`/users/${userId}`);
-                setIsManager(userData.manager);
-            } catch (error) { console.error("User fetch error:", error); }
-        };
-        fetchUserRole();
-    }, [api]);
+ useEffect(() => {
+    let isMounted = true;
+    const fetchProjects = async () => {
+      const userId = localStorage.getItem("id");
+      if (!userId) return;
+      try {
+        const userData = await api.get<{ manager: boolean }>(`/users/${userId}`);
+        const data = await api.get<ProjectDTO[]>(`/projects/users/${userId}`);
+        if (isMounted) {
+          setIsManager(userData.manager);
+          setProjects(data || []);
+          if (targetLanguage === "en") setDisplayProjects(data || []);
+        }
+      } catch (error) {
+        console.error("Fetch Error:", error);
+      }
+    };
+    fetchProjects();
+    return () => { isMounted = false; };
+  }, [api]);
+
 
     // WebSocket for projects
     useEffect(() => {

@@ -4,9 +4,11 @@ import { Button, Card, Col, Dropdown, Flex, Progress, Row, Typography } from "an
 import React, { useEffect, useState, useMemo } from "react";
 import { Client } from "@stomp/stompjs";
 import SockJS from "sockjs-client";
+import { AimOutlined } from "@ant-design/icons";
 import { ApiService } from "@/api/apiService";
 import CreateProjectModal from "./CreateProjectModal";
 import EditProjectModal from "./EditProjectModal";
+import { getSprintTranslation } from "@/utils/dictionary_sprints";
 import { useRouter } from "next/navigation";
 import { ProjectDTO } from "@/projects/projectTypes";
 import { getApiDomain } from "@/utils/domain";
@@ -31,10 +33,7 @@ interface ProjectGetDTO {
     projectName: string;
 }
 
-// Stub — replace with your real implementation
-function getSprintTranslation(text: string, _lang: string): string {
-    return text;
-}
+
 
 const ProjectListSection = (): React.JSX.Element => {
     const [userId, setUserId] = useState<string | null>(null);
@@ -69,16 +68,28 @@ const ProjectListSection = (): React.JSX.Element => {
         }
     }, []);
 
-    const uiText = useMemo(() => {
-        return {
-            activeSprintsTitle: getSprintTranslation("Active Sprints", targetLanguage),
-            projectLabel: getSprintTranslation("Project", targetLanguage),
-            daysRemaining: getSprintTranslation("days remaining", targetLanguage),
-            ended: getSprintTranslation("Ended", targetLanguage),
-            noSprintsText: getSprintTranslation("No active sprints available.", targetLanguage),
-        };
-    }, [targetLanguage]);
 
+      const formatDate = (dateStr: string) => {
+    const date = new Date(dateStr);
+    return date.toLocaleDateString('de-CH', { day: '2-digit', month: '2-digit', year: 'numeric' });
+  };
+
+  const getDaysRemaining = (endDateStr: string) => {
+    const end = new Date(endDateStr).getTime();
+    const now = new Date().getTime();
+    const diffDays = Math.ceil((end - now) / (1000 * 60 * 60 * 24));
+    return diffDays > 0 ? `${diffDays} ${uiText.daysRemaining}` : uiText.ended;
+  };
+
+const uiText = useMemo(() => {
+  return {
+    activeSprintsTitle: getSprintTranslation("Active Sprints", targetLanguage),
+    projectLabel: getSprintTranslation("Project", targetLanguage),
+    daysRemaining: getSprintTranslation("days remaining", targetLanguage),
+    ended: getSprintTranslation("Ended", targetLanguage),
+    noSprintsText: getSprintTranslation("No active sprints available.", targetLanguage),
+  };
+}, [targetLanguage]);
     const fetchSprints = async () => {
         try {
             const userData = localStorage.getItem("id");
@@ -145,7 +156,7 @@ const ProjectListSection = (): React.JSX.Element => {
     }, [userId, api]);
 
     // FIX 5: WebSocket effect is now a proper top-level useEffect
-    useEffect(() => {
+    /*useEffect(() => {
         if (!userId) return;
 
         const client = new Client({
@@ -179,116 +190,66 @@ const ProjectListSection = (): React.JSX.Element => {
         return () => {
             client.deactivate();
         };
-    }, [userId]);
+    }, [userId]);*/
 
     return (
-        <Card
-            style={{
-                borderRadius: 12,
-                width: "100%",
-                background: "#ffffff",
-                boxShadow:
-                    "0 1px 2px 0 rgba(0, 0, 0, 0.03), 0 1px 6px -1px rgba(0, 0, 0, 0.02), 0 2px 4px 0 rgba(0, 0, 0, 0.02)",
-            }}
-        >
-            <Flex justify="space-between" align="center" style={{ marginBottom: 16 }}>
+    <Card style={{ 
+      borderRadius: 12, 
+      width: "100%", 
+      marginTop: 16, 
+      boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.03), 0 1px 6px -1px rgba(0, 0, 0, 0.02), 0 2px 4px 0 rgba(0, 0, 0, 0.02)' 
+    }}>
+      <Flex vertical gap={16}>
+        <Flex align="center" gap={8}>
+          <AimOutlined style={{ fontSize: 22 }} />
+          <Title level={4} style={{ margin: 0 }}>
+            {uiText.activeSprintsTitle}
+          </Title>
+        </Flex>
+
+        {sprints.length > 0 ? (
+          sprints.map((sprint) => {
+            // --- CALCULATION LOGIC ---
+            const progressPercent = sprint.totalTasks > 0 
+              ? Math.round((sprint.completedTasks / sprint.totalTasks) * 100) 
+              : 0;
+
+            return (
+              <Flex vertical gap={4} key={sprint.id}>
+                <Title level={5} style={{ margin: 0 }}>
+                  {sprint.name}
+                </Title>
+
+                <Row justify="space-between" align="middle">
+                  <Col>
+                    <Text style={{ color: "#4A5565" }}>
+                      {formatDate(sprint.startTime)} - {formatDate(sprint.endTime)} 
+                      &nbsp;•&nbsp; {uiText.projectLabel}: {sprint.projectName}
+                    </Text>
+                  </Col>
+                  <Col>
+                    <Text style={{ color: "#4A5565" }}>{getDaysRemaining(sprint.endTime)}</Text>
+                  </Col>
+                </Row>
+
                 <Flex align="center" gap={8}>
-                    <FolderOutlined style={{ fontSize: 20 }} />
-                    <Title level={4} style={{ margin: 0 }}>
-                        Projects
-                    </Title>
+                  <Progress
+                    percent={progressPercent} 
+                    strokeColor="#4f46e5" // Matching your "Add Sprint" button color
+                    style={{ flex: 1, margin: 0 }}
+                    showInfo={false}
+                  />
+                  <Text style={{ color: "#4A5565", minWidth: 35 }}>{progressPercent}%</Text>
                 </Flex>
-                {isManager && (
-                    <Button type="primary" icon={<PlusOutlined />} onClick={() => setIsModalOpen(true)}>
-                        Create Project
-                    </Button>
-                )}
-            </Flex>
-
-            <Row gutter={[16, 16]}>
-                {projects.map((project) => {
-                    const totalTasks = project.tasks?.length || 0;
-                    const completedTasks = project.tasks?.filter((t) => t.status === "DONE").length || 0;
-                    const inProgressTasks = project.tasks?.filter((t) => t.status === "IN_PROGRESS").length || 0;
-                    const percentage = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
-
-                    return (
-                        <Col xs={24} sm={12} lg={8} key={project.id} style={{ display: "flex" }}>
-                            <Card
-                                size="small"
-                                style={{ borderRadius: 12, width: "100%", display: "flex", flexDirection: "column" }}
-                            >
-                                <Flex justify="space-between" align="center">
-                                    <Title level={5} style={{ margin: 0 }}>
-                                        {project.name}
-                                    </Title>
-                                    <Flex gap={8} align="center">
-                                        {isManager && (
-                                            <Dropdown
-                                                menu={{
-                                                    items: [
-                                                        {
-                                                            key: "edit",
-                                                            label: "Edit Project",
-                                                            onClick: () => handleEditClick(project),
-                                                        },
-                                                    ],
-                                                }}
-                                                trigger={["click"]}
-                                            >
-                                                <MoreOutlined style={{ cursor: "pointer", fontSize: 18, color: "#8c8c8c" }} />
-                                            </Dropdown>
-                                        )}
-                                        <ArrowRightOutlined
-                                            style={{ cursor: "pointer", fontSize: 18 }}
-                                            onClick={() => router.push(`/projects/${project.id}`)}
-                                        />
-                                    </Flex>
-                                </Flex>
-
-                                <Text style={{ display: "block", margin: "8px 0", color: "#4A5565", minHeight: "40px" }}>
-                                    {project.description}
-                                </Text>
-
-                                <Flex justify="space-between" align="center">
-                                    <Text style={{ color: "#4A5565" }}>
-                                        {completedTasks}/{totalTasks} tasks
-                                    </Text>
-                                    <Text style={{ color: "#4A5565" }}>{percentage}%</Text>
-                                </Flex>
-
-                                <Progress percent={percentage} showInfo={false} size="small" strokeColor="#00c950" />
-
-                                <Flex gap={8} align="center" style={{ marginTop: 8 }}>
-                                    <Text style={{ color: "#4A5565" }}>{inProgressTasks} in progress</Text>
-                                    <Text style={{ color: "#4A5565" }}>•</Text>
-                                    <Text style={{ color: "#4A5565" }}>{project.members?.length || 0} members</Text>
-                                </Flex>
-                            </Card>
-                        </Col>
-                    );
-                })}
-            </Row>
-
-            {projects.length === 0 && (
-                <Flex justify="center" style={{ padding: "20px" }}>
-                    <Text type="secondary">{status === "loading" ? "Loading…" : "No projects found."}</Text>
-                </Flex>
-            )}
-
-            <CreateProjectModal open={isModalOpen} onClose={() => setIsModalOpen(false)} />
-            {selectedProject && (
-                <EditProjectModal
-                    open={isEditModalOpen}
-                    project={selectedProject}
-                    onClose={() => {
-                        setIsEditModalOpen(false);
-                        setSelectedProject(null);
-                    }}
-                />
-            )}
-        </Card>
-    );
-};
+              </Flex>
+            );
+          })
+        ) : (
+          <Text type="secondary">{uiText.noSprintsText}</Text>
+        )}
+      </Flex>
+    </Card>
+  );
+}
 
 export default ProjectListSection;

@@ -178,6 +178,7 @@ const statsData = [
               open={isModalOpen}
               onClose={() => setIsModalOpen(false)}
             />
+            <TaskSummarySection />
           </Content>
         </Layout>
       </Layout>
