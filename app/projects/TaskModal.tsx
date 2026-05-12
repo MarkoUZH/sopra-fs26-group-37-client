@@ -104,7 +104,7 @@ const TaskModal: React.FC<TaskModalProps> = ({
           dueDate: editingTask.dueDate ? dayjs(editingTask.dueDate) : null,
           timeEstimate: editingTask.timeEstimate?.toString() ?? "",
           // Normalize to strings for the Select matcher
-          tags: editingTask.tags?.map((t: TagItem) => String(t.name)) ?? [],
+          tags: editingTask.tags?.map((t) => String(t.name)) ?? [],
           sprintId: editingTask.sprintId ? Number(editingTask.sprintId) : undefined,
         });
       } else {
