@@ -8,7 +8,7 @@ import ProjectHeader from "@/projects/ProjectHeader";
 import KanbanColumn from "@/projects/KanbanColumn";
 import TaskModal from "@/projects/TaskModal";
 import { KANBAN_COLUMNS, Task, TaskColumn } from "@/projects/taskTypes";
-import { TagsProvider } from "@/dashboard/TagsContext";
+import { TagsProvider, useTags, TagItem } from "@/dashboard/TagsContext";
 import { ApiService } from "@/api/apiService";
 import dayjs from "dayjs";
 import { ProjectDTO, Sprint } from "@/projects/projectTypes";
@@ -19,7 +19,10 @@ import FilterBar from "@/projects/FilterBar";
 const { Content, Sider } = Layout;
 const { Title } = Typography;
 
-const ProjectPage: React.FC = () => {
+// ─── Inner component ────────────────────────────────────────────────────────
+// Must live inside <TagsProvider> so useTags() works.
+
+const ProjectPageInner: React.FC = () => {
     const params = useParams();
     const router = useRouter();
     const projectId = (params?.id as string) ?? "1";
@@ -29,16 +32,18 @@ const ProjectPage: React.FC = () => {
     const [loading, setLoading] = useState(true);
     const [targetLanguage, setTargetLanguage] = useState("en");
     const [sprints, setSprints] = useState<Sprint[]>([]);
-
-    // REST-seeded tasks — source of truth on load/reload
     const [tasks, setTasks] = useState<Task[]>([]);
+    const [projectTags, setProjectTags] = useState<TagItem[]>([]);
 
     // 2. UI States
     const [modalOpen, setModalOpen] = useState(false);
     const [modalColumn, setModalColumn] = useState<TaskColumn>("TODO");
     const [editingTask, setEditingTask] = useState<Task | null>(null);
     const [selectedMembers, setSelectedMembers] = useState<number[]>([]);
+    const [selectedTags, setSelectedTags] = useState<number[]>([]);
+    const [selectedSprints, setSelectedSprints] = useState<number[]>([]);
 
+    const { getTagsForProject } = useTags(); // ✅ safe — inside TagsProvider
     const apiService = useMemo(() => new ApiService(), []);
     const dragTaskId = useRef<string | null>(null);
 
@@ -60,13 +65,12 @@ const ProjectPage: React.FC = () => {
         [targetLanguage]
     );
 
-    // 5. REST seed — runs on mount and on projectId change (navigation, reload)
+    // 5. REST seed
     const fetchProject = useCallback(async () => {
         try {
             const data = await apiService.get<ProjectDTO>(`/projects/${projectId}`);
             setProject(data);
             setSprints(data.sprints || []);
-            // Seed tasks from REST; WebSocket will take over for live updates
             setTasks(data.tasks || []);
         } catch (error) {
             console.error("Failed to fetch project:", error);
@@ -78,23 +82,32 @@ const ProjectPage: React.FC = () => {
         fetchProject().finally(() => setLoading(false));
     }, [fetchProject]);
 
-    // 6. WebSocket — live updates only, no snapshot handling.
-    //    Pass setTasks so the hook can apply incremental changes
-    //    (task_created / task_updated / task_deleted) on top of the
-    //    REST-seeded state without ever replacing it wholesale.
+    // 6. Fetch tags for filter bar
+    useEffect(() => {
+        getTagsForProject(projectId).then((tags) => setProjectTags(tags || []));
+    }, [projectId, getTagsForProject]);
+
+    // 7. WebSocket — live updates only
     useTaskWebSocket(projectId, setTasks);
 
-    // 7. Stats
+    // 8. Stats & filtering
     const totalTasks = tasks.length;
     const doneTasks = tasks.filter((t) => t.status === "DONE").length;
 
-    const filteredTasks = tasks.filter(
-        (task) =>
+    const filteredTasks = tasks.filter((task) => {
+        const memberMatch =
             selectedMembers.length === 0 ||
-            task.assignedUsers?.some((u) => selectedMembers.includes(u.id))
-    );
+            task.assignedUsers?.some((u) => selectedMembers.includes(u.id));
+        const tagMatch =
+            selectedTags.length === 0 ||
+            task.tags?.some((tag) => selectedTags.includes(tag.id));
+        const sprintMatch =
+            selectedSprints.length === 0 ||
+            (task.sprintId != null && selectedSprints.includes(Number(task.sprintId)));
+        return memberMatch && tagMatch && sprintMatch;
+    });
 
-    // 8. Drag & Drop
+    // 9. Drag & Drop
     const handleDragStart = (e: React.DragEvent, taskId: number) => {
         dragTaskId.current = taskId.toString();
         e.dataTransfer.effectAllowed = "move";
@@ -110,7 +123,6 @@ const ProjectPage: React.FC = () => {
         const taskToUpdate = tasks.find((t) => t.id === numericId);
         if (!taskToUpdate || taskToUpdate.status === targetStatus) return;
 
-        // Optimistic update — WebSocket will confirm with task_updated broadcast
         setTasks((prev) =>
             prev.map((t) => (t.id === numericId ? { ...t, status: targetStatus } : t))
         );
@@ -131,14 +143,13 @@ const ProjectPage: React.FC = () => {
             });
         } catch (error) {
             console.error("Failed to update task status:", error);
-            // Revert optimistic update on failure
             setTasks((prev) =>
                 prev.map((t) => (t.id === numericId ? { ...t, status: taskToUpdate.status } : t))
             );
         }
     };
 
-    // 9. Modal helpers
+    // 10. Modal helpers
     const handleAddTask = (column: TaskColumn) => {
         setModalColumn(column);
         setEditingTask(null);
@@ -151,7 +162,7 @@ const ProjectPage: React.FC = () => {
         setModalOpen(true);
     };
 
-    // 10. Save Task (create or update) — REST only, WebSocket broadcasts back
+    // 11. Save Task
     const handleSaveTask = async (taskData: Omit<Task, "id">) => {
         try {
             const postBody = {
@@ -182,7 +193,7 @@ const ProjectPage: React.FC = () => {
         }
     };
 
-    // 11. Delete Task — REST only, WebSocket broadcasts back
+    // 12. Delete Task
     const handleDeleteTask = async (taskId: number) => {
         try {
             await apiService.delete(`/tasks/${taskId}`);
@@ -200,119 +211,115 @@ const ProjectPage: React.FC = () => {
     }
 
     return (
-        <TagsProvider>
-            <Layout style={{ minHeight: "100vh", background: "#f5f5f5" }}>
-                <Sider
-                    width={220}
-                    theme="light"
-                    style={{
-                        position: "fixed",
-                        left: 0,
-                        top: 0,
-                        bottom: 0,
-                        height: "100vh",
-                        boxShadow: "2px 0 6px rgba(0,0,0,0.03)",
-                        zIndex: 10,
-                    }}
-                >
-                    <SideBarSection />
-                </Sider>
+        <Layout style={{ minHeight: "100vh", background: "#f5f5f5" }}>
+            <Sider
+                width={220}
+                theme="light"
+                style={{
+                    position: "fixed",
+                    left: 0,
+                    top: 0,
+                    bottom: 0,
+                    height: "100vh",
+                    boxShadow: "2px 0 6px rgba(0,0,0,0.03)",
+                    zIndex: 10,
+                }}
+            >
+                <SideBarSection />
+            </Sider>
 
-                <Layout style={{ marginLeft: 220 }}>
-                    <Content style={{ padding: "12px 24px", background: "#f5f5f5" }}>
-                        <Button
-                            type="text"
-                            icon={<ArrowLeftOutlined />}
-                            onClick={() => router.push("/dashboard")}
-                            style={{ marginBottom: 16, color: "#6b7280", paddingLeft: 0 }}
-                        >
-                            {uiText.back}
-                        </Button>
+            <Layout style={{ marginLeft: 220 }}>
+                <Content style={{ padding: "12px 24px", background: "#f5f5f5" }}>
+                    <Button
+                        type="text"
+                        icon={<ArrowLeftOutlined />}
+                        onClick={() => router.push("/dashboard")}
+                        style={{ marginBottom: 16, color: "#6b7280", paddingLeft: 0 }}
+                    >
+                        {uiText.back}
+                    </Button>
 
-                        {project && (
-                            <ProjectHeader
-                                project={{
-                                    name: project.name,
-                                    description: project.description,
-                                    members: project.members || [],
-                                    originalLanguage: project.originalLanguage || "en",
-                                }}
-                                totalTasks={totalTasks}
-                                doneTasks={doneTasks}
-                            />
-                        )}
-
-                        <FilterBar
-                            members={project?.members || []}
-                            selectedMembers={selectedMembers}
-                            onMembersChange={setSelectedMembers}
+                    {project && (
+                        <ProjectHeader
+                            project={{
+                                name: project.name,
+                                description: project.description,
+                                members: project.members || [],
+                                originalLanguage: project.originalLanguage || "en",
+                            }}
+                            totalTasks={totalTasks}
+                            doneTasks={doneTasks}
                         />
+                    )}
 
-                        <div
-                            style={{
-                                display: "flex",
-                                justifyContent: "space-between",
-                                alignItems: "center",
-                                marginBottom: 16,
-                            }}
-                        >
-                            <Title level={4} style={{ margin: 0 }}>
-                                {uiText.boardTitle}
-                            </Title>
-                            <Button
-                                type="primary"
-                                icon={<PlusOutlined />}
-                                onClick={() => handleAddTask("TODO")}
-                                style={{ background: "#6066FF", borderRadius: 8 }}
-                            >
-                                {uiText.addTask}
-                            </Button>
-                        </div>
-
-                        <div
-                            style={{
-                                display: "flex",
-                                gap: 16,
-                                alignItems: "flex-start",
-                                overflowX: "auto",
-                                paddingBottom: 24,
-                            }}
-                        >
-                            {KANBAN_COLUMNS.map((col) => (
-                                <KanbanColumn
-                                    key={col.key}
-                                    column={col}
-                                    tasks={filteredTasks.filter((t) => t.status === col.key)}
-                                    onDragStart={handleDragStart}
-                                    onDrop={handleDrop}
-                                    onEdit={handleEditTask}
-                                    onDelete={handleDeleteTask}
-                                    onAddTask={handleAddTask}
-                                    projectId={Number(projectId)}
-                                />
-                            ))}
-                        </div>
-                    </Content>
-                </Layout>
-
-                {project && (
-                    <TaskModal
-                        open={modalOpen}
-                        initialColumn={modalColumn}
-                        editingTask={editingTask}
+                    <FilterBar
+                        members={project?.members || []}
+                        selectedMembers={selectedMembers}
+                        onMembersChange={setSelectedMembers}
+                        tags={projectTags}
+                        selectedTags={selectedTags}
+                        onTagsChange={setSelectedTags}
                         sprints={sprints}
-                        team={project.members || []}
-                        onClose={() => {
-                            setModalOpen(false);
-                            setEditingTask(null);
-                        }}
-                        onSave={handleSaveTask}
-                        projectId={projectId}
+                        selectedSprints={selectedSprints}
+                        onSprintsChange={setSelectedSprints}
                     />
-                )}
+
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+                        <Title level={4} style={{ margin: 0 }}>{uiText.boardTitle}</Title>
+                        <Button
+                            type="primary"
+                            icon={<PlusOutlined />}
+                            onClick={() => handleAddTask("TODO")}
+                            style={{ background: "#6066FF", borderRadius: 8 }}
+                        >
+                            {uiText.addTask}
+                        </Button>
+                    </div>
+
+                    <div style={{ display: "flex", gap: 16, alignItems: "flex-start", overflowX: "auto", paddingBottom: 24 }}>
+                        {KANBAN_COLUMNS.map((col) => (
+                            <KanbanColumn
+                                key={col.key}
+                                column={col}
+                                tasks={filteredTasks.filter((t) => t.status === col.key)}
+                                onDragStart={handleDragStart}
+                                onDrop={handleDrop}
+                                onEdit={handleEditTask}
+                                onDelete={handleDeleteTask}
+                                onAddTask={handleAddTask}
+                                projectId={Number(projectId)}
+                            />
+                        ))}
+                    </div>
+                </Content>
             </Layout>
-        </TagsProvider>
+
+            {project && (
+                <TaskModal
+                    open={modalOpen}
+                    initialColumn={modalColumn}
+                    editingTask={editingTask}
+                    sprints={sprints}
+                    team={project.members || []}
+                    onClose={() => {
+                        setModalOpen(false);
+                        setEditingTask(null);
+                    }}
+                    onSave={handleSaveTask}
+                    projectId={projectId}
+                />
+            )}
+        </Layout>
     );
 };
+
+// ─── Outer wrapper ───────────────────────────────────────────────────────────
+// Provides TagsContext to the entire page tree.
+
+const ProjectPage: React.FC = () => (
+    <TagsProvider>
+        <ProjectPageInner />
+    </TagsProvider>
+);
 
 export default ProjectPage;
