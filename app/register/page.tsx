@@ -94,6 +94,7 @@ const Register: React.FC = () => {
           name="username"
           label="Username"
           rules={[{ required: true, message: "Please input your username!" }]}
+          extra={<small style={{ color: '#8c8c8c' }}>Username must be unique.</small>}
         >
           <Input placeholder="Enter username" maxLength={255} />
         </Form.Item>
@@ -105,6 +106,7 @@ const Register: React.FC = () => {
             { required: true, message: "Please input your email!" },
             { type: "email", message: "The input is not a valid email address!" },
           ]}
+          extra={<small style={{ color: '#8c8c8c' }}>Email must be unique.</small>}
         >
           <Input placeholder="Enter email" maxLength={255} />
         </Form.Item>
