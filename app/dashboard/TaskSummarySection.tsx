@@ -1,6 +1,6 @@
 "use client";
 import { MoreOutlined, ArrowRightOutlined, FolderOutlined, PlusOutlined } from "@ant-design/icons";
-import { Button, Card, Col, Dropdown, Flex, Progress, Row, Typography } from "antd";
+import { Button, Card, Col, Dropdown, Flex, Progress, Row, Typography, Modal, message } from "antd";
 import React, { useEffect, useState, useMemo, useCallback } from "react";
 import { ApiService } from "@/api/apiService";
 import { Client } from "@stomp/stompjs";
@@ -10,6 +10,7 @@ import EditProjectModal from "./EditProjectModal";
 import { useRouter } from "next/navigation";
 import { ProjectDTO } from "@/projects/projectTypes";
 import { getTaskSummaryTranslation } from "@/utils/dictionary_task_summary";
+
 import {getApiDomain} from "@/utils/domain";
 import {User} from "@/types/user";
 
@@ -44,72 +45,89 @@ const TaskSummarySection = (): React.JSX.Element => {
     }
   }, []);
 
-  // 1. Instant UI Label Translation (Dictionary)
+  // 1. UI Label Translations
   const uiText = useMemo(() => ({
     title: getTaskSummaryTranslation("Projects", targetLanguage),
     createProject: getTaskSummaryTranslation("Create Project", targetLanguage),
     editProject: getTaskSummaryTranslation("Edit Project", targetLanguage),
+    deleteProject: getTaskSummaryTranslation("Delete Project", targetLanguage),
+    deleteWarning: getTaskSummaryTranslation("Delete Warning", targetLanguage),
+    deleteSuccess: getTaskSummaryTranslation("Delete Success", targetLanguage),
+    deleteError: getTaskSummaryTranslation("Delete Error", targetLanguage),
+    cancelLabel: getTaskSummaryTranslation("Cancel", targetLanguage),
     tasksLabel: getTaskSummaryTranslation("tasks", targetLanguage),
     inProgressLabel: getTaskSummaryTranslation("in progress", targetLanguage),
     membersLabel: getTaskSummaryTranslation("members", targetLanguage),
     noProjects: getTaskSummaryTranslation("No projects found.", targetLanguage)
   }), [targetLanguage]);
 
+  // 2. Translation Helper
+  const translateText = useCallback(async (text: string, sourceLang: string, targetLang: string): Promise<string> => {
+    if (!text || sourceLang === targetLang) return text;
+    try {
+      const result = await api.post<TranslateResponse | string>("/translate", {
+        text,
+        sourceLanguage: sourceLang,
+        language: targetLang,
+      });
 
-
-  // 2. Dynamic Translation Helper (API) - 'any' replaced with 'TranslateResponse | string'
-// Add sourceLang to the parameters
-const translateText = useCallback(async (text: string, sourceLang: string, targetLang: string): Promise<string> => {
-  // If the project language is already the same as the target language, don't translate
-  if (!text || sourceLang === targetLang) return text;
-
-  try {
-    const result = await api.post<TranslateResponse | string>("/translate", {
-      text,
-      sourceLanguage: sourceLang, // Use the passed sourceLang
-      language: targetLang,
-    });
-
-    if (result && typeof result === 'object' && typeof result.text === 'function') {
-      return await result.text();
+      if (result && typeof result === 'object' && typeof result.text === 'function') {
+        return await result.text();
+      }
+      return typeof result === 'string' ? result : text;
+    } catch (err) {
+      console.error("Translation error:", err);
+      return text;
     }
+  }, [api]);
 
-    return typeof result === 'string' ? result : text;
-  } catch (err) {
-    console.error("Translation error:", err);
-    return text;
-  }
-}, [api]);
+  // 3. Translate Dynamic Content
+  useEffect(() => {
+    const translateDynamicContent = async () => {
+      const translated = await Promise.all(
+        projects.map(async (p) => {
+          const source = p.originalLanguage || "en";
+          return {
+            ...p,
+            name: await translateText(p.name, source, targetLanguage),
+            description: await translateText(p.description || "", source, targetLanguage),
+          };
+        })
+      );
+      setDisplayProjects(translated);
+    };
 
-  // 3. Translate Dynamic Project Content
-useEffect(() => {
-  const translateDynamicContent = async () => {
-    // Note: We no longer skip if targetLanguage === "en" globally,
-    // because some projects might be in "de" or "es" and need translation TO "en".
+    if (projects.length > 0) translateDynamicContent();
+    else setDisplayProjects([]);
+  }, [targetLanguage, projects, translateText]);
 
-    const translated = await Promise.all(
-      projects.map(async (p) => {
-        // Use the project's specific originalLanguage
-        const source = p.originalLanguage || "fr"; // Fallback to en if undefined
-
-        return {
-          ...p,
-          name: await translateText(p.name, source, targetLanguage),
-          description: await translateText(p.description, source, targetLanguage),
-        };
-      })
-    );
-    setDisplayProjects(translated);
+  // 4. Handle Delete Project
+  const handleDeleteProject = (projectId: number, projectName: string) => {
+    Modal.confirm({
+      title: uiText.deleteProject,
+      // Combining the translated warning with the project name
+      content: `${uiText.deleteWarning} ("${projectName}")`,
+      okText: uiText.deleteProject,
+      okType: 'danger',
+      cancelText: uiText.cancelLabel,
+      onOk: async () => {
+        try {
+          await api.delete(`/projects/${projectId}`);
+          message.success(uiText.deleteSuccess);
+          // The WebSocket "project_deleted" listener handles UI removal
+        } catch (error) {
+          console.error("Delete Error:", error);
+          message.error(uiText.deleteError);
+        }
+      },
+    });
   };
 
-  if (projects.length > 0) translateDynamicContent();
-}, [targetLanguage, projects, translateText]);
-
-  // 4. Fetch Projects
- useEffect(() => {
+  // 5. Fetch Initial Data
+  useEffect(() => {
     let isMounted = true;
-    const fetchProjects = async () => {
-      const userId = localStorage.getItem("id");
+    const fetchInitialData = async () => {
+      const userId = localStorage.getItem("id")?.replace(/['"]+/g, '');
       if (!userId) return;
       try {
         const userData = await api.get<{ manager: boolean }>(`/users/${userId}`);
@@ -117,16 +135,19 @@ useEffect(() => {
         if (isMounted) {
           setIsManager(userData.manager);
           setProjects(data || []);
-          if (targetLanguage === "en") setDisplayProjects(data || []);
         }
       } catch (error) {
         console.error("Fetch Error:", error);
       }
     };
-    fetchProjects();
+    fetchInitialData();
     return () => { isMounted = false; };
   }, [api]);
 
+  // 6. WebSocket for Projects
+  useEffect(() => {
+    const userId = localStorage.getItem("id")?.replace(/['"]+/g, '');
+    if (!userId) return;
 
     // WebSocket for projects
     useEffect(() => {
@@ -167,10 +188,15 @@ useEffect(() => {
                 client.publish({ destination: "/app/subscribe_projects", body: JSON.stringify({ userId }) });
             },
             reconnectDelay: 3000,
+
         });
-        client.activate();
-        return () => { client.deactivate(); };
-    }, []);
+        client.publish({ destination: "/app/subscribe_projects", body: JSON.stringify({ userId }) });
+      },
+      reconnectDelay: 3000,
+    });
+    client.activate();
+    return () => { client.deactivate(); };
+  }, []);
 
   return (
     <Card style={{ borderRadius: 12, marginTop: 16, boxShadow: '0 2px 4px rgba(0,0,0,0.02)' }}>
@@ -187,8 +213,9 @@ useEffect(() => {
       </Flex>
 
       <Row gutter={[16, 16]}>
-        {displayProjects.map((project, index) => {
-          const originalProject = projects[index];
+        {displayProjects.map((project) => {
+          // Find the non-translated project for Edit/Delete actions
+          const originalProject = projects.find(p => p.id === project.id);
           const totalTasks = project.tasks?.length || 0;
           const completedTasks = project.tasks?.filter(t => t.status === "DONE").length || 0;
           const inProgressTasks = project.tasks?.filter(t => t.status === "IN_PROGRESS").length || 0;
@@ -201,11 +228,18 @@ useEffect(() => {
                   <Title level={5} style={{ margin: 0 }}>{project.name}</Title>
                   <Flex gap={8}>
                     {isManager && originalProject && (
-                      <Dropdown menu={{ items: [{
-                        key: 'edit',
-                        label: uiText.editProject,
-                        onClick: () => { setSelectedProject(originalProject); setIsEditModalOpen(true); }
-                      }] }}>
+                      <Dropdown menu={{ items: [
+                        {
+                          key: 'edit',
+                          label: uiText.editProject,
+                          onClick: () => { setSelectedProject(originalProject); setIsEditModalOpen(true); }
+                        },
+                        {
+                          key: 'delete',
+                          label: <Text type="danger">{uiText.deleteProject}</Text>,
+                          onClick: () => handleDeleteProject(Number(project.id), project.name)
+                        }
+                      ] }}>
                         <MoreOutlined style={{ cursor: "pointer", color: "#8c8c8c" }} />
                       </Dropdown>
                     )}
