@@ -2,7 +2,6 @@
 import {
   DashboardOutlined,
   LogoutOutlined,
-  ProjectOutlined,
   SettingOutlined,
   TagsOutlined,
   RocketOutlined,
@@ -51,7 +50,7 @@ const SideBarSection = (): React.JSX.Element => {
     }
   }, []);
 
-  // 2. Memoized UI Text - Instant lookup
+  // 2. Memoized UI Text
   const uiText = useMemo(() => {
     return {
       managerRole: getSidebarTranslation("Manager", targetLanguage),
@@ -88,7 +87,7 @@ const SideBarSection = (): React.JSX.Element => {
     };
     if (id) fetchUser();
     return () => { isMounted = false; };
-  }, [id, api]);
+  }, [id, api, targetLanguage]);
 
   const handleLogout = async (): Promise<void> => {
     try {
@@ -127,6 +126,19 @@ const SideBarSection = (): React.JSX.Element => {
     else if (info.key === "projects") router.push("/projects");
   };
 
+  // Define menu items dynamically based on user role
+  const mainMenuItems = [
+    { key: "dashboard", icon: <DashboardOutlined />, label: <span className="menu-item">{uiText.dashboard}</span> },
+    // Only show Sprints if the user is a manager
+    ...(user?.manager ? [
+      { key: "sprints", icon: <RocketOutlined />, label: <span className="menu-item">{uiText.sprints}</span> }
+    ] : []),
+    // Only show Tags if inside a project
+    ...(isInProject ? [
+      { key: "tags", icon: <TagsOutlined />, label: <span className="menu-item">{uiText.tags}</span> },
+    ] : []),
+  ];
+
   return (
     <div style={{ height: "100%", display: "flex", flexDirection: "column", marginTop: 12 }}>
       <div style={{ display: "flex", flexDirection: "column", gap: 4, padding: "0 12px 12px 12px" }}>
@@ -158,13 +170,7 @@ const SideBarSection = (): React.JSX.Element => {
           selectable={false}
           onClick={onMenuClick}
           style={{ border: "none", background: "transparent" }}
-          items={[
-            { key: "dashboard", icon: <DashboardOutlined />, label: <span className="menu-item">{uiText.dashboard}</span> },
-            { key: "sprints", icon: <RocketOutlined />, label: <span className="menu-item">{uiText.sprints}</span> },
-            ...(isInProject ? [
-              { key: "tags", icon: <TagsOutlined />, label: <span className="menu-item">{uiText.tags}</span> },
-            ] : []),
-          ]}
+          items={mainMenuItems}
         />
       </div>
 
