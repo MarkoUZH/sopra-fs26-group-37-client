@@ -1,52 +1,388 @@
 export const sprintTranslations: Record<string, Record<string, string>> = {
-  en: { manageSprints: "Sprint Management", sprintName: "Sprint Name", project: "Project", status: "Status", startDate: "Start Date", endDate: "Due Date", planned: "Planned", active: "Active", completed: "Completed", addSprint: "Add Sprint", saveChanges: "Save Changes", cancel: "Cancel", selectProject: "Select a project", successCreate: "Sprint created", successUpdate: "Sprint updated", failSave: "Failed to save", fillFields: "Fill all fields", deleted: "Deleted" },
-  de: { manageSprints: "Sprint-Verwaltung", sprintName: "Sprint-Name", project: "Projekt", status: "Status", startDate: "Startdatum", endDate: "Enddatum", planned: "Geplant", active: "Aktiv", completed: "Abgeschlossen", addSprint: "Sprint hinzufügen", saveChanges: "Änderungen speichern", cancel: "Abbrechen", selectProject: "Projekt wählen", successCreate: "Sprint erstellt", successUpdate: "Sprint aktualisiert", failSave: "Fehler", fillFields: "Felder ausfüllen", deleted: "Gelöscht" },
-  fr: { manageSprints: "Gestion des Sprints", sprintName: "Nom du Sprint", project: "Projet", status: "Statut", startDate: "Date de début", endDate: "Date de fin", planned: "Planifié", active: "Actif", completed: "Terminé", addSprint: "Ajouter un Sprint", saveChanges: "Enregistrer", cancel: "Annuler", selectProject: "Choisir un projet", successCreate: "Sprint créé", successUpdate: "Sprint mis à jour", failSave: "Échec", fillFields: "Remplir tous les champs", deleted: "Supprimé" },
-  es: { manageSprints: "Gestión de Sprints", sprintName: "Nombre del Sprint", project: "Proyecto", status: "Estado", startDate: "Fecha de inicio", endDate: "Fecha de entrega", planned: "Planificado", active: "Activo", completed: "Completado", addSprint: "Agregar Sprint", saveChanges: "Guardar cambios", cancel: "Cancelar", selectProject: "Seleccionar proyecto", successCreate: "Sprint creado", successUpdate: "Sprint actualizado", failSave: "Error", fillFields: "Completar campos", deleted: "Eliminado" },
-  it: { manageSprints: "Gestione Sprint", sprintName: "Nome Sprint", project: "Progetto", status: "Stato", startDate: "Data inizio", endDate: "Data fine", planned: "Pianificato", active: "Attivo", completed: "Completato", addSprint: "Aggiungi Sprint", saveChanges: "Salva modifiche", cancel: "Annulla", selectProject: "Seleziona progetto", successCreate: "Sprint creato", successUpdate: "Sprint aggiornato", failSave: "Errore", fillFields: "Riempi i campi", deleted: "Eliminato" },
-  pt: { manageSprints: "Gestão de Sprints", sprintName: "Nome do Sprint", project: "Projeto", status: "Status", startDate: "Data de início", endDate: "Data de entrega", planned: "Planejado", active: "Ativo", completed: "Concluído", addSprint: "Adicionar Sprint", saveChanges: "Salvar alterações", cancel: "Cancelar", selectProject: "Selecionar projeto", successCreate: "Sprint criado", successUpdate: "Sprint atualizado", failSave: "Falha", fillFields: "Preencha os campos", deleted: "Excluído" },
-  nl: { manageSprints: "Sprintbeheer", sprintName: "Sprintnaam", project: "Project", status: "Status", startDate: "Startdatum", endDate: "Einddatum", planned: "Gepland", active: "Actief", completed: "Voltooid", addSprint: "Sprint toevoegen", saveChanges: "Opslaan", cancel: "Annuleren", selectProject: "Selecteer project", successCreate: "Sprint gemaakt", successUpdate: "Sprint bijgewerkt", failSave: "Fout", fillFields: "Velden invullen", deleted: "Verwijderd" },
-  pl: { manageSprints: "Zarządzanie Sprintami", sprintName: "Nazwa Sprintu", project: "Projekt", status: "Status", startDate: "Data rozpoczęcia", endDate: "Data zakończenia", planned: "Planowane", active: "Aktywne", completed: "Zakończone", addSprint: "Dodaj Sprint", saveChanges: "Zapisz zmiany", cancel: "Anuluj", selectProject: "Wybierz projekt", successCreate: "Utworzono sprint", successUpdate: "Zaktualizowano sprint", failSave: "Błąd", fillFields: "Wypełnij pola", deleted: "Usunięto" },
-  ru: { manageSprints: "Управление спринтами", sprintName: "Название спринта", project: "Проект", status: "Статус", startDate: "Дата начала", endDate: "Дата окончания", planned: "Запланировано", active: "Активно", completed: "Завершено", addSprint: "Добавить спринт", saveChanges: "Сохранить", cancel: "Отмена", selectProject: "Выбрать проект", successCreate: "Спринт создан", successUpdate: "Спринт обновлен", failSave: "Ошибка", fillFields: "Заполните поля", deleted: "Удалено" },
-  tr: { manageSprints: "Sprint Yönetimi", sprintName: "Sprint Adı", project: "Proje", status: "Durum", startDate: "Başlangıç Tarihi", endDate: "Bitiş Tarihi", planned: "Planlandı", active: "Aktif", completed: "Tamamlandı", addSprint: "Sprint Ekle", saveChanges: "Kaydet", cancel: "İptal", selectProject: "Proje seç", successCreate: "Sprint oluşturuldu", successUpdate: "Sprint güncellendi", failSave: "Hata", fillFields: "Alanları doldur", deleted: "Silindi" },
-  zh: { manageSprints: "迭代管理", sprintName: "迭代名称", project: "项目", status: "状态", startDate: "开始日期", endDate: "结束日期", planned: "计划中", active: "活跃中", completed: "已完成", addSprint: "添加迭代", saveChanges: "保存更改", cancel: "取消", selectProject: "选择项目", successCreate: "迭代已创建", successUpdate: "迭代已更新", failSave: "保存失败", fillFields: "请填写所有字段", deleted: "已删除" },
-  ja: { manageSprints: "スプリント管理", sprintName: "スプリント名", project: "プロジェクト", status: "ステータス", startDate: "開始日", endDate: "終了日", planned: "計画済み", active: "実行中", completed: "完了", addSprint: "スプリントを追加", saveChanges: "変更を保存", cancel: "キャンセル", selectProject: "プロジェクトを選択", successCreate: "スプリント作成完了", successUpdate: "スプリント更新完了", failSave: "失敗", fillFields: "入力を完了してください", deleted: "削除済み" },
-  ko: { manageSprints: "스프린트 관리", sprintName: "스프린트 이름", project: "프로젝트", status: "상태", startDate: "시작일", endDate: "종료일", planned: "계획됨", active: "진행 중", completed: "완료됨", addSprint: "스프린트 추가", saveChanges: "변경 사항 저장", cancel: "취소", selectProject: "프로젝트 선택", successCreate: "스프린트 생성됨", successUpdate: "스프린트 수정됨", failSave: "저장 실패", fillFields: "필드를 입력하세요", deleted: "삭제됨" },
-  ar: { manageSprints: "إدارة السبرنت", sprintName: "اسم السبرنت", project: "المشروع", status: "الحالة", startDate: "تاريخ البدء", endDate: "تاريخ الانتهاء", planned: "مخطط", active: "نشط", completed: "مكتمل", addSprint: "إضافة سبرنت", saveChanges: "حفظ التغييرات", cancel: "إلغاء", selectProject: "اختر مشروعاً", successCreate: "تم إنشاء السبرنت", successUpdate: "تم تحديث السبرنت", failSave: "فشل الحفظ", fillFields: "يرجى ملء الحقول", deleted: "تم الحذف" },
-  hi: { manageSprints: "स्प्रिंट प्रबंधन", sprintName: "स्प्रिंट का नाम", project: "परियोजना", status: "स्थिति", startDate: "प्रारंभ तिथि", endDate: "अंतिम तिथि", planned: "नियोजित", active: "सक्रिय", completed: "पूरा हुआ", addSprint: "स्प्रिंट जोड़ें", saveChanges: "परिवर्तन सहेजें", cancel: "रद्द करें", selectProject: "परियोजना चुनें", successCreate: "स्प्रिंट बनाया गया", successUpdate: "स्प्रिंट अपडेट किया गया", failSave: "विफल", fillFields: "सभी फ़ील्ड भरें", deleted: "हटाया गया" },
-  vi: { manageSprints: "Quản lý Sprint", sprintName: "Tên Sprint", project: "Dự án", status: "Trạng thái", startDate: "Ngày bắt đầu", endDate: "Ngày kết thúc", planned: "Đã lập kế hoạch", active: "Đang hoạt động", completed: "Đã hoàn thành", addSprint: "Thêm Sprint", saveChanges: "Lưu thay đổi", cancel: "Hủy", selectProject: "Chọn dự án", successCreate: "Đã tạo Sprint", successUpdate: "Đã cập nhật Sprint", failSave: "Lỗi", fillFields: "Điền đầy đủ thông tin", deleted: "Đã xóa" },
-  uk: { manageSprints: "Управління спринтами", sprintName: "Назва спринту", project: "Проєкт", status: "Статус", startDate: "Дата початку", endDate: "Дата завершення", planned: "Заплановано", active: "Активно", completed: "Завершено", addSprint: "Додати спринт", saveChanges: "Зберегти", cancel: "Скасувати", selectProject: "Вибрати проєкт", successCreate: "Спринт створено", successUpdate: "Спринт оновлено", failSave: "Помилка", fillFields: "Заповніть поля", deleted: "Видалено" },
-  th: { manageSprints: "การจัดการสปรินต์", sprintName: "ชื่อสปรินต์", project: "โครงการ", status: "สถานะ", startDate: "วันที่เริ่ม", endDate: "วันที่สิ้นสุด", planned: "วางแผนแล้ว", active: "กำลังดำเนินการ", completed: "เสร็จสิ้น", addSprint: "เพิ่มสปรินต์", saveChanges: "บันทึกการเปลี่ยนแปลง", cancel: "ยกเลิก", selectProject: "เลือกโครงการ", successCreate: "สร้างสปรินต์แล้ว", successUpdate: "อัปเดตสปรินต์แล้ว", failSave: "ล้มเหลว", fillFields: "กรุณากรอกข้อมูล", deleted: "ลบแล้ว" },
-  el: { manageSprints: "Διαχείριση Sprint", sprintName: "Όνομα Sprint", project: "Έργο", status: "Κατάσταση", startDate: "Ημερομηνία έναρξης", endDate: "Ημερομηνία λήξης", planned: "Προγραμματισμένο", active: "Ενεργό", completed: "Ολοκληρωμένο", addSprint: "Προσθήκη Sprint", saveChanges: "Αποθήκευση", cancel: "Ακύρωση", selectProject: "Επιλογή έργου", successCreate: "Το Sprint δημιουργήθηκε", successUpdate: "Το Sprint ενημερώθηκε", failSave: "Αποτυχία", fillFields: "Συμπληρώστε τα πεδία", deleted: "Διαγράφηκε" },
-  he: { manageSprints: "ניהול ספרינטים", sprintName: "שם הספרינט", project: "פרויקט", status: "סטטוס", startDate: "תאריך התחלה", endDate: "תאריך סיום", planned: "מתוכנן", active: "פעיל", completed: "הושלם", addSprint: "הוסף ספרינט", saveChanges: "שמור שינויים", cancel: "ביטול", selectProject: "בחר פרויקט", successCreate: "הספרינט נוצר", successUpdate: "הספרינט עודכן", failSave: "שגיאה", fillFields: "מלא את השדות", deleted: "נמחק" },
-  sv: { manageSprints: "Sprinthantering", sprintName: "Sprintnamn", project: "Projekt", status: "Status", startDate: "Startdatum", endDate: "Slutdatum", planned: "Planerad", active: "Aktiv", completed: "Slutförd", addSprint: "Lägg till Sprint", saveChanges: "Spara ändringar", cancel: "Avbryt", selectProject: "Välj projekt", successCreate: "Sprint skapad", successUpdate: "Sprint uppdaterad", failSave: "Fel", fillFields: "Fyll i fält", deleted: "Raderad" },
-  no: { manageSprints: "Sprintstyring", sprintName: "Sprintnavn", project: "Prosjekt", status: "Status", startDate: "Startdato", endDate: "Sluttdato", planned: "Planlagt", active: "Aktiv", completed: "Fullført", addSprint: "Legg til Sprint", saveChanges: "Lagre endringer", cancel: "Avbryt", selectProject: "Velg prosjekt", successCreate: "Sprint opprettet", successUpdate: "Sprint oppdatert", failSave: "Feil", fillFields: "Fyll ut felt", deleted: "Slettet" },
-  da: { manageSprints: "Sprintstyring", sprintName: "Sprintnavn", project: "Projekt", status: "Status", startDate: "Startdato", endDate: "Slutdato", planned: "Planlagt", active: "Aktiv", completed: "Gennemført", addSprint: "Tilføj Sprint", saveChanges: "Gem ændringer", cancel: "Annuller", selectProject: "Vælg projekt", successCreate: "Sprint oprettet", successUpdate: "Sprint opdateret", failSave: "Fejl", fillFields: "Udfyld felter", deleted: "Slettet" },
-  fi: { manageSprints: "Sprinttien hallinta", sprintName: "Sprintin nimi", project: "Projekti", status: "Tila", startDate: "Alkamispäivä", endDate: "Päättymispäivä", planned: "Suunniteltu", active: "Aktiivinen", completed: "Valmis", addSprint: "Lisää sprintti", saveChanges: "Tallenna", cancel: "Peruuta", selectProject: "Valitse projekti", successCreate: "Sprintti luotu", successUpdate: "Sprintti päivitetty", failSave: "Virhe", fillFields: "Täytä kentät", deleted: "Poistettu" },
-  hu: { manageSprints: "Sprint kezelés", sprintName: "Sprint neve", project: "Projekt", status: "Állapot", startDate: "Kezdés dátuma", endDate: "Befejezés dátuma", planned: "Tervezett", active: "Aktív", completed: "Befejezett", addSprint: "Sprint hozzáadása", saveChanges: "Mentés", cancel: "Mégse", selectProject: "Válassz projektet", successCreate: "Sprint létrehozva", successUpdate: "Sprint frissítve", failSave: "Hiba", fillFields: "Töltsd ki a mezőket", deleted: "Törölve" },
-  cs: { manageSprints: "Správa sprintů", sprintName: "Název sprintu", project: "Projekt", status: "Stav", startDate: "Datum zahájení", endDate: "Datum ukončení", planned: "Plánováno", active: "Aktivní", completed: "Dokončeno", addSprint: "Přidat sprint", saveChanges: "Uložit změny", cancel: "Zrušit", selectProject: "Vybrat projekt", successCreate: "Sprint vytvořen", successUpdate: "Sprint aktualizován", failSave: "Chyba", fillFields: "Vyplňte pole", deleted: "Smazáno" },
-  sk: { manageSprints: "Správa sprintov", sprintName: "Názov sprintu", project: "Projekt", status: "Stav", startDate: "Dátum začatia", endDate: "Dátum ukončenia", planned: "Plánované", active: "Aktívne", completed: "Dokončené", addSprint: "Pridať sprint", saveChanges: "Uložiť zmeny", cancel: "Zrušiť", selectProject: "Vybrať projekt", successCreate: "Sprint vytvorený", successUpdate: "Sprint aktualizovaný", failSave: "Chyba", fillFields: "Vyplňte polia", deleted: "Zmazané" },
-  ro: { manageSprints: "Gestionare Sprint", sprintName: "Nume Sprint", project: "Proiect", status: "Status", startDate: "Data de început", endDate: "Data de sfârșit", planned: "Planificat", active: "Activ", completed: "Finalizat", addSprint: "Adaugă Sprint", saveChanges: "Salvează", cancel: "Anulează", selectProject: "Selectează proiect", successCreate: "Sprint creat", successUpdate: "Sprint actualizat", failSave: "Eroare", fillFields: "Completați câmpurile", deleted: "Șters" },
-  bg: { manageSprints: "Управление на спринтове", sprintName: "Име на спринта", project: "Проект", status: "Статус", startDate: "Начална дата", endDate: "Крайна дата", planned: "Планиран", active: "Активен", completed: "Завършен", addSprint: "Добави спринт", saveChanges: "Запази", cancel: "Отказ", selectProject: "Избери проект", successCreate: "Спринтът е създаден", successUpdate: "Спринтът е обновен", failSave: "Грешка", fillFields: "Попълнете полетата", deleted: "Изтрито" },
-  id: { manageSprints: "Manajemen Sprint", sprintName: "Nama Sprint", project: "Proyek", status: "Status", startDate: "Tanggal Mulai", endDate: "Tanggal Selesai", planned: "Direncanakan", active: "Aktif", completed: "Selesai", addSprint: "Tambah Sprint", saveChanges: "Simpan", cancel: "Batal", selectProject: "Pilih proyek", successCreate: "Sprint dibuat", successUpdate: "Sprint diperbarui", failSave: "Gagal", fillFields: "Isi semua bidang", deleted: "Dihapus" },
-  ms: { manageSprints: "Pengurusan Sprint", sprintName: "Nama Sprint", project: "Projek", status: "Status", startDate: "Tarikh Mula", endDate: "Tarikh Tamat", planned: "Dirancang", active: "Aktif", completed: "Selesai", addSprint: "Tambah Sprint", saveChanges: "Simpan", cancel: "Batal", selectProject: "Pilih projek", successCreate: "Sprint dicipta", successUpdate: "Sprint dikemaskini", failSave: "Gagal", fillFields: "Isi semua medan", deleted: "Dipadam" },
-  et: { manageSprints: "Spurdi haldus", sprintName: "Spurdi nimi", project: "Projekt", status: "Olek", startDate: "Alguskuupäev", endDate: "Lõppkuupäev", planned: "Planeeritud", active: "Aktiivne", completed: "Lõpetatud", addSprint: "Lisa spurt", saveChanges: "Salvesta", cancel: "Tühista", selectProject: "Vali projekt", successCreate: "Spurt loodud", successUpdate: "Spurt uuendatud", failSave: "Viga", fillFields: "Täida väljad", deleted: "Kustutatud" },
-  lv: { manageSprints: "Sprinta vadība", sprintName: "Sprinta nosaukums", project: "Projekts", status: "Statuss", startDate: "Sākuma datums", endDate: "Beigu datums", planned: "Plānots", active: "Aktīvs", completed: "Pabeigts", addSprint: "Pievienot sprintu", saveChanges: "Saglabāt", cancel: "Atcelt", selectProject: "Izvēlēties projektu", successCreate: "Sprints izveidots", successUpdate: "Sprints atjaunināts", failSave: "Kļūda", fillFields: "Aizpildiet laukus", deleted: "Izdzēsts" },
-  lt: { manageSprints: "Sprintų valdymas", sprintName: "Sprinto pavadinimas", project: "Projektas", status: "Būsena", startDate: "Pradžios data", endDate: "Pabaigos data", planned: "Planuojamas", active: "Aktyvus", completed: "Baigtas", addSprint: "Pridėti sprintą", saveChanges: "Išsaugoti", cancel: "Atšaukti", selectProject: "Pasirinkti projektą", successCreate: "Sprintas sukurtas", successUpdate: "Sprintas atnaujintas", failSave: "Klaida", fillFields: "Užpildykite laukus", deleted: "Ištrinta" },
-  hr: { manageSprints: "Upravljanje sprintovima", sprintName: "Naziv sprinta", project: "Projekt", status: "Status", startDate: "Početni datum", endDate: "Završni datum", planned: "Planirano", active: "Aktivno", completed: "Završeno", addSprint: "Dodaj sprint", saveChanges: "Spremi", cancel: "Odustani", selectProject: "Odaberi projekt", successCreate: "Sprint kreiran", successUpdate: "Sprint ažuriran", failSave: "Greška", fillFields: "Popunite polja", deleted: "Obrisano" },
-  sr: { manageSprints: "Upravljanje sprintovima", sprintName: "Naziv sprinta", project: "Projekat", status: "Status", startDate: "Datum početka", endDate: "Datum završetka", planned: "Planirano", active: "Aktivno", completed: "Završeno", addSprint: "Dodaj sprint", saveChanges: "Sačuvaj", cancel: "Otkaži", selectProject: "Izaberi projekat", successCreate: "Sprint kreiran", successUpdate: "Sprint ažuriran", failSave: "Greška", fillFields: "Popunite polja", deleted: "Obrisano" },
-  sl: { manageSprints: "Upravljanje sprinti", sprintName: "Ime sprinta", project: "Projekt", status: "Status", startDate: "Datum začetka", endDate: "Datum konca", planned: "Načrtovano", active: "Aktivno", completed: "Končano", addSprint: "Dodaj sprint", saveChanges: "Shrani", cancel: "Prekliči", selectProject: "Izberi projekt", successCreate: "Sprint ustvarjen", successUpdate: "Sprint posodobljen", failSave: "Napaka", fillFields: "Izpolnite polja", deleted: "Izbrisano" },
-  fa: { manageSprints: "مدیریت اسپرینت", sprintName: "نام اسپرینت", project: "پروژه", status: "وضعیت", startDate: "تاریخ شروع", endDate: "تاریخ پایان", planned: "برنامه‌ریزی شده", active: "فعال", completed: "تکمیل شده", addSprint: "افزودن اسپرینت", saveChanges: "ذخیره تغییرات", cancel: "لغو", selectProject: "انتخاب پروژه", successCreate: "اسپرینت ایجاد شد", successUpdate: "اسپرینت بروز شد", failSave: "خطا", fillFields: "فیلدها را پر کنید", deleted: "حذف شد" },
-  ur: { manageSprints: "سپرنٹ مینجمنٹ", sprintName: "سپرنٹ کا نام", project: "پروجیکٹ", status: "حیثیت", startDate: "شروع کی تاریخ", endDate: "ختم ہونے کی تاریخ", planned: "منصوبہ بند", active: "فعال", completed: "مکمل", addSprint: "سپرنٹ شامل کریں", saveChanges: "تبدیلیاں محفوظ کریں", cancel: "منسوخ کریں", selectProject: "پروجیکٹ منتخب کریں", successCreate: "سپرنٹ بن گیا", successUpdate: "سپرنٹ اپ ڈیٹ ہو گیا", failSave: "ناکام", fillFields: "تمام خانے بھریں", deleted: "ختم کر دیا گیا" },
-  bn: { manageSprints: "স্প্রিন্ট ম্যানেজমেন্ট", sprintName: "স্প্রিন্টের নাম", project: "প্রকল্প", status: "অবস্থা", startDate: "শুরু তারিখ", endDate: "শেষ তারিখ", planned: "পরিকল্পিত", active: "সক্রিয়", completed: "সম্পন্ন", addSprint: "স্প্রিন্ট যোগ করুন", saveChanges: "পরিবর্তন সংরক্ষণ করুন", cancel: "বাতিল করুন", selectProject: "প্রকল্প নির্বাচন করুন", successCreate: "স্প্রিন্ট তৈরি হয়েছে", successUpdate: "স্প্রিন্ট আপডেট হয়েছে", failSave: "ব্যর্থ", fillFields: "সব ঘর পূরণ করুন", deleted: "মুছে ফেলা হয়েছে" },
-  pa: { manageSprints: "ਸਪ੍ਰਿੰਟ ਪ੍ਰਬੰਧਨ", sprintName: "ਸਪ੍ਰਿੰਟ ਦਾ ਨਾਮ", project: "ਪ੍ਰੋਜੈਕਟ", status: "ਸਥਿਤੀ", startDate: "ਸ਼ੁਰੂਆਤੀ ਮਿਤੀ", endDate: "ਅੰਤਮ ਮਿਤੀ", planned: "ਯੋਜਨਾਬੱਧ", active: "ਸਰਗਰਮ", completed: "ਪੂਰਾ ਹੋਇਆ", addSprint: "ਸਪ੍ਰਿੰਟ ਜੋੜੋ", saveChanges: "ਤਬਦੀਲੀਆਂ ਸੁਰੱਖਿਅਤ ਕਰੋ", cancel: "ਰੱਦ ਕਰੋ", selectProject: "ਪ੍ਰੋਜੈਕਟ ਚੁਣੋ", successCreate: "ਸਪ੍ਰਿੰਟ ਬਣਾਇਆ ਗਿਆ", successUpdate: "ਸਪ੍ਰਿੰਟ ਅੱਪਡੇਟ ਕੀਤਾ ਗਿਆ", failSave: "ਅਸਫਲ", fillFields: "ਸਾਰੇ ਖੇਤਰ ਭਰੋ", deleted: "ਹਟਾਇਆ ਗਿਆ" },
-  gu: { manageSprints: "સ્પ્રિન્ટ મેનેજમેન્ટ", sprintName: "સ્પ્રિન્ટ નામ", project: "પ્રોજેક્ટ", status: "સ્થિતિ", startDate: "શરૂઆતની તારીખ", endDate: "અંતિમ તારીખ", planned: "આયોજિત", active: "સક્રિય", completed: "પૂર્ણ", addSprint: "સ્પ્રિન્ટ ઉમેરો", saveChanges: "ફેરફારો સાચવો", cancel: "રદ કરો", selectProject: "પ્રોજેક્ટ પસંદ કરો", successCreate: "સ્પ્રિન્ટ બનાવવામાં આવી", successUpdate: "સ્પ્રિન્ટ અપડેટ થઈ", failSave: "નિષ્ફળ", fillFields: "બધા ક્ષેત્રો ભરો", deleted: "કાઢી નાખ્યું" },
-  ta: { manageSprints: "ஸ்பிரிண்ட் மேலாண்மை", sprintName: "ஸ்பிரிண்ட் பெயர்", project: "திட்டம்", status: "நிலை", startDate: "ஆரம்ப தேதி", endDate: "முடிவு தேதி", planned: "திட்டமிடப்பட்டது", active: "செயலில் உள்ளது", completed: "முடிந்தது", addSprint: "ஸ்பிரிண்ட் சேர்க்க", saveChanges: "மாற்றங்களை சேமி", cancel: "ரத்து செய்", selectProject: "திட்டத்தைத் தேர்ந்தெடுக்கவும்", successCreate: "ஸ்பிரிண்ட் உருவாக்கப்பட்டது", successUpdate: "ஸ்பிரிண்ட் புதுப்பிக்கப்பட்டது", failSave: "தோல்வி", fillFields: "அனைத்து புலங்களையும் நிரப்பவும்", deleted: "நீக்கப்பட்டது" },
-  te: { manageSprints: "స్ప్రింట్ నిర్వహణ", sprintName: "స్ప్రింట్ పేరు", project: "ప్రాజెక్ట్", status: "స్థితి", startDate: "ప్రారంభ తేదీ", endDate: "ముగింపు తేదీ", planned: "ప్రణాళిక చేయబడింది", active: "క్రియాశీల", completed: "పూర్తయింది", addSprint: "స్ప్రింట్ జోడించు", saveChanges: "మార్పులను పొదుపు చేయండి", cancel: "రద్దు చేయి", selectProject: "ప్రాజెక్ట్ ఎంచుకోండి", successCreate: "స్ప్రింట్ సృష్టించబడింది", successUpdate: "స్ప్రింట్ నవీకరించబడింది", failSave: "విఫలమైంది", fillFields: "అన్ని ఫీల్డ్‌లను నింపండి", deleted: "తొలగించబడింది" },
-  kn: { manageSprints: "ಸ್ಪ್ರಿಂಟ್ ನಿರ್ವಹಣೆ", sprintName: "ಸ್ಪ್ರಿಂಟ್ ಹೆಸರು", project: "ಯೋಜನೆ", status: "ಸ್ಥಿತಿ", startDate: "ಪ್ರಾರಂಭ ದಿನಾಂಕ", endDate: "ಅಂತಿಮ ದಿನಾಂక", planned: "ಯೋಜಿತ", active: "ಸಕ್ರಿಯ", completed: "ಪೂರ್ಣಗೊಂಡಿದೆ", addSprint: "ಸ್ಪ್ರಿಂಟ್ ಸೇರಿಸಿ", saveChanges: "ಬದಲಾವಣೆ ಉಳಿಸಿ", cancel: "ರದ್ದುಮಾಡಿ", selectProject: "ಯೋಜನೆ ಆಯ್ಕೆಮಾಡಿ", successCreate: "ಸ್ಪ್ರಿಂಟ್ ರಚಿಸಲಾಗಿದೆ", successUpdate: "ಸ್ಪ್ರಿಂಟ್ ನವೀಕರಿಸಲಾಗಿದೆ", failSave: "ವಿಫಲ", fillFields: "ಎಲ್ಲಾ ಕ್ಷೇತ್ರಗಳನ್ನು ತುಂಬಿ", deleted: "ಅಳಿಸಲಾಗಿದೆ" },
-  ml: { manageSprints: "സ്പ്രിന്റ് മാനേജ്‌മെന്റ്", sprintName: "സ്പ്രിന്റ് പേര്", project: "പ്രോജക്റ്റ്", status: "നില", startDate: "ആരംഭ തീയതി", endDate: "അവസാന തീയതി", planned: "ആസൂത്രണം ചെയ്തു", active: "സജീവം", completed: "പൂർത്തിയായി", addSprint: "സ്പ്രിന്റ് ചേർക്കുക", saveChanges: "മാറ്റങ്ങൾ സംരക്ഷിക്കുക", cancel: "റദ്ദാക്കുക", selectProject: "പ്രോജക്റ്റ് തിരഞ്ഞെടുക്കുക", successCreate: "സ്പ്രിന്റ് സൃഷ്ടിച്ചു", successUpdate: "സ്പ്രിന്റ് പുതുക്കി", failSave: "പരാജയപ്പെട്ടു", fillFields: "എല്ലാ ഫീൽഡുകളും പൂരിപ്പിക്കുക", deleted: "നീക്കംചെയ്തു" },
-  sw: { manageSprints: "Usimamizi wa Sprint", sprintName: "Jina la Sprint", project: "Mradi", status: "Hali", startDate: "Tarehe ya Kuanza", endDate: "Tarehe ya Mwisho", planned: "Iliyopangwa", active: "Inayofanya Kazi", completed: "Imekamilika", addSprint: "Ongeza Sprint", saveChanges: "Hifadhi Mabadiliko", cancel: "Ghairi", selectProject: "Chagua mradi", successCreate: "Sprint imeundwa", successUpdate: "Sprint imesasishwa", failSave: "Imeshindwa", fillFields: "Jaza nyanja zote", deleted: "Imefutwa" },
-  tl: { manageSprints: "Pamamahala ng Sprint", sprintName: "Pangalan ng Sprint", project: "Proyekto", status: "Katayuan", startDate: "Petsa ng Simula", endDate: "Petsa ng Tapos", planned: "Plano", active: "Aktibo", completed: "Tapos na", addSprint: "Magdagdag ng Sprint", saveChanges: "I-save ang mga pagbabago", cancel: "Kanselahin", selectProject: "Pumili ng proyekto", successCreate: "Nalikha ang sprint", successUpdate: "Na-update ang sprint", failSave: "Nabigo", fillFields: "Punan ang lahat ng field", deleted: "Na-delete" }
+  en: { 
+    manageSprints: "Sprint Management", sprintName: "Sprint Name", project: "Project", status: "Status", 
+    startDate: "Start Date", endDate: "Due Date", planned: "Planned", active: "Active", 
+    completed: "Completed", addSprint: "Add Sprint", saveChanges: "Save Changes", cancel: "Cancel", 
+    selectProject: "Select a project", successCreate: "Sprint created", successUpdate: "Sprint updated", 
+    failSave: "Failed to save", fillFields: "Fill all fields", deleted: "Deleted",
+    dateError: "End date cannot be before start date" // Added
+  },
+  de: { 
+    manageSprints: "Sprint-Verwaltung", sprintName: "Sprint-Name", project: "Projekt", status: "Status", 
+    startDate: "Startdatum", endDate: "Enddatum", planned: "Geplant", active: "Aktiv", 
+    completed: "Abgeschlossen", addSprint: "Sprint hinzufügen", saveChanges: "Änderungen speichern", cancel: "Abbrechen", 
+    selectProject: "Projekt wählen", successCreate: "Sprint erstellt", successUpdate: "Sprint aktualisiert", 
+    failSave: "Fehler", fillFields: "Felder ausfüllen", deleted: "Gelöscht",
+    dateError: "Enddatum darf nicht vor dem Startdatum liegen" // Added
+  },
+  fr: { 
+    manageSprints: "Gestion des Sprints", sprintName: "Nom du Sprint", project: "Projet", status: "Statut", 
+    startDate: "Date de début", endDate: "Date de fin", planned: "Planifié", active: "Actif", 
+    completed: "Terminé", addSprint: "Ajouter un Sprint", saveChanges: "Enregistrer", cancel: "Annuler", 
+    selectProject: "Choisir un projet", successCreate: "Sprint créé", successUpdate: "Sprint mis à jour", 
+    failSave: "Échec", fillFields: "Remplir tous les champs", deleted: "Supprimé",
+    dateError: "La date de fin ne peut pas être antérieure à la date de début" // Added
+  },
+  es: { 
+    manageSprints: "Gestión de Sprints", sprintName: "Nombre del Sprint", project: "Proyecto", status: "Estado", 
+    startDate: "Fecha de inicio", endDate: "Fecha de entrega", planned: "Planificado", active: "Activo", 
+    completed: "Completado", addSprint: "Agregar Sprint", saveChanges: "Guardar cambios", cancel: "Cancelar", 
+    selectProject: "Seleccionar proyecto", successCreate: "Sprint creado", successUpdate: "Sprint actualizado", 
+    failSave: "Error", fillFields: "Completar campos", deleted: "Eliminado",
+    dateError: "La fecha de fin no puede ser anterior a la de inicio" // Added
+  },
+  it: { 
+    manageSprints: "Gestione Sprint", sprintName: "Nome Sprint", project: "Progetto", status: "Stato", 
+    startDate: "Data inizio", endDate: "Data fine", planned: "Pianificato", active: "Attivo", 
+    completed: "Completato", addSprint: "Aggiungi Sprint", saveChanges: "Salva modifiche", cancel: "Annulla", 
+    selectProject: "Seleziona progetto", successCreate: "Sprint creato", successUpdate: "Sprint aggiornato", 
+    failSave: "Errore", fillFields: "Riempi i campi", deleted: "Eliminato",
+    dateError: "La data di fine non può essere precedente alla data di inizio" // Added
+  },
+  pt: { 
+    manageSprints: "Gestão de Sprints", sprintName: "Nome do Sprint", project: "Projeto", status: "Status", 
+    startDate: "Data de início", endDate: "Data de entrega", planned: "Planejado", active: "Ativo", 
+    completed: "Concluído", addSprint: "Adicionar Sprint", saveChanges: "Salvar alterações", cancel: "Cancelar", 
+    selectProject: "Selecionar projeto", successCreate: "Sprint criado", successUpdate: "Sprint atualizado", 
+    failSave: "Falha", fillFields: "Preencha os campos", deleted: "Excluído",
+    dateError: "A data de término não pode ser anterior à data de início" // Added
+  },
+  nl: { 
+    manageSprints: "Sprintbeheer", sprintName: "Sprintnaam", project: "Project", status: "Status", 
+    startDate: "Startdatum", endDate: "Einddatum", planned: "Gepland", active: "Actief", 
+    completed: "Voltooid", addSprint: "Sprint toevoegen", saveChanges: "Opslaan", cancel: "Annuleren", 
+    selectProject: "Selecteer project", successCreate: "Sprint gemaakt", successUpdate: "Sprint bijgewerkt", 
+    failSave: "Fout", fillFields: "Velden invullen", deleted: "Verwijderd",
+    dateError: "Einddatum kan niet vóór de startdatum liggen" // Added
+  },
+  pl: { 
+    manageSprints: "Zarządzanie Sprintami", sprintName: "Nazwa Sprintu", project: "Projekt", status: "Status", 
+    startDate: "Data rozpoczęcia", endDate: "Data zakończenia", planned: "Planowane", active: "Aktywne", 
+    completed: "Zakończone", addSprint: "Dodaj Sprint", saveChanges: "Zapisz zmiany", cancel: "Anuluj", 
+    selectProject: "Wybierz projekt", successCreate: "Utworzono sprint", successUpdate: "Zaktualizowano sprint", 
+    failSave: "Błąd", fillFields: "Wypełnij pola", deleted: "Usunięto",
+    dateError: "Data zakończenia nie może być wcześniejsza niż data rozpoczęcia" // Added
+  },
+  ru: { 
+    manageSprints: "Управление спринтами", sprintName: "Название спринта", project: "Проект", status: "Статус", 
+    startDate: "Дата начала", endDate: "Дата окончания", planned: "Запланировано", active: "Активно", 
+    completed: "Завершено", addSprint: "Добавить спринт", saveChanges: "Сохранить", cancel: "Отмена", 
+    selectProject: "Выбрать проект", successCreate: "Спринт создан", successUpdate: "Спринт обновлен", 
+    failSave: "Ошибка", fillFields: "Заполните поля", deleted: "Удалено",
+    dateError: "Дата окончания не может быть раньше даты начала" // Added
+  },
+  tr: { 
+    manageSprints: "Sprint Yönetimi", sprintName: "Sprint Adı", project: "Proje", status: "Durum", 
+    startDate: "Başlangıç Tarihi", endDate: "Bitiş Tarihi", planned: "Planlandı", active: "Aktif", 
+    completed: "Tamamlandı", addSprint: "Sprint Ekle", saveChanges: "Kaydet", cancel: "İptal", 
+    selectProject: "Proje seç", successCreate: "Sprint oluşturuldu", successUpdate: "Sprint güncellendi", 
+    failSave: "Hata", fillFields: "Alanları doldur", deleted: "Silindi",
+    dateError: "Bitiş tarihi başlangıç tarihinden önce olamaz" // Added
+  },
+  zh: { 
+    manageSprints: "迭代管理", sprintName: "迭代名称", project: "项目", status: "状态", 
+    startDate: "开始日期", endDate: "结束日期", planned: "计划中", active: "活跃中", 
+    completed: "已完成", addSprint: "添加迭代", saveChanges: "保存更改", cancel: "取消", 
+    selectProject: "选择项目", successCreate: "迭代已创建", successUpdate: "迭代已更新", 
+    failSave: "保存失败", fillFields: "请填写所有字段", deleted: "已删除",
+    dateError: "结束日期不能早于开始日期" // Added
+  },
+  ja: { 
+    manageSprints: "スプリント管理", sprintName: "スプリント名", project: "プロジェクト", status: "ステータス", 
+    startDate: "開始日", endDate: "終了日", planned: "計画済み", active: "実行中", 
+    completed: "完了", addSprint: "スプリントを追加", saveChanges: "変更を保存", cancel: "キャンセル", 
+    selectProject: "プロジェクトを選択", successCreate: "スプリント作成完了", successUpdate: "スプリント更新完了", 
+    failSave: "失敗", fillFields: "入力を完了してください", deleted: "削除済み",
+    dateError: "終了日は開始日より前には設定できません" // Added
+  },
+  ko: { 
+    manageSprints: "스프린트 관리", sprintName: "스프린트 이름", project: "프로젝트", status: "상태", 
+    startDate: "시작일", endDate: "종료일", planned: "계획됨", active: "진행 중", 
+    completed: "완료됨", addSprint: "스프린트 추가", saveChanges: "변경 사항 저장", cancel: "취소", 
+    selectProject: "프로젝트 선택", successCreate: "스프린트 생성됨", successUpdate: "스프린트 수정됨", 
+    failSave: "저장 실패", fillFields: "필드를 입력하세요", deleted: "삭제됨",
+    dateError: "종료일은 시작일보다 빠를 수 없습니다" // Added
+  },
+  ar: { 
+    manageSprints: "إدارة السبرنت", sprintName: "اسم السبرنت", project: "المشروع", status: "الحالة", 
+    startDate: "تاريخ البدء", endDate: "تاريخ الانتهاء", planned: "مخطط", active: "نشط", 
+    completed: "مكتمل", addSprint: "إضافة سبرنت", saveChanges: "حفظ التغييرات", cancel: "إلغاء", 
+    selectProject: "اختر مشروعاً", successCreate: "تم إنشاء السبرنت", successUpdate: "تم تحديث السبرنت", 
+    failSave: "فشل الحفظ", fillFields: "يرجى ملء الحقول", deleted: "تم الحذف",
+    dateError: "تاريخ الانتهاء لا يمكن أن يكون قبل تاريخ البدء" // Added
+  },
+  hi: { 
+    manageSprints: "स्प्रिंट प्रबंधन", sprintName: "स्प्रिंट का नाम", project: "परियोजना", status: "स्थिति", 
+    startDate: "प्रारंभ तिथि", endDate: "अंतिम तिथि", planned: "नियोजित", active: "सक्रिय", 
+    completed: "पूरा हुआ", addSprint: "स्प्रिंट जोड़ें", saveChanges: "परिवर्तन सहेजें", cancel: "रद्द करें", 
+    selectProject: "परियोजना चुनें", successCreate: "स्प्रिंट बनाया गया", successUpdate: "स्प्रिंट अपडेट किया गया", 
+    failSave: "विफल", fillFields: "सभी फ़ील्ड भरें", deleted: "हटाया गया",
+    dateError: "अंतिम तिथि प्रारंभ तिथि से पहले नहीं हो सकती" // Added
+  },
+  vi: { 
+    manageSprints: "Quản lý Sprint", sprintName: "Tên Sprint", project: "Dự án", status: "Trạng thái", 
+    startDate: "Ngày bắt đầu", endDate: "Ngày kết thúc", planned: "Đã lập kế hoạch", active: "Đang hoạt động", 
+    completed: "Đã hoàn thành", addSprint: "Thêm Sprint", saveChanges: "Lưu thay đổi", cancel: "Hủy", 
+    selectProject: "Chọn dự án", successCreate: "Đã tạo Sprint", successUpdate: "Đã cập nhật Sprint", 
+    failSave: "Lỗi", fillFields: "Điền đầy đủ thông tin", deleted: "Đã xóa",
+    dateError: "Ngày kết thúc không thể trước ngày bắt đầu" // Added
+  },
+  uk: { 
+    manageSprints: "Управління спринтами", sprintName: "Назва спринту", project: "Проєкт", status: "Статус", 
+    startDate: "Дата початку", endDate: "Дата завершення", planned: "Заплановано", active: "Активно", 
+    completed: "Завершено", addSprint: "Додати спринт", saveChanges: "Зберегти", cancel: "Скасувати", 
+    selectProject: "Вибрати проєкт", successCreate: "Спринт створено", successUpdate: "Спринт оновлено", 
+    failSave: "Помилка", fillFields: "Заповніть поля", deleted: "Видалено",
+    dateError: "Дата завершення не може бути раніше дати початку" // Added
+  },
+  th: { 
+    manageSprints: "การจัดการสปรินต์", sprintName: "ชื่อสปรินต์", project: "โครงการ", status: "สถานะ", 
+    startDate: "วันที่เริ่ม", endDate: "วันที่สิ้นสุด", planned: "วางแผนแล้ว", active: "กำลังดำเนินการ", 
+    completed: "เสร็จสิ้น", addSprint: "เพิ่มสปรินต์", saveChanges: "บันทึกการเปลี่ยนแปลง", cancel: "ยกเลิก", 
+    selectProject: "เลือกโครงการ", successCreate: "สร้างสปรินต์แล้ว", successUpdate: "อัปเดตสปรินต์แล้ว", 
+    failSave: "ล้มเหลว", fillFields: "กรุณากรอกข้อมูล", deleted: "ลบแล้ว",
+    dateError: "วันที่สิ้นสุดต้องไม่มาก่อนวันที่เริ่มต้น" // Added
+  },
+  el: { 
+    manageSprints: "Διαχείριση Sprint", sprintName: "Όνομα Sprint", project: "Έργο", status: "Κατάσταση", 
+    startDate: "Ημερομηνία έναρξης", endDate: "Ημερομηνία λήξης", planned: "Προγραμματισμένο", active: "Ενεργό", 
+    completed: "Ολοκληρωμένο", addSprint: "Προσθήκη Sprint", saveChanges: "Αποθήκευση", cancel: "Ακύρωση", 
+    selectProject: "Επιλογή έργου", successCreate: "Το Sprint δημιουργήθηκε", successUpdate: "Το Sprint ενημερώθηκε", 
+    failSave: "Αποτυχία", fillFields: "Συμπληρώστε τα πεδία", deleted: "Διαγράφηκε",
+    dateError: "Η ημερομηνία λήξης δεν μπορεί να είναι πριν από την ημερομηνία έναρξης" // Added
+  },
+  he: { 
+    manageSprints: "ניהול ספרינטים", sprintName: "שם הספרינט", project: "פרויקט", status: "סטטוס", 
+    startDate: "תאריך התחלה", endDate: "תאריך סיום", planned: "מתוכנן", active: "פעיל", 
+    completed: "הושלם", addSprint: "הוסף ספרינט", saveChanges: "שמור שינויים", cancel: "ביטול", 
+    selectProject: "בחר פרויקט", successCreate: "הספרינט נוצר", successUpdate: "הספרינט עודכן", 
+    failSave: "שגיאה", fillFields: "מלא את השדות", deleted: "נמחק",
+    dateError: "תאריך הסיום לא יכול להיות לפני תאריך ההתחלה" // Added
+  },
+  sv: { 
+    manageSprints: "Sprinthantering", sprintName: "Sprintnamn", project: "Projekt", status: "Status", 
+    startDate: "Startdatum", endDate: "Slutdatum", planned: "Planerad", active: "Aktiv", 
+    completed: "Slutförd", addSprint: "Lägg till Sprint", saveChanges: "Spara ändringar", cancel: "Avbryt", 
+    selectProject: "Välj projekt", successCreate: "Sprint skapad", successUpdate: "Sprint uppdaterad", 
+    failSave: "Fel", fillFields: "Fyll i fält", deleted: "Raderad",
+    dateError: "Slutdatum kan inte vara före startdatum" // Added
+  },
+  no: { 
+    manageSprints: "Sprintstyring", sprintName: "Sprintnavn", project: "Prosjekt", status: "Status", 
+    startDate: "Startdato", endDate: "Sluttdato", planned: "Planlagt", active: "Aktiv", 
+    completed: "Fullført", addSprint: "Legg til Sprint", saveChanges: "Lagre endringer", cancel: "Avbryt", 
+    selectProject: "Velg prosjekt", successCreate: "Sprint opprettet", successUpdate: "Sprint oppdatert", 
+    failSave: "Feil", fillFields: "Fyll ut felt", deleted: "Slettet",
+    dateError: "Sluttdato kan ikke være før startdato" // Added
+  },
+  da: { 
+    manageSprints: "Sprintstyring", sprintName: "Sprintnavn", project: "Projekt", status: "Status", 
+    startDate: "Startdato", endDate: "Slutdato", planned: "Planlagt", active: "Aktiv", 
+    completed: "Gennemført", addSprint: "Tilføj Sprint", saveChanges: "Gem ændringer", cancel: "Annuller", 
+    selectProject: "Væl projekt", successCreate: "Sprint oprettet", successUpdate: "Sprint opdateret", 
+    failSave: "Feil", fillFields: "Udfyld felter", deleted: "Slettet",
+    dateError: "Slutdato kan ikke være før startdato" // Added
+  },
+  fi: { 
+    manageSprints: "Sprinttien hallinta", sprintName: "Sprintin nimi", project: "Projekti", status: "Tila", 
+    startDate: "Alkamispäivä", endDate: "Päättymispäivä", planned: "Suunniteltu", active: "Aktiivinen", 
+    completed: "Valmis", addSprint: "Lisää sprintti", saveChanges: "Tallenna", cancel: "Peruuta", 
+    selectProject: "Valitse projekti", successCreate: "Sprintti luotu", successUpdate: "Sprintti päivitetty", 
+    failSave: "Virhe", fillFields: "Täytä kentät", deleted: "Poistettu",
+    dateError: "Päättymispäivä ei voi olla ennen alkamispäivää" // Added
+  },
+  hu: { 
+    manageSprints: "Sprint kezelés", sprintName: "Sprint neve", project: "Projekt", status: "Állapot", 
+    startDate: "Kezdés dátuma", endDate: "Befejezés dátuma", planned: "Tervezett", active: "Aktív", 
+    completed: "Befejezett", addSprint: "Sprint hozzáadása", saveChanges: "Mentés", cancel: "Mégse", 
+    selectProject: "Válassz projektet", successCreate: "Sprint létrehozva", successUpdate: "Sprint frissítve", 
+    failSave: "Hiba", fillFields: "Töltsd ki a mezőket", deleted: "Törölve",
+    dateError: "A befejezés dátuma nem lehet korábbi a kezdés dátumánál" // Added
+  },
+  cs: { 
+    manageSprints: "Správa sprintů", sprintName: "Název sprintu", project: "Projekt", status: "Stav", 
+    startDate: "Datum zahájení", endDate: "Datum ukončení", planned: "Plánováno", active: "Aktivní", 
+    completed: "Dokončeno", addSprint: "Přidat sprint", saveChanges: "Uložit změny", cancel: "Zrušit", 
+    selectProject: "Vybrat projekt", successCreate: "Sprint vytvořen", successUpdate: "Sprint aktualizován", 
+    failSave: "Chyba", fillFields: "Vyplňte pole", deleted: "Smazáno",
+    dateError: "Datum ukončení nemůže být dříve než datum zahájení" // Added
+  },
+  sk: { 
+    manageSprints: "Správa sprintov", sprintName: "Názov sprintu", project: "Projekt", status: "Stav", 
+    startDate: "Dátum začatia", endDate: "Dátum ukončenia", planned: "Plánované", active: "Aktívne", 
+    completed: "Dokončené", addSprint: "Pridať sprint", saveChanges: "Uložiť zmeny", cancel: "Zrušiť", 
+    selectProject: "Vybrať projekt", successCreate: "Sprint vytvorený", successUpdate: "Sprint aktualizovaný", 
+    failSave: "Chyba", fillFields: "Vyplňte polia", deleted: "Zmazané",
+    dateError: "Dátum ukončenia nemôže byť skôr ako dátum začatia" // Added
+  },
+  ro: { 
+    manageSprints: "Gestionare Sprint", sprintName: "Nume Sprint", project: "Proiect", status: "Status", 
+    startDate: "Data de început", endDate: "Data de sfârșit", planned: "Planificat", active: "Activ", 
+    completed: "Finalizat", addSprint: "Adaugă Sprint", saveChanges: "Salvează", cancel: "Anulează", 
+    selectProject: "Selectează proiect", successCreate: "Sprint creat", successUpdate: "Sprint actualizat", 
+    failSave: "Eroare", fillFields: "Completați câmpurile", deleted: "Șters",
+    dateError: "Data de sfârșit nu poate fi înainte de data de început" // Added
+  },
+  bg: { 
+    manageSprints: "Управление на спринтове", sprintName: "Име на спринта", project: "Проект", status: "Статус", 
+    startDate: "Начална дата", endDate: "Крайна дата", planned: "Планиран", active: "Активен", 
+    completed: "Завършен", addSprint: "Добави спринт", saveChanges: "Запази", cancel: "Отказ", 
+    selectProject: "Избери проект", successCreate: "Спринтът е създаден", successUpdate: "Спринтът е обновен", 
+    failSave: "Грешка", fillFields: "Попълнете полетата", deleted: "Изтрито",
+    dateError: "Крайната дата не може да бъде преди началната дата" // Added
+  },
+  id: { 
+    manageSprints: "Manajemen Sprint", sprintName: "Nama Sprint", project: "Proyek", status: "Status", 
+    startDate: "Tanggal Mulai", endDate: "Tanggal Selesai", planned: "Direncanakan", active: "Aktif", 
+    completed: "Selesai", addSprint: "Tambah Sprint", saveChanges: "Simpan", cancel: "Batal", 
+    selectProject: "Pilih proyek", successCreate: "Sprint dibuat", successUpdate: "Sprint diperbarui", 
+    failSave: "Gagal", fillFields: "Isi semua bidang", deleted: "Dihapus",
+    dateError: "Tanggal selesai tidak boleh sebelum tanggal mulai" // Added
+  },
+  ms: { 
+    manageSprints: "Pengurusan Sprint", sprintName: "Nama Sprint", project: "Projek", status: "Status", 
+    startDate: "Tarikh Mula", endDate: "Tarikh Tamat", planned: "Dirancang", active: "Aktif", 
+    completed: "Selesai", addSprint: "Tambah Sprint", saveChanges: "Simpan", cancel: "Batal", 
+    selectProject: "Pilih projek", successCreate: "Sprint dicipta", successUpdate: "Sprint dikemaskini", 
+    failSave: "Gagal", fillFields: "Isi semua medan", deleted: "Dipadam",
+    dateError: "Tarikh tamat tidak boleh sebelum tarikh mula" // Added
+  },
+  et: { 
+    manageSprints: "Spurdi haldus", sprintName: "Spurdi nimi", project: "Projekt", status: "Olek", 
+    startDate: "Alguskuupäev", endDate: "Lõppkuupäev", planned: "Planeeritud", active: "Aktiivne", 
+    completed: "Lõpetatud", addSprint: "Lisa spurt", saveChanges: "Salvesta", cancel: "Tühista", 
+    selectProject: "Vali projekt", successCreate: "Spurt loodud", successUpdate: "Spurt uuendatud", 
+    failSave: "Viga", fillFields: "Täida väljad", deleted: "Kustutatud",
+    dateError: "Lõppkuupäev ei saa olla enne alguskuupäeva" // Added
+  },
+  lv: { 
+    manageSprints: "Sprinta vadība", sprintName: "Sprinta nosaukums", project: "Projekts", status: "Statuss", 
+    startDate: "Sākuma datums", endDate: "Beigu datums", planned: "Plānots", active: "Aktīvs", 
+    completed: "Pabeigts", addSprint: "Pievienot sprintu", saveChanges: "Saglabāt", cancel: "Atcelt", 
+    selectProject: "Izvēlēties projektu", successCreate: "Sprints izveidots", successUpdate: "Sprints atjaunināts", 
+    failSave: "Kļūda", fillFields: "Aizpildiet laukus", deleted: "Izdzēsts",
+    dateError: "Beigu datums nevar būt pirms sākuma datuma" // Added
+  },
+  lt: { 
+    manageSprints: "Sprintų valdymas", sprintName: "Sprinto pavadinimas", project: "Projektas", status: "Būsena", 
+    startDate: "Pradžios data", endDate: "Pabaigos data", planned: "Planuojamas", active: "Aktyvus", 
+    completed: "Baigtas", addSprint: "Pridėti sprintą", saveChanges: "Išsaugoti", cancel: "Atšaukti", 
+    selectProject: "Pasirinkti projektą", successCreate: "Sprintas sukurtas", successUpdate: "Sprintas atnaujintas", 
+    failSave: "Klaida", fillFields: "Užpildykite laukus", deleted: "Ištrinta",
+    dateError: "Pabaigos data negali būti ankstesnė nei pradžios data" // Added
+  },
+  hr: { 
+    manageSprints: "Upravljanje sprintovima", sprintName: "Naziv sprinta", project: "Projekt", status: "Status", 
+    startDate: "Početni datum", endDate: "Završni datum", planned: "Planirano", active: "Aktivno", 
+    completed: "Završeno", addSprint: "Dodaj sprint", saveChanges: "Spremi", cancel: "Odustani", 
+    selectProject: "Odaberi projekt", successCreate: "Sprint kreiran", successUpdate: "Sprint ažuriran", 
+    failSave: "Greška", fillFields: "Popunite polja", deleted: "Obrisano",
+    dateError: "Završni datum ne može biti prije početnog datuma" // Added
+  },
+  sr: { 
+    manageSprints: "Upravljanje sprintovima", sprintName: "Naziv sprinta", project: "Projekat", status: "Status", 
+    startDate: "Datum početka", endDate: "Datum završetka", planned: "Planirano", active: "Aktivno", 
+    completed: "Završeno", addSprint: "Dodaj sprint", saveChanges: "Sačuvaj", cancel: "Otkaži", 
+    selectProject: "Izaberi projekat", successCreate: "Sprint kreiran", successUpdate: "Sprint ažuriran", 
+    failSave: "Greška", fillFields: "Popunite polja", deleted: "Obrisano",
+    dateError: "Datum završetka ne može biti pre datuma početka" // Added
+  },
+  sl: { 
+    manageSprints: "Upravljanje sprinti", sprintName: "Ime sprinta", project: "Projekt", status: "Status", 
+    startDate: "Datum začetka", endDate: "Datum konca", planned: "Načrtovano", active: "Aktivno", 
+    completed: "Končano", addSprint: "Dodaj sprint", saveChanges: "Shrani", cancel: "Prekliči", 
+    selectProject: "Izberi projekt", successCreate: "Sprint ustvarjen", successUpdate: "Sprint posodobljen", 
+    failSave: "Napaka", fillFields: "Izpolnite polja", deleted: "Izbrisano",
+    dateError: "Datum konca ne more biti pred datumom začetka" // Added
+  },
+  fa: { 
+    manageSprints: "مدیریت اسپرینت", sprintName: "نام اسپرینت", project: "پروژه", status: "وضعیت", 
+    startDate: "تاریخ شروع", endDate: "تاریخ پایان", planned: "برنامه‌ریزی شده", active: "فعال", 
+    completed: "تکمیل شده", addSprint: "افزودن اسپرینت", saveChanges: "ذخیره تغییرات", cancel: "لغو", 
+    selectProject: "انتخاب پروژه", successCreate: "اسپرینت ایجاد شد", successUpdate: "اسپرینت بروز شد", 
+    failSave: "خطا", fillFields: "فیلدها را پر کنید", deleted: "حذف شد",
+    dateError: "تاریخ پایان نمی‌تواند قبل از تاریخ شروع باشد" // Added
+  },
+  ur: { 
+    manageSprints: "سپرنٹ مینجمنٹ", sprintName: "سپرنٹ کا نام", project: "پروجیکٹ", status: "حیثیت", 
+    startDate: "شروع کی تاریخ", endDate: "ختم ہونے کی تاریخ", planned: "منصوبہ بند", active: "فعال", 
+    completed: "مکمل", addSprint: "سپرنٹ شامل کریں", saveChanges: "تبدیلیاں محفوظ کریں", cancel: "منسوخ کریں", 
+    selectProject: "پروجیکٹ منتخب کریں", successCreate: "سپرنٹ بن گیا", successUpdate: "سپرنٹ اپ ڈیٹ ہو گیا", 
+    failSave: "ناکام", fillFields: "تمام خانے بھریں", deleted: "ختم کر دیا گیا",
+    dateError: "ختم ہونے کی تاریخ شروع کی تاریخ سے پہلے نہیں ہو سکتی" // Added
+  },
+  bn: { 
+    manageSprints: "স্প্রিন্ট ম্যানেজমেন্ট", sprintName: "স্প্রিন্টের নাম", project: "প্রকল্প", status: "অবস্থা", 
+    startDate: "শুরু তারিখ", endDate: "শেষ তারিখ", planned: "পরিকল্পিত", active: "সক্রিয়", 
+    completed: "সম্পন্ন", addSprint: "স্প্রিন্ট যোগ করুন", saveChanges: "পরিবর্তন সংরক্ষণ করুন", cancel: "বাতিল করুন", 
+    selectProject: "প্রকল্প নির্বাচন করুন", successCreate: "স্প্রিন্ট তৈরি হয়েছে", successUpdate: "স্প্রিন্ট আপডেট হয়েছে", 
+    failSave: "ব্যর্থ", fillFields: "সব ঘর পূরণ করুন", deleted: "মুছে ফেলা হয়েছে",
+    dateError: "শেষ তারিখ শুরু তারিখের আগে হতে পারে না" // Added
+  },
+  pa: { 
+    manageSprints: "ਸਪ੍ਰਿੰਟ ਪ੍ਰਬੰਧਨ", sprintName: "ਸਪ੍ਰਿੰਟ ਦਾ ਨਾਮ", project: "ਪ੍ਰੋਜੈਕਟ", status: "ਸਥਿਤੀ", 
+    startDate: "ਸ਼ੁਰੂਆਤੀ ਮਿਤੀ", endDate: "ਅੰਤਮ ਮਿਤੀ", planned: "ਯੋਜਨਾਬੱਧ", active: "ਸਰਗਰਮ", 
+    completed: "ਪੂਰਾ ਹੋਇਆ", addSprint: "ਸਪ੍ਰਿੰਟ ਜੋੜੋ", saveChanges: "ਤਬਦੀਲੀਆਂ ਸੁਰੱਖਿਅਤ ਕਰੋ", cancel: "ਰੱਦ ਕਰੋ", 
+    selectProject: "ਪ੍ਰੋਜੈਕਟ ਚੁਣੋ", successCreate: "ਸਪ੍ਰਿੰਟ ਬਣਾਇਆ ਗਿਆ", successUpdate: "ਸਪ੍ਰਿੰਟ ਅੱਪਡੇਟ ਕੀਤਾ ਗਿਆ", 
+    failSave: "ਅਸਫਲ", fillFields: "ਸਾਰੇ ਖੇਤਰ ਭਰੋ", deleted: "ਹਟਾਇਆ ਗਿਆ",
+    dateError: "ਅੰਤਮ ਮਿਤੀ ਸ਼ੁਰੂਆਤੀ ਮਿਤੀ ਤੋਂ ਪਹਿਲਾਂ ਨਹੀਂ ਹੋ ਸਕਦੀ" // Added
+  },
+  gu: { 
+    manageSprints: "સ્પ્રિન્ટ મેનેજમેન્ટ", sprintName: "સ્પ્રિન્ટ નામ", project: "પ્રોજેક્ટ", status: "સ્થિતિ", 
+    startDate: "શરૂઆતની તારીખ", endDate: "અંતિમ તારીખ", planned: "આયોજિત", active: "સક્રિય", 
+    completed: "પૂર્ણ", addSprint: "સ્પ્રિન્ટ ઉમેરો", saveChanges: "ફેરફારો સાચવો", cancel: "રદ કરો", 
+    selectProject: "પ્રોજેક્ટ પસંદ કરો", successCreate: "સ્પ્રિન્ટ બનાવવામાં આવી", successUpdate: "સ્પ્રિન્ટ અપડેટ થઈ", 
+    failSave: "નિષ્ફળ", fillFields: "બધા ક્ષેત્રો ભરો", deleted: "કાઢી નાખ્યું",
+    dateError: "અંતિમ તારીખ શરૂઆતની તારીખ પહેલાં ન હોઈ શકે" // Added
+  },
+  ta: { 
+    manageSprints: "ஸ்பிரிண்ட் மேலாண்மை", sprintName: "ஸ்பிரிண்ட் பெயர்", project: "திட்டம்", status: "நிலை", 
+    startDate: "ஆரம்ப தேதி", endDate: "முடிவு தேதி", planned: "திட்டமிடப்பட்டது", active: "செயலில் உள்ளது", 
+    completed: "முடிந்தது", addSprint: "ஸ்பிரிண்ட் சேர்க்க", saveChanges: "மாற்றங்களை சேமி", cancel: "ரத்து செய்", 
+    selectProject: "திட்டத்தைத் தேர்ந்தெடுக்கவும்", successCreate: "ஸ்பிரிண்ட் உருவாக்கப்பட்டது", successUpdate: "ஸ்பிரிண்ட் புதுப்பிக்கப்பட்டது", 
+    failSave: "தோல்வி", fillFields: "அனைத்து புலங்களையும் நிரப்பவும்", deleted: "நீக்கப்பட்டது",
+    dateError: "முடிவு தேதி ஆரம்ப தேதிக்கு முன்னதாக இருக்க முடியாது" // Added
+  },
+  te: { 
+    manageSprints: "స్ప్రింట్ నిర్వహణ", sprintName: "స్ప్రింట్ పేరు", project: "ప్రాజెక్ట్", status: "స్థితి", 
+    startDate: "ప్రారంభ తేదీ", endDate: "ముగింపు తేదీ", planned: "ప్రణాళిక చేయబడింది", active: "క్రియాశీల", 
+    completed: "పూర్తయింది", addSprint: "స్ప్రింట్ జోడించు", saveChanges: "మార్పులను పొదుపు చేయండి", cancel: "రద్దు చేయి", 
+    selectProject: "ప్రాజెక్ట్ ఎంచుకోండి", successCreate: "స్ప్రింట్ సృష్టించబడింది", successUpdate: "స్ప్రింట్ నవీకరించబడింది", 
+    failSave: "విఫలమైంది", fillFields: "అన్ని ఫీల్డ్‌లను నింపండి", deleted: "తొలగించబడింది",
+    dateError: "ముగింపు తేదీ ప్రారంభ తేదీ కంటే ముందు ఉండకూడదు" // Added
+  },
+  kn: { 
+    manageSprints: "ಸ್ಪ್ರಿಂಟ್ ನಿರ್ವಹಣೆ", sprintName: "ಸ್ಪ್ರಿಂಟ್ ಹೆಸರು", project: "ಯೋಜನೆ", status: "ಸ್ಥಿತಿ", 
+    startDate: "ಪ್ರಾರಂಭ ದಿನಾಂಕ", endDate: "ಅಂತಿಮ ದಿನಾಂಕ", planned: "ಯೋಜಿತ", active: "ಸಕ್ರಿಯ", 
+    completed: "ಪೂರ್ಣಗೊಂಡಿದೆ", addSprint: "ಸ್ಪ್ರಿಂಟ್ ಸೇರಿಸಿ", saveChanges: "ಬದಲಾವಣೆ ಉಳಿಸಿ", cancel: "ರದ್ದುಮಾಡಿ", 
+    selectProject: "ಯೋಜನೆ ಆಯ್ಕೆಮಾಡಿ", successCreate: "ಸ್ಪ್ರಿಂಟ್ ರಚಿಸಲಾಗಿದೆ", successUpdate: "ಸ್ಪ್ರಿಂಟ್ ನವೀಕರಿಸಲಾಗಿದೆ", 
+    failSave: "ವಿಫಲ", fillFields: "ಎಲ್ಲಾ ಕ್ಷೇತ್ರಗಳನ್ನು ತುಂಬಿ", deleted: "ಅಳಿಸಲಾಗಿದೆ",
+    dateError: "ಅಂತಿಮ ದಿನಾಂಕ ಪ್ರಾರಂಭ ದಿನಾಂಕಕ್ಕಿಂತ ಮುಂಚಿತವಾಗಿರಬಾರದು" // Added
+  },
+  ml: { 
+    manageSprints: "സ്പ്രിന്റ് മാനേജ്‌മെന്റ്", sprintName: "സ്പ്രിന്റ് പേര്", project: "പ്രോജക്റ്റ്", status: "നില", 
+    startDate: "ആരംഭ തീയതി", endDate: "അവസാന തീയതി", planned: "ആസൂത്രണം ചെയ്തു", active: "സജീവം", 
+    completed: "പൂർത്തിയായി", addSprint: "സ്പ്രിന്റ് ചേർക്കുക", saveChanges: "മാറ്റങ്ങൾ സംരക്ഷിക്കുക", cancel: "റദ്ദാക്കുക", 
+    selectProject: "പ്രോജക്റ്റ് തിരഞ്ഞെടുക്കുക", successCreate: "സ്പ്രിന്റ് സൃഷ്ടിച്ചു", successUpdate: "സ്പ്രിന്റ് പുതുക്കി", 
+    failSave: "പരാജയപ്പെട്ടു", fillFields: "എല്ലാ ഫീൽഡുകളും പൂരിപ്പിക്കുക", deleted: "നീക്കംചെയ്തു",
+    dateError: "അവസാന തീയതി ആരംഭ തീയതിക്ക് മുമ്പാകാൻ കഴിയില്ല" // Added
+  },
+  sw: { 
+    manageSprints: "Usimamizi wa Sprint", sprintName: "Jina la Sprint", project: "Mradi", status: "Hali", 
+    startDate: "Tarehe ya Kuanza", endDate: "Tarehe ya Mwisho", planned: "Iliyopangwa", active: "Inayofanya Kazi", 
+    completed: "Imekamilika", addSprint: "Ongeza Sprint", saveChanges: "Hifadhi Mabadiliko", cancel: "Ghairi", 
+    selectProject: "Chagua mradi", successCreate: "Sprint imeundwa", successUpdate: "Sprint imesasishwa", 
+    failSave: "Imeshindwa", fillFields: "Jaza nyanja zote", deleted: "Imefutwa",
+    dateError: "Tarehe ya mwisho haiwezi kuwa kabla ya tarehe ya kuanza" // Added
+  },
+  tl: { 
+    manageSprints: "Pamamahala ng Sprint", sprintName: "Pangalan ng Sprint", project: "Proyekto", status: "Katayuan", 
+    startDate: "Petsa ng Simula", endDate: "Petsa ng Tapos", planned: "Plano", active: "Aktibo", 
+    completed: "Tapos na", addSprint: "Magdagdag ng Sprint", saveChanges: "I-save ang mga pagbabago", cancel: "Kanselahin", 
+    selectProject: "Pumili ng proyekto", successCreate: "Nalikha ang sprint", successUpdate: "Na-update ang sprint", 
+    failSave: "Nabigo", fillFields: "Punan ang lahat ng field", deleted: "Na-delete",
+    dateError: "Hindi maaaring mas mauna ang petsa ng pagtatapos kaysa sa simula" // Added
+  }
 };
 
 export const getSprintTranslation = (key: string, lang: string) => {
