@@ -11,6 +11,7 @@ import { useRouter } from "next/navigation";
 import { ProjectDTO } from "@/projects/projectTypes";
 import { getTaskSummaryTranslation } from "@/utils/dictionary_task_summary";
 import {getApiDomain} from "@/utils/domain";
+import {User} from "@/types/user";
 
 const { Title, Text } = Typography;
 
@@ -26,6 +27,7 @@ const TaskSummarySection = (): React.JSX.Element => {
   const [projects, setProjects] = useState<ProjectDTO[]>([]);
   const [displayProjects, setDisplayProjects] = useState<ProjectDTO[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [user, setUser] = useState<User>(null);
 
   const router = useRouter();
   const api = useMemo(() => new ApiService(), []);
@@ -146,9 +148,11 @@ useEffect(() => {
                             );
                             break;
                         case "project_created":
-                            if ((payload as ProjectDTO).members?.some((m) => String(m.id) === userId)) {
-                                setProjects((prev) => [...prev, payload]);
-                            }
+                            api.get<ProjectDTO>(`/projects/${payload.id}`).then((full) => {
+                                if (full.members?.some((m) => String(m.id) === userId)) {
+                                    setProjects((prev) => [...prev, full]);
+                                }
+                            });
                             break;
                         case "project_updated":
                             setProjects((prev) =>
