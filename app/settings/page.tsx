@@ -38,8 +38,8 @@ const Settings = (): React.JSX.Element => {
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
   const [username, setUsername] = useState("");
-  const [user, setUser] = useState<User>(null);
-  
+  const [user, setUser] = useState<User | null>(null);
+
   const { value: id, clear: clearId } = useLocalStorage<string>("id", "");
   const { clear: clearToken } = useLocalStorage<string>("token", "");
   const { value: storedLanguage, set: setStoredLanguage } = useLocalStorage<string>("language", "en");
