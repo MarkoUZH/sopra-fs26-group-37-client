@@ -10,7 +10,9 @@ import EditProjectModal from "./EditProjectModal";
 import { useRouter } from "next/navigation";
 import { ProjectDTO } from "@/projects/projectTypes";
 import { getTaskSummaryTranslation } from "@/utils/dictionary_task_summary";
-import { getApiDomain } from "@/utils/domain";
+
+import {getApiDomain} from "@/utils/domain";
+import {User} from "@/types/user";
 
 const { Title, Text } = Typography;
 
@@ -26,6 +28,7 @@ const TaskSummarySection = (): React.JSX.Element => {
   const [projects, setProjects] = useState<ProjectDTO[]>([]);
   const [displayProjects, setDisplayProjects] = useState<ProjectDTO[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [user, setUser] = useState<User>(null);
 
   const router = useRouter();
   const api = useMemo(() => new ApiService(), []);
@@ -146,29 +149,46 @@ const TaskSummarySection = (): React.JSX.Element => {
     const userId = localStorage.getItem("id")?.replace(/['"]+/g, '');
     if (!userId) return;
 
-    const client = new Client({
-      webSocketFactory: () => new SockJS(`${getApiDomain()}/ws/projects`),
-      onConnect: () => {
-        client.subscribe("/topic/projects", (msg) => {
-          const { type, payload } = JSON.parse(msg.body);
-          switch (type) {
-            case "projects_snapshot":
-              setProjects((payload as ProjectDTO[]).filter((p) =>
-                p.members?.some((m) => String(m.id) === userId)
-              ));
-              break;
-            case "project_created":
-              if ((payload as ProjectDTO).members?.some((m) => String(m.id) === userId)) {
-                setProjects((prev) => [...prev, payload]);
-              }
-              break;
-            case "project_updated":
-              setProjects((prev) => prev.map((p) => (p.id === payload.id ? payload : p)));
-              break;
-            case "project_deleted":
-              setProjects((prev) => prev.filter((p) => p.id !== payload.id));
-              break;
-          }
+    // WebSocket for projects
+    useEffect(() => {
+        const userId = localStorage.getItem("id");
+        if (!userId) return;
+
+        const client = new Client({
+            webSocketFactory: () =>
+                new SockJS(`${getApiDomain()}/ws/projects`),
+            onConnect: () => {
+                client.subscribe("/topic/projects", (msg) => {
+                    const { type, payload } = JSON.parse(msg.body);
+                    switch (type) {
+                        case "projects_snapshot":
+                            setProjects(
+                                (payload as ProjectDTO[]).filter((p) =>
+                                    p.members?.some((m) => String(m.id) === userId)
+                                )
+                            );
+                            break;
+                        case "project_created":
+                            api.get<ProjectDTO>(`/projects/${payload.id}`).then((full) => {
+                                if (full.members?.some((m) => String(m.id) === userId)) {
+                                    setProjects((prev) => [...prev, full]);
+                                }
+                            });
+                            break;
+                        case "project_updated":
+                            setProjects((prev) =>
+                                prev.map((p) => (p.id === payload.id ? payload : p))
+                            );
+                            break;
+                        case "project_deleted":
+                            setProjects((prev) => prev.filter((p) => p.id !== payload.id));
+                            break;
+                    }
+                });
+                client.publish({ destination: "/app/subscribe_projects", body: JSON.stringify({ userId }) });
+            },
+            reconnectDelay: 3000,
+
         });
         client.publish({ destination: "/app/subscribe_projects", body: JSON.stringify({ userId }) });
       },
