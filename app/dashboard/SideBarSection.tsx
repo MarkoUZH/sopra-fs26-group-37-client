@@ -1,10 +1,10 @@
 "use client";
 import {
-  DashboardOutlined,
-  LogoutOutlined,
-  SettingOutlined,
-  TagsOutlined,
-  RocketOutlined,
+    DashboardOutlined,
+    LogoutOutlined,
+    SettingOutlined,
+    TagsOutlined,
+    RocketOutlined, AreaChartOutlined,
 } from "@ant-design/icons";
 import { Divider, Menu } from "antd";
 import React, { useEffect, useState, useMemo } from "react";
@@ -26,6 +26,7 @@ const SideBarSection = (): React.JSX.Element => {
   const { clear: clearToken } = useLocalStorage<string>("token", "");
   const pathname = usePathname();
   const isInProject = pathname?.includes("/projects/");
+  const isInOverview = pathname?.includes("/overview");
 
   const projectId = isInProject ? pathname.split("/projects/")[1]?.split("/")[0] : undefined;
 
@@ -59,6 +60,7 @@ const SideBarSection = (): React.JSX.Element => {
       dashboard: getSidebarTranslation("Dashboard", targetLanguage),
       projects: getSidebarTranslation("Projects", targetLanguage),
       tags: getSidebarTranslation("Tags", targetLanguage),
+      overview: getSidebarTranslation("Overview", targetLanguage),
       sprints: getSidebarTranslation("Sprints", targetLanguage),
       settingsSection: getSidebarTranslation("SETTINGS_SECTION", targetLanguage),
       settings: getSidebarTranslation("Settings", targetLanguage),
@@ -121,6 +123,7 @@ const SideBarSection = (): React.JSX.Element => {
     if (info.key === "logout") handleLogout();
     else if (info.key === "dashboard") router.push("/dashboard");
     else if (info.key === "settings") router.push("/settings");
+    else if (info.key === "overview") router.push(`/projects/${projectId}/overview`);
     else if (info.key === "tags") setTagsModalOpen(true);
     else if (info.key === "sprints") setSprintsModalOpen(true);
     else if (info.key === "projects") router.push("/projects");
@@ -130,12 +133,13 @@ const SideBarSection = (): React.JSX.Element => {
   const mainMenuItems = [
     { key: "dashboard", icon: <DashboardOutlined />, label: <span className="menu-item">{uiText.dashboard}</span> },
     // Only show Sprints if the user is a manager
-    ...(user?.manager ? [
+    ...(user?.manager && !isInOverview ? [
       { key: "sprints", icon: <RocketOutlined />, label: <span className="menu-item">{uiText.sprints}</span> }
     ] : []),
     // Only show Tags if inside a project
-    ...(isInProject ? [
+    ...(isInProject && !isInOverview ? [
       { key: "tags", icon: <TagsOutlined />, label: <span className="menu-item">{uiText.tags}</span> },
+      { key: "overview", icon: <AreaChartOutlined />, label: <span className="menu-item">{uiText.overview}</span> },
     ] : []),
   ];
 
