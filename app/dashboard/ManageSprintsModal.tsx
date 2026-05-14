@@ -381,7 +381,7 @@ useEffect(() => {
                 </Flex>
                 <Flex gap={4}>
                   <Button type="text" icon={<EditOutlined />} onClick={() => { setEditingId(sprint.id); setForm({ ...sprint, projectId: String(sprint.projectId) }); setShowForm(true); }} />
-                  <Button type="text" icon={<DeleteOutlined />} onClick={async () => {
+                  <Button type="text" icon={<DeleteOutlined />} disabled={rawSprints.find(r => r.id === sprint.id)?.name === "Backlog"} onClick={async () => {
                     try {
                       await api.delete(`/sprints/${sprint.id}`);
                       setSprints(sprints.filter(s => s.id !== sprint.id));
