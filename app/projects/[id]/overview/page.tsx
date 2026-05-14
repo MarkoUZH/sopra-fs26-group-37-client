@@ -15,8 +15,6 @@ import {TagsProvider} from "@/dashboard/TagsContext";
 const { Sider, Content } = Layout;
 const { Text } = Typography;
 
-// ─── Types ────────────────────────────────────────────────────────────────────
-
 interface ApiSprint {
     id: number;
     name: string;
@@ -45,8 +43,6 @@ interface ApiProject {
     members?: { id: number; username: string; name?: string }[];
     sprints?: ApiSprint[];
 }
-
-// ─── Helpers ──────────────────────────────────────────────────────────────────
 
 const STATUS_COLOR: Record<string, string> = {
     PLANNED:   "#6366f1",
@@ -93,8 +89,6 @@ function buildBurndown(tasks: ApiTask[], startTime: string, endTime: string) {
     });
 }
 
-// ─── Sub-components ───────────────────────────────────────────────────────────
-
 const StatCard = ({
                       label, value, sub, accent,
                   }: { label: string; value: string | number; sub?: string; accent: string }) => (
@@ -131,8 +125,6 @@ const EmptyChart = ({ height = 180 }: { height?: number }) => (
     </div>
 );
 
-// ─── Main Page ────────────────────────────────────────────────────────────────
-
 const ProjectSprintOverview: React.FC = () => {
     const api = useApi();
     const router = useRouter();
@@ -144,7 +136,6 @@ const ProjectSprintOverview: React.FC = () => {
     const [selectedSprintId, setSelectedSprintId] = useState<number | null>(null);
     const [loading, setLoading] = useState(true);
 
-    // ── Fetch project + its sprints ──
     useEffect(() => {
         if (!projectId) return;
         let mounted = true;
@@ -177,16 +168,13 @@ const ProjectSprintOverview: React.FC = () => {
         return () => { mounted = false; };
     }, [api, projectId]);
 
-    // ── Selected sprint ──
     const sprint = useMemo(
         () => sprints.find(s => s.id === selectedSprintId) ?? null,
         [sprints, selectedSprintId]
     );
 
-    // ── Tasks scoped to this project ──
     const allTasks: ApiTask[] = project?.tasks ?? [];
 
-    // ── Derived metrics ──
     const todo        = allTasks.filter(t => t.status === "TODO").length;
     const inProgress  = allTasks.filter(t => t.status === "IN_PROGRESS").length;
     const done        = allTasks.filter(t => t.status === "DONE").length;
@@ -224,7 +212,6 @@ const ProjectSprintOverview: React.FC = () => {
             .sort((a, b) => b.count - a.count);
     }, [allTasks]);
 
-    // Sprint velocity — tasks completed per sprint
     const velocityData = useMemo(() =>
             [...sprints]
                 .sort((a, b) => dayjs(a.startTime).valueOf() - dayjs(b.startTime).valueOf())
@@ -236,7 +223,6 @@ const ProjectSprintOverview: React.FC = () => {
         [sprints, selectedSprintId, done]
     );
 
-    // ── Loading ──
     if (loading) {
         return (
             <div style={{ display: "flex", justifyContent: "center", alignItems: "center", height: "100vh" }}>
@@ -263,7 +249,6 @@ const ProjectSprintOverview: React.FC = () => {
             <Layout style={{ marginLeft: 220 }}>
                 <Content style={{ padding: "28px 32px", background: "#f8fafc", minHeight: "100vh" }}>
 
-                    {/* ── Header ── */}
                     <Button
                         type="text"
                         icon={<ArrowLeftOutlined />}
@@ -339,7 +324,6 @@ const ProjectSprintOverview: React.FC = () => {
                         </div>
                     ) : (
                         <>
-                            {/* ── Sprint info bar ── */}
                             {sprint && (
                                 <div style={{
                                     display: "flex", alignItems: "center", gap: 16, marginBottom: 24,
@@ -368,7 +352,6 @@ const ProjectSprintOverview: React.FC = () => {
                                 </div>
                             )}
 
-                            {/* ── Stat cards ── */}
                             <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 16, marginBottom: 24 }}>
                                 <StatCard label="Completion"  value={`${completion}%`} sub={`${done} of ${total} tasks done`}        accent="#6366f1" />
                                 <StatCard label="To Do"       value={todo}             sub="tasks not started"                        accent="#f04000" />
@@ -376,7 +359,6 @@ const ProjectSprintOverview: React.FC = () => {
                                 <StatCard label="Days Left"   value={sprint ? timeLeft : "–"} sub={sprint ? `${timeProgress}% of sprint elapsed` : "No sprint selected"} accent={timeLeft <= 3 ? "#ef4444" : "#10b981"} />
                             </div>
 
-                            {/* ── Timeline progress ── */}
                             {sprint && (
                                 <div style={{ marginBottom: 24 }}>
                                     <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
@@ -397,7 +379,6 @@ const ProjectSprintOverview: React.FC = () => {
                                 </div>
                             )}
 
-                            {/* ── Charts row 1: Burndown + Priority ── */}
                             <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: 20, marginBottom: 20 }}>
 
                                 <div style={{ background: "#fff", borderRadius: 14, padding: 24, border: "1px solid #f1f5f9", boxShadow: "0 1px 3px rgba(0,0,0,0.04)" }}>
@@ -421,7 +402,6 @@ const ProjectSprintOverview: React.FC = () => {
                                                     <YAxis tick={{ fontSize: 11, fill: "#94a3b8" }} tickLine={false} axisLine={false} />
                                                     <Tooltip
                                                         contentStyle={{ borderRadius: 8, border: "1px solid #e2e8f0", fontSize: 12 }}
-                                                        formatter={(val: any, name: string) => [val ?? "–", name === "ideal" ? "Ideal remaining" : "Actual remaining"]}
                                                     />
                                                     <Area type="monotone" dataKey="ideal" stroke="#6366f1" strokeWidth={2} strokeDasharray="5 3" fill="url(#idealGrad)" dot={false} name="ideal" />
                                                     <Area type="monotone" dataKey="actual" stroke="#10b981" strokeWidth={2.5} fill="url(#actualGrad)" dot={false} connectNulls name="actual" />
@@ -457,7 +437,6 @@ const ProjectSprintOverview: React.FC = () => {
                                 </div>
                             </div>
 
-                            {/* ── Charts row 2: Status + Workload ── */}
                             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20, marginBottom: 20 }}>
 
                                 <div style={{ background: "#fff", borderRadius: 14, padding: 24, border: "1px solid #f1f5f9", boxShadow: "0 1px 3px rgba(0,0,0,0.04)" }}>
@@ -502,7 +481,6 @@ const ProjectSprintOverview: React.FC = () => {
                                 </div>
                             </div>
 
-                            {/* ── Sprint list for this project ── */}
                             <div style={{ background: "#fff", borderRadius: 14, padding: 24, border: "1px solid #f1f5f9", boxShadow: "0 1px 3px rgba(0,0,0,0.04)", marginBottom: 20 }}>
                                 <SectionTitle>All Sprints in This Project</SectionTitle>
                                 {sprints.length === 0 ? (
@@ -572,7 +550,6 @@ const ProjectSprintOverview: React.FC = () => {
                                 )}
                             </div>
 
-                            {/* ── Task list ── */}
                             <div style={{ background: "#fff", borderRadius: 14, padding: 24, border: "1px solid #f1f5f9", boxShadow: "0 1px 3px rgba(0,0,0,0.04)" }}>
                                 <SectionTitle>All Tasks in Project</SectionTitle>
                                 {allTasks.length === 0 ? (
