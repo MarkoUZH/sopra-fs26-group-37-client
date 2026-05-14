@@ -313,9 +313,6 @@ const ProjectPageInner: React.FC = () => {
     );
 };
 
-// ─── Outer wrapper ───────────────────────────────────────────────────────────
-// Provides TagsContext to the entire page tree.
-
 const ProjectPage: React.FC = () => (
     <TagsProvider>
         <ProjectPageInner />
