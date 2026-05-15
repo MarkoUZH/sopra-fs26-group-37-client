@@ -1,9 +1,10 @@
 "use client";
 import {FilterOutlined, UserOutlined, TagsOutlined, RocketOutlined} from "@ant-design/icons";
 import {Flex, Select, Typography} from "antd";
-import React from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import {TagItem} from "@/dashboard/TagsContext";
 import {TeamMember, Sprint} from "@/projects/projectTypes";
+import { getFilterBarTranslation } from "@/utils/dictionary_filter";
 
 const {Text} = Typography;
 
@@ -30,6 +31,28 @@ const FilterBar: React.FC<FilterBarProps> = ({
                                                  onTagsChange,
                                                  onSprintsChange,
                                              }) => {
+    const [targetLanguage, setTargetLanguage] = useState("en");
+
+    useEffect(() => {
+        if (typeof window !== "undefined") {
+            const savedLang = localStorage.getItem("language");
+            if (savedLang) {
+                try {
+                    setTargetLanguage(JSON.parse(savedLang));
+                } catch {
+                    setTargetLanguage(savedLang);
+                }
+            }
+        }
+    }, []);
+
+    const uiText = useMemo(() => ({
+        filters: getFilterBarTranslation("Filters", targetLanguage),
+        member: getFilterBarTranslation("Member", targetLanguage),
+        tags: getFilterBarTranslation("Tags", targetLanguage),
+        sprint: getFilterBarTranslation("Sprint", targetLanguage),
+    }), [targetLanguage]);
+
     return (
         <div style={{
             background: "#fff",
@@ -42,7 +65,7 @@ const FilterBar: React.FC<FilterBarProps> = ({
         }}>
             <Flex align="center" gap={6} style={{marginBottom: 10}}>
                 <FilterOutlined style={{color: "#9ca3af", fontSize: 13}}/>
-                <Text style={{fontSize: 13, color: "#9ca3af", fontWeight: 500}}>Filters</Text>
+                <Text style={{fontSize: 13, color: "#9ca3af", fontWeight: 500}}>{uiText.filters}</Text>
             </Flex>
 
             <Flex gap={16}>
@@ -50,7 +73,7 @@ const FilterBar: React.FC<FilterBarProps> = ({
                 <Flex vertical gap={4} style={{flex: 1}}>
                     <Flex align="center" gap={4}>
                         <UserOutlined style={{fontSize: 12, color: "#6b7280"}}/>
-                        <span style={{fontSize: 12, color: "#6b7280"}}>Member</span>
+                        <span style={{fontSize: 12, color: "#6b7280"}}>{uiText.member}</span>
                     </Flex>
                     <Select
                         mode="multiple"
@@ -69,7 +92,7 @@ const FilterBar: React.FC<FilterBarProps> = ({
                 <Flex vertical gap={4} style={{flex: 1}}>
                     <Flex align="center" gap={4}>
                         <TagsOutlined style={{fontSize: 12, color: "#6b7280"}}/>
-                        <span style={{fontSize: 12, color: "#6b7280"}}>Tags</span>
+                        <span style={{fontSize: 12, color: "#6b7280"}}>{uiText.tags}</span>
                     </Flex>
                     <Select
                         mode="multiple"
@@ -88,7 +111,7 @@ const FilterBar: React.FC<FilterBarProps> = ({
                 <Flex vertical gap={4} style={{flex: 1}}>
                     <Flex align="center" gap={4}>
                         <RocketOutlined style={{fontSize: 12, color: "#6b7280"}}/>
-                        <span style={{fontSize: 12, color: "#6b7280"}}>Sprint</span>
+                        <span style={{fontSize: 12, color: "#6b7280"}}>{uiText.sprint}</span>
                     </Flex>
                     <Select
                         mode="multiple"
