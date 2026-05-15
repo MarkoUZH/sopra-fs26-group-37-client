@@ -153,6 +153,7 @@ reason).
 | ---------------- |------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|-----------------|---------------|
 |  **joazariah**  | 13.05.2026 | [backend](https://github.com/MarkoUZH/sopra-fs26-group-37-server/commit/6b9ea03dbf66ece2d6ca6cfcb2e12db98dcc7153) [frontend](https://github.com/MarkoUZH/sopra-fs26-group-37-client/commit/6e50223e8dfd60f10e1083cc8330982c103eb0ef)    | Enabling project deletion   | Adjusting the backend and frontend to enable project deletion (and their respective sprints and tasks) and creating error messages for the process is relevant to allow old or cancelled projects to be removed from the user's workspace         |
 |  **joazariah**  | 13.05.2026 | [commit](https://github.com/MarkoUZH/sopra-fs26-group-37-client/commit/a40d00732e5aa968965ae8379ba6d291cb762cf8)    | Ensuring sprint creation privileges     | It's crucial that only managers can create an edit sprints, otherwise the work flow risks becoming to cluttered and chaotic         |
+|  **joazariah**  | 15.05.2026 | [commit](https://github.com/MarkoUZH/sopra-fs26-group-37-client/commit/d01eac65ae1062e3374655b0325c1fde501ccceb)    | Filter bar translation            | set up the hard-coded translation of the filter bar so that this also displays in the user's language          |
 
 ---
 
