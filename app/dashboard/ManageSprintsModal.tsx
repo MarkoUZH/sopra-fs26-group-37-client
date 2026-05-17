@@ -5,7 +5,9 @@ import React, { useState, useEffect, useRef, useMemo, useCallback } from "react"
 import { createPortal } from "react-dom";
 import dayjs from "dayjs";
 import { useApi } from "@/hooks/useApi";
+// Import your dictionary helper
 import { getSprintTranslation } from "@/utils/dictionary_sprint_modal"; 
+
 
 const { Title, Text } = Typography;
 
@@ -14,7 +16,6 @@ const { Title, Text } = Typography;
 interface TranslateResponse {
   text?: () => Promise<string>;
 }
-
 interface ApiSprint {
   id: number;
   name: string;
@@ -25,17 +26,10 @@ interface ApiSprint {
   projectName?: string;
 }
 
-// Updated interface to accurately map the nested JSON structure
 interface ApiProject {
   id: number;
   name: string;
-  originalLanguage: string;
-  owner: {
-    id: number;
-    email: string;
-    username: string;
-    [key: string]: any; 
-  };
+  originalLanguage: string; // Assuming you have this info to help with translation
 }
 
 interface Props {
@@ -57,14 +51,12 @@ interface ProjectOption {
   id: number;
   name: string;
   originalLanguage: string;
-  ownerId: number; // Keep flattened inside UI state configuration
 }
 
 const EMPTY_FORM = { name: "", status: "PLANNED", startDate: "", endDate: "", projectId: "" };
 
 const ManageSprintsModal = ({ open, onClose }: Props): React.JSX.Element | null => {
-  const [currentUserId, setCurrentUserId] = useState<number | null>(null);
-  const [rawSprints, setRawSprints] = useState<ApiSprint[]>([]); 
+  const [rawSprints, setRawSprints] = useState<ApiSprint[]>([]); // Keep raw data here
   const [sprints, setSprints] = useState<SprintItem[]>([]);
   const [projects, setProjects] = useState<ProjectOption[]>([]);
   const [showForm, setShowForm] = useState(false);
@@ -72,20 +64,17 @@ const ManageSprintsModal = ({ open, onClose }: Props): React.JSX.Element | null 
   const [form, setForm] = useState(EMPTY_FORM);
   const api = useApi();
   const containerRef = useRef<HTMLDivElement>(null);
+  
+
   const [targetLanguage, setTargetLanguage] = useState("en");
 
-  // Sync language and user id from storage
+  // Sync language from storage
   useEffect(() => {
     if (typeof window !== "undefined") {
       const savedLang = localStorage.getItem("language");
       if (savedLang) {
         try { setTargetLanguage(JSON.parse(savedLang)); }
         catch { setTargetLanguage(savedLang); }
-      }
-      
-      const storedUid = localStorage.getItem("id");
-      if (storedUid) {
-        setCurrentUserId(Number(storedUid));
       }
     }
   }, []);
@@ -113,15 +102,9 @@ const ManageSprintsModal = ({ open, onClose }: Props): React.JSX.Element | null 
     dateError: getSprintTranslation("dateError", targetLanguage),
   }), [targetLanguage]);
 
-  // Authorization check using our local state variable
-  const isProjectOwner = useCallback((projectId: string) => {
-    const targetProject = projects.find(p => String(p.id) === String(projectId));
-    if (!targetProject || currentUserId === null) return false;
-    return targetProject.ownerId === currentUserId;
-  }, [projects, currentUserId]);
-
-  // 2. Dynamic Translation Helper (API)
+  // 2. Dynamic Translation Helper (API) - COPIED FROM TASK SUMMARY
   const translateText = useCallback(async (text: string, sourceLang: string, targetLang: string): Promise<string> => {
+   
     try {
       const result = await api.post<TranslateResponse | string>("/translate", {
         text,
@@ -139,78 +122,78 @@ const ManageSprintsModal = ({ open, onClose }: Props): React.JSX.Element | null 
   }, [api]);
 
   // 3. Effect to Translate Dynamic Sprint Content
-  useEffect(() => {
-    const translateDynamicContent = async () => {
-      const translated = await Promise.all(
-        rawSprints.map(async (s) => {
-          const projectInfo = projects.find(p => String(p.id) === String(s.projectId));
-          const source = projectInfo?.originalLanguage || "it"; 
-          
-          // Case-insensitive validation to verify if the sprint is a backlog item
-          const isBacklog = s.name.trim().toLowerCase() === "backlog";
+useEffect(() => {
+  const translateDynamicContent = async () => {
+    const translated = await Promise.all(
+      rawSprints.map(async (s) => {
+        // Find the project associated with this sprint
+        const projectInfo = projects.find(p => String(p.id) === String(s.projectId));
+        
+        // Fallback to "it" (or "en") if the project isn't found for some reason
+        const source = projectInfo?.originalLanguage || "it"; 
+        
+        return {
+          id: s.id,
+          name: await translateText(s.name, source, targetLanguage),
+          status: s.sprintStatus,
+          startDate: dayjs(s.startTime).format("DD.MM.YYYY"),
+          endDate: dayjs(s.endTime).format("DD.MM.YYYY"),
+          projectId: String(s.projectId),
+          projectName: await translateText(s.projectName || "", source, targetLanguage)
+        };
+      })
+    );
+    setSprints(translated);
+  };
 
-          return {
-            id: s.id,
-            // Skip dynamic API translation layer if it's the baseline Backlog
-            name: isBacklog ? s.name : await translateText(s.name, source, targetLanguage),
-            status: s.sprintStatus,
-            startDate: dayjs(s.startTime).format("DD.MM.YYYY"),
-            endDate: dayjs(s.endTime).format("DD.MM.YYYY"),
-            projectId: String(s.projectId),
-            projectName: await translateText(s.projectName || "", source, targetLanguage)
-          };
-        })
+  // Ensure we have both rawSprints AND the projects (to get the languages) before translating
+  if (rawSprints.length > 0 && projects.length > 0) {
+    translateDynamicContent();
+  } else if (rawSprints.length === 0) {
+    setSprints([]);
+  }
+}, [targetLanguage, rawSprints, projects, translateText]); // Added 'projects' to dependencies
+
+useEffect(() => {
+  if (!open) return;
+  let isMounted = true;
+
+  const fetchData = async () => {
+    try {
+      const userData = localStorage.getItem("id");
+      const [sprintData, userProjects] = await Promise.all([
+        api.get<ApiSprint[]>("/sprints"),
+        api.get<ApiProject[]>(`/projects/users/${userData}`)
+      ]);
+
+      if (!isMounted) return;
+
+      const myProjectIds = userProjects.map(p => p.id);
+
+  const translatedProjects = await Promise.all(
+    userProjects.map(async (p) => ({
+      id: p.id,
+      name: await translateText(p.name, p.originalLanguage, targetLanguage),
+      originalLanguage: p.originalLanguage 
+    }))
+  );
+  setProjects(translatedProjects);
+      // --------------------------------------------
+
+      const filteredSprints = sprintData.filter(s => 
+        myProjectIds.includes(Number(s.projectId))
       );
-      setSprints(translated);
-    };
 
-    if (rawSprints.length > 0 && projects.length > 0) {
-      translateDynamicContent();
-    } else if (rawSprints.length === 0) {
-      setSprints([]);
+      setRawSprints(filteredSprints);
+
+    } catch (e) {
+      console.error("Failed to fetch filtered management data", e);
     }
-  }, [targetLanguage, rawSprints, projects, translateText]);
+  };
 
-  useEffect(() => {
-    if (!open) return;
-    let isMounted = true;
-
-    const fetchData = async () => {
-      try {
-        const userData = localStorage.getItem("id");
-        const [sprintData, userProjects] = await Promise.all([
-          api.get<ApiSprint[]>("/sprints"),
-          api.get<ApiProject[]>(`/projects/users/${userData}`)
-        ]);
-
-        if (!isMounted) return;
-
-        const myProjectIds = userProjects.map(p => p.id);
-
-        const translatedProjects = await Promise.all(
-          userProjects.map(async (p) => ({
-            id: p.id,
-            name: await translateText(p.name, p.originalLanguage, targetLanguage),
-            originalLanguage: p.originalLanguage,
-            ownerId: p.owner?.id // Extracted from your nested owner object
-          }))
-        );
-        setProjects(translatedProjects);
-
-        const filteredSprints = sprintData.filter(s => 
-          myProjectIds.includes(Number(s.projectId))
-        );
-
-        setRawSprints(filteredSprints);
-
-      } catch (e) {
-        console.error("Failed to fetch filtered management data", e);
-      }
-    };
-
-    fetchData();
-    return () => { isMounted = false; };
-  }, [api, open, targetLanguage, translateText]);
+  fetchData();
+  return () => { isMounted = false; };
+}, [api, open, targetLanguage, translateText]); // Added dependencies for translation
 
   const calculateStatus = (startDate: string, endDate: string) => {
     if (!startDate || !endDate) return "PLANNED";
@@ -236,19 +219,14 @@ const ManageSprintsModal = ({ open, onClose }: Props): React.JSX.Element | null 
       message.warning(uiText.fillFields);
       return;
     }
+    // 2. Date Sequence Validation
+  const start = dayjs(form.startDate, "DD.MM.YYYY");
+  const end = dayjs(form.endDate, "DD.MM.YYYY");
 
-    if (!isProjectOwner(form.projectId)) {
-      message.error("Access Denied: Only the project owner can manage this sprint.");
-      return;
-    }
-
-    const start = dayjs(form.startDate, "DD.MM.YYYY");
-    const end = dayjs(form.endDate, "DD.MM.YYYY");
-
-    if (end.isBefore(start)) {
-      message.error(uiText.dateError); 
-      return;
-    }
+  if (end.isBefore(start)) {
+    message.error(uiText.dateError); // Use the new dictionary key here
+    return;
+  }
 
     const payload = {
       name: form.name,
@@ -276,7 +254,15 @@ const ManageSprintsModal = ({ open, onClose }: Props): React.JSX.Element | null 
       const myProjectIds = projects.map(p => p.id);
       const filtered = refreshed.filter(s => myProjectIds.includes(Number(s.projectId)));
 
-      setRawSprints(filtered);
+      setSprints(filtered.map(s => ({
+        id: s.id,
+        name: s.name,
+        status: s.sprintStatus,
+        startDate: dayjs(s.startTime).format("DD.MM.YYYY"),
+        endDate: dayjs(s.endTime).format("DD.MM.YYYY"),
+        projectId: String(s.projectId),
+        projectName: s.projectName
+      })));
     } catch (e) {
       message.error(uiText.failSave);
     }
@@ -360,69 +346,51 @@ const ManageSprintsModal = ({ open, onClose }: Props): React.JSX.Element | null 
                 </Flex>
                 <Flex vertical gap={4} style={{ flex: 1 }}>
                   <Text style={{ fontSize: 13, color: "#555" }}>{uiText.endDate}</Text>
-                  <DatePicker
-                    style={{ width: "100%" }}
-                    format="DD.MM.YYYY"
-                    getPopupContainer={() => containerRef.current || document.body}
-                    value={form.endDate ? dayjs(form.endDate, "DD.MM.YYYY") : null}
-                    disabledDate={(current) => {
-                      return form.startDate ? current && current < dayjs(form.startDate, "DD.MM.YYYY").startOf('day') : false;
-                    }}
-                    onChange={(_, dateStr) => setForm({ ...form, endDate: Array.isArray(dateStr) ? dateStr[0] : dateStr })}
-                  />
+        <DatePicker
+          style={{ width: "100%" }}
+          format="DD.MM.YYYY"
+          getPopupContainer={() => containerRef.current || document.body}
+          value={form.endDate ? dayjs(form.endDate, "DD.MM.YYYY") : null}
+          // Disable any date before the start date
+          disabledDate={(current) => {
+            return form.startDate ? current && current < dayjs(form.startDate, "DD.MM.YYYY").startOf('day') : false;
+          }}
+          onChange={(_, dateStr) => setForm({ ...form, endDate: Array.isArray(dateStr) ? dateStr[0] : dateStr })}
+        />
                 </Flex>
               </Flex>
             </Flex>
           )}
 
           <Flex vertical gap={0}>
-            {sprints.map((sprint, index) => {
-              const isOwner = isProjectOwner(sprint.projectId);
-              const isBacklog = rawSprints.find(r => r.id === sprint.id)?.name.trim().toLowerCase() === "backlog";
-
-              return (
-                <Flex key={sprint.id} align="center" justify="space-between" style={{ padding: "14px 4px", borderBottom: index < sprints.length - 1 ? "1px solid #e5e7eb" : "none" }}>
-                  <Flex vertical gap={4}>
-                    <Flex align="center" gap={8}>
-                      <Text strong>{sprint.name}</Text>
-                      <Text type="secondary" style={{ fontSize: 12 }}>
-                        ({uiText[sprint.status.toLowerCase() as keyof typeof uiText]})
-                      </Text>
-                    </Flex>
-                    <Flex align="center" gap={4}>
-                      <CalendarOutlined style={{ fontSize: 11, color: "#888" }} />
-                      <Text style={{ fontSize: 12, color: "#888" }}>
-                        {sprint.startDate} - {sprint.endDate} {sprint.projectName && `• ${sprint.projectName}`}
-                      </Text>
-                    </Flex>
+            {sprints.map((sprint, index) => (
+              <Flex key={sprint.id} align="center" justify="space-between" style={{ padding: "14px 4px", borderBottom: index < sprints.length - 1 ? "1px solid #e5e7eb" : "none" }}>
+                <Flex vertical gap={4}>
+                  <Flex align="center" gap={8}>
+                    <Text strong>{sprint.name}</Text>
+                    <Text type="secondary" style={{ fontSize: 12 }}>
+                      ({uiText[sprint.status.toLowerCase() as keyof typeof uiText]})
+                    </Text>
                   </Flex>
-                  <Flex gap={4}>
-                    <Button 
-                      type="text" 
-                      icon={<EditOutlined />} 
-                      disabled={!isOwner}
-                      onClick={() => { 
-                        setEditingId(sprint.id); 
-                        setForm({ ...sprint, projectId: String(sprint.projectId) }); 
-                        setShowForm(true); 
-                      }} 
-                    />
-                    <Button 
-                      type="text" 
-                      icon={<DeleteOutlined />} 
-                      disabled={!isOwner || isBacklog} 
-                      onClick={async () => {
-                        try {
-                          await api.delete(`/sprints/${sprint.id}`);
-                          setSprints(sprints.filter(s => s.id !== sprint.id));
-                          message.success(uiText.deleted);
-                        } catch { message.error(uiText.failSave); }
-                      }} 
-                    />
+                  <Flex align="center" gap={4}>
+                    <CalendarOutlined style={{ fontSize: 11, color: "#888" }} />
+                    <Text style={{ fontSize: 12, color: "#888" }}>
+                      {sprint.startDate} - {sprint.endDate} {sprint.projectName && `• ${sprint.projectName}`}
+                    </Text>
                   </Flex>
                 </Flex>
-              );
-            })}
+                <Flex gap={4}>
+                  <Button type="text" icon={<EditOutlined />} onClick={() => { setEditingId(sprint.id); setForm({ ...sprint, projectId: String(sprint.projectId) }); setShowForm(true); }} />
+                  <Button type="text" icon={<DeleteOutlined />} onClick={async () => {
+                    try {
+                      await api.delete(`/sprints/${sprint.id}`);
+                      setSprints(sprints.filter(s => s.id !== sprint.id));
+                      message.success(uiText.deleted);
+                    } catch { message.error(uiText.failSave); }
+                  }} />
+                </Flex>
+              </Flex>
+            ))}
           </Flex>
 
           <Flex justify="flex-end" gap={8} style={{ marginTop: 8 }}>
