@@ -74,10 +74,13 @@ const EditProjectModal = ({ open, onClose, project }: Props): React.JSX.Element 
 
   const handleUpdateProject = async () => {
     try {
+      // Create the payload and force update the originalLanguage field
+      // to match the active user's chosen UI targetLanguage
       const projectData = {
         name: projectName,
         description: description,
         memberIds: members.map((m) => parseInt(m.key)),
+        originalLanguage: targetLanguage, // Mapped to match user language on save
       };
 
       await api.put(`/projects/${project.id}`, projectData);
