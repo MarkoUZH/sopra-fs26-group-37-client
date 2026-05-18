@@ -43,7 +43,7 @@ const ProjectPageInner: React.FC = () => {
     const [selectedTags, setSelectedTags] = useState<number[]>([]);
     const [selectedSprints, setSelectedSprints] = useState<number[]>([]);
 
-    const { getTagsForProject } = useTags(); // ✅ safe — inside TagsProvider
+    const { getTagsForProject } = useTags();
     const apiService = useMemo(() => new ApiService(), []);
     const dragTaskId = useRef<string | null>(null);
 
@@ -90,7 +90,22 @@ const ProjectPageInner: React.FC = () => {
     // 7. WebSocket — live updates only
     useTaskWebSocket(projectId, setTasks);
 
-    // 8. Stats & filtering
+    // 8. Listen for sprint changes dispatched by ManageSprintsModal
+    useEffect(() => {
+        const handleSprintsUpdated = () => {
+            fetchProject();
+        };
+
+        window.addEventListener("sprintCreated", handleSprintsUpdated);
+        window.addEventListener("sprintsUpdated", handleSprintsUpdated);
+
+        return () => {
+            window.removeEventListener("sprintCreated", handleSprintsUpdated);
+            window.removeEventListener("sprintsUpdated", handleSprintsUpdated);
+        };
+    }, [fetchProject]);
+
+    // 9. Stats & filtering
     const totalTasks = tasks.length;
     const doneTasks = tasks.filter((t) => t.status === "DONE").length;
 
@@ -107,7 +122,7 @@ const ProjectPageInner: React.FC = () => {
         return memberMatch && tagMatch && sprintMatch;
     });
 
-    // 9. Drag & Drop
+    // 10. Drag & Drop
     const handleDragStart = (e: React.DragEvent, taskId: number) => {
         dragTaskId.current = taskId.toString();
         e.dataTransfer.effectAllowed = "move";
@@ -149,7 +164,7 @@ const ProjectPageInner: React.FC = () => {
         }
     };
 
-    // 10. Modal helpers
+    // 11. Modal helpers
     const handleAddTask = (column: TaskColumn) => {
         setModalColumn(column);
         setEditingTask(null);
@@ -162,7 +177,7 @@ const ProjectPageInner: React.FC = () => {
         setModalOpen(true);
     };
 
-    // 11. Save Task
+    // 12. Save Task
     const handleSaveTask = async (taskData: Omit<Task, "id">) => {
         try {
             const postBody = {
@@ -193,7 +208,7 @@ const ProjectPageInner: React.FC = () => {
         }
     };
 
-    // 12. Delete Task
+    // 13. Delete Task
     const handleDeleteTask = async (taskId: number) => {
         try {
             await apiService.delete(`/tasks/${taskId}`);

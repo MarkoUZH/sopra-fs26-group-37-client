@@ -253,8 +253,9 @@ useEffect(() => {
       const refreshed = await api.get<ApiSprint[]>("/sprints");
       const myProjectIds = projects.map(p => p.id);
       const filtered = refreshed.filter(s => myProjectIds.includes(Number(s.projectId)));
+      setRawSprints(filtered);
 
-      setSprints(filtered.map(s => ({
+        setSprints(filtered.map(s => ({
         id: s.id,
         name: s.name,
         status: s.sprintStatus,
@@ -384,7 +385,8 @@ useEffect(() => {
                   <Button type="text" icon={<DeleteOutlined />} disabled={rawSprints.find(r => r.id === sprint.id)?.name === "Backlog"} onClick={async () => {
                     try {
                       await api.delete(`/sprints/${sprint.id}`);
-                      setSprints(sprints.filter(s => s.id !== sprint.id));
+                        setRawSprints(prev => prev.filter(r => r.id !== sprint.id));
+                        setSprints(sprints.filter(s => s.id !== sprint.id));
                       message.success(uiText.deleted);
                     } catch { message.error(uiText.failSave); }
                   }} />
