@@ -13,6 +13,13 @@ interface FormFieldProps {
     value: string;
 }
 
+// Define an explicit structure for API errors to appease the Vercel compiler
+interface ApiNetworkError {
+    status?: number;
+    statusCode?: number;
+    message?: string;
+}
+
 const LoginErrorHandler: React.FC = () => {
     const searchParams = useSearchParams();
     const error = searchParams.get("error");
@@ -50,18 +57,22 @@ const Login: React.FC = () => {
 
             message.success("Welcome back!");
             router.push("/dashboard");
-        } catch (error: any) {
-            console.error("Login raw error:", error);
+        } catch (rawError: unknown) {
+            console.error("Login raw error:", rawError);
             
-            // 1. Check for a network connection error (failed to reach server)
-            if (!error.status && error.message?.toLowerCase().includes("fetch")) {
+            // Cast unknown to our safe structural interface
+            const error = rawError as ApiNetworkError;
+            const httpStatus = error.status ?? error.statusCode;
+            
+            // 1. Check for network connection failures
+            if (!httpStatus && error.message?.toLowerCase().includes("fetch")) {
                 message.error("Unable to connect to the server. Please check your internet connection.");
             } 
-            // 2. Handle missing or wrong credentials (401 Unauthorized or 404 Not Found)
-            else if (error.status === 401 || error.status === 404) {
+            // 2. Handle missing or wrong credentials
+            else if (httpStatus === 401 || httpStatus === 404) {
                 message.error("The username or password you entered is incorrect.");
             } 
-            // 3. Fallback for server bugs / unhandled cases (500 Internal Server Error, etc.)
+            // 3. Fallback for unhandled server issues
             else {
                 message.error("Something went wrong during login. Please try again later.");
             }
