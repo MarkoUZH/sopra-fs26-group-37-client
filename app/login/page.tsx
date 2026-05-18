@@ -48,12 +48,22 @@ const Login: React.FC = () => {
                 localStorage.setItem("language", JSON.stringify(response.language));
             }
 
+            message.success("Welcome back!");
             router.push("/dashboard");
-        } catch (error) {
-            if (error instanceof Error) {
-                alert(`Something went wrong during the login:\n${error.message}`);
-            } else {
-                console.error("An unknown error occurred during login.");
+        } catch (error: any) {
+            console.error("Login raw error:", error);
+            
+            // 1. Check for a network connection error (failed to reach server)
+            if (!error.status && error.message?.toLowerCase().includes("fetch")) {
+                message.error("Unable to connect to the server. Please check your internet connection.");
+            } 
+            // 2. Handle missing or wrong credentials (401 Unauthorized or 404 Not Found)
+            else if (error.status === 401 || error.status === 404) {
+                message.error("The username or password you entered is incorrect.");
+            } 
+            // 3. Fallback for server bugs / unhandled cases (500 Internal Server Error, etc.)
+            else {
+                message.error("Something went wrong during login. Please try again later.");
             }
         }
     };
