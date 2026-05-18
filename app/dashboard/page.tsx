@@ -7,7 +7,7 @@ import {
   ThunderboltOutlined,
   UnorderedListOutlined,
 } from "@ant-design/icons";
-import { Card, Col, Layout, Row, Typography } from "antd";
+import { Card, Col, Layout, Row, Typography, Spin } from "antd";
 import React from "react";
 import { TagsProvider } from "@/dashboard/TagsContext";
 // --- DICTIONARY IMPORT ---
@@ -20,22 +20,20 @@ import TaskSummarySection from "./TaskSummarySection";
 import CreateProjectModal from "./CreateProjectModal";
 import { ApiService } from "@/api/apiService";
 import { Task } from "@/projects/taskTypes";
-import {useTaskWebSocket} from "@/hooks/useTaskWebSocket";
-// ------------------------------
+import { ProjectDTO } from "@/projects/projectTypes";
 
 const { Content, Sider } = Layout;
 const { Title, Text } = Typography;
 
 const Dashboard = (): React.JSX.Element => {
   const [isModalOpen, setIsModalOpen] = useState(false);
-  //const { tasks } = useTaskWebSocket();
   const [targetLanguage, setTargetLanguage] = useState("en");
   const apiService = useMemo(() => new ApiService(), []);
-  const [sprintUpdateTrigger, setSprintUpdateTrigger] = useState(0);
   const [tasks, setTasks] = useState<Task[]>([]);
+  const [projects, setProjects] = useState<ProjectDTO[]>([]);
+  const [loading, setLoading] = useState(true);
 
-
-    // 1. Read preferred language from localStorage on mount
+  // 1. Read preferred language from localStorage on mount
   useEffect(() => {
     if (typeof window !== "undefined") {
       const savedLang = localStorage.getItem("language");
@@ -49,7 +47,7 @@ const Dashboard = (): React.JSX.Element => {
     }
   }, []);
 
-  // 2. Memoized UI Text - This replaces the old state and useEffect translation logic
+  // 2. Memoized UI Text
   const uiText = useMemo(() => {
     return {
       dashboardTitle: getTranslation("My Dashboard", targetLanguage),
@@ -61,62 +59,90 @@ const Dashboard = (): React.JSX.Element => {
     };
   }, [targetLanguage]);
 
-  // 3. Fetch tasks
+  // 3. Fetch Dashboard Data (Both tasks and projects to calculate counts)
   useEffect(() => {
-    const fetchTasks = async () => {
+    const fetchDashboardData = async () => {
       try {
-        const data = await apiService.get<Task[]>("/tasks");
-        setTasks(data);
+        setLoading(true);
+        const [tasksData, projectsData] = await Promise.all([
+          apiService.get<Task[]>("/tasks"),
+          apiService.get<ProjectDTO[]>(`/projects`)
+        ]);
+        setTasks(tasksData || []);
+        setProjects(projectsData || []);
       } catch (error) {
-        console.error("Failed to fetch tasks:", error);
+        console.error("Failed to fetch dashboard data:", error);
+      } finally {
+        setLoading(false);
       }
     };
-    fetchTasks();
+    fetchDashboardData();
   }, [apiService]);
 
+  // 4. Retrieve and sanitize Current User ID
   const userIdRaw = typeof window !== "undefined" ? localStorage.getItem("id") : null;
-const currentUserId = userIdRaw ? Number(userIdRaw.replace(/['"]+/g, '')) : null;
+  const currentUserId = userIdRaw ? Number(userIdRaw.replace(/['"]+/g, '')) : null;
 
-// 2. Filter the tasks globally first so the "Total Tasks" count is also correct
-const userTasks = useMemo(() => {
-  return tasks.filter((t) => 
-    t.assignedUsers?.map(u => u.id).includes(currentUserId as number)
-  );
-}, [tasks, currentUserId]);
+  // 5. Derived Computations: Filter statistics dynamically based on ownership/memberships
+  const { userTasks, activeSprintCount } = useMemo(() => {
+    // Only target tasks explicitly assigned to this user
+    const uTasks = tasks.filter((t) => 
+      t.assignedUsers?.some(u => u.id === currentUserId)
+    );
 
-const statsData = [
-  {
-    icon: <UnorderedListOutlined style={{ fontSize: 24, color: "#fff" }} />,
-    iconBg: "#2b7fff",
-    value: userTasks.length.toString(), // Total tasks for THIS user
-    label: uiText.totalTasks,
-  },
-  {
-    icon: <FlagOutlined style={{ fontSize: 24, color: "#fff" }} />,
-    iconBg: "#f04000",
-    value: userTasks.filter((t) => t.status === "TODO").length.toString(),
-    label: uiText.todo,
-  },
-  {
-    icon: <ClockCircleOutlined style={{ fontSize: 24, color: "#fff" }} />,
-    iconBg: "#f0b100",
-    value: userTasks.filter((t) => t.status === "IN_PROGRESS").length.toString(),
-    label: uiText.inProgress,
-  },
-  {
-    icon: <CheckCircleOutlined style={{ fontSize: 24, color: "#fff" }} />,
-    iconBg: "#00c950",
-    value: userTasks.filter((t) => t.status === "DONE").length.toString(),
-    label: uiText.completed,
-  },
+    // Only count sprints from projects where the user is a verified member
+    const uProjects = projects.filter((p) => 
+      p.members?.some((m: any) => m.id === currentUserId)
+    );
 
+    const aSprintCount = uProjects
+      .flatMap((p) => p.sprints || [])
+      .filter((s: any) => s.sprintStatus?.toUpperCase() === "ACTIVE")
+      .length;
+
+    return { userTasks: uTasks, activeSprintCount: aSprintCount };
+  }, [tasks, projects, currentUserId]);
+
+  const statsData = [
+    {
+      icon: <UnorderedListOutlined style={{ fontSize: 24, color: "#fff" }} />,
+      iconBg: "#2b7fff",
+      value: userTasks.length.toString(), 
+      label: uiText.totalTasks,
+    },
+    {
+      icon: <FlagOutlined style={{ fontSize: 24, color: "#fff" }} />,
+      iconBg: "#f04000",
+      value: userTasks.filter((t) => t.status === "TODO").length.toString(),
+      label: uiText.todo,
+    },
+    {
+      icon: <ClockCircleOutlined style={{ fontSize: 24, color: "#fff" }} />,
+      iconBg: "#f0b100",
+      value: userTasks.filter((t) => t.status === "IN_PROGRESS").length.toString(),
+      label: uiText.inProgress,
+    },
+    {
+      icon: <CheckCircleOutlined style={{ fontSize: 24, color: "#fff" }} />,
+      iconBg: "#00c950",
+      value: userTasks.filter((t) => t.status === "DONE").length.toString(),
+      label: uiText.completed,
+    },
     {
       icon: <ThunderboltOutlined style={{ fontSize: 24, color: "#fff" }} />,
       iconBg: "#ad46ff",
-      value: "1",
+      value: activeSprintCount.toString(), // Dynamic active count returned here!
       label: uiText.activeSprints,
     },
   ];
+
+  if (loading) {
+    return (
+      <div style={{ display: "flex", justifyContent: "center", alignItems: "center", height: "100vh" }}>
+        <Spin size="large" />
+      </div>
+    );
+  }
 
   return (
     <TagsProvider>
@@ -132,6 +158,7 @@ const statsData = [
             height: "100vh",
             boxShadow: "2px 0 6px rgba(0, 0, 0, 0.03)",
             background: "#fff",
+            zIndex: 10,
           }}
         >
           <SideBarSection />
@@ -145,6 +172,7 @@ const statsData = [
                 <Col key={index} flex="1 1 20%">
                   <Card
                     style={{
+                      borderRadius: 12,
                       boxShadow:
                         "0 1px 2px 0 rgba(0, 0, 0, 0.03), 0 1px 6px -1px rgba(0, 0, 0, 0.02), 0 2px 4px 0 rgba(0, 0, 0, 0.02)",
                     }}
