@@ -10,7 +10,8 @@ import {
     AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid,
     Tooltip, ResponsiveContainer, Cell, PieChart, Pie, Legend,
 } from "recharts";
-import {TagsProvider} from "@/dashboard/TagsContext";
+import { TagsProvider } from "@/dashboard/TagsContext";
+import { getSprintOverviewTranslation } from "@/utils/dictionary_sprint_overview";
 
 const { Sider, Content } = Layout;
 const { Text } = Typography;
@@ -116,12 +117,12 @@ const SectionTitle = ({ children }: { children: React.ReactNode }) => (
     </div>
 );
 
-const EmptyChart = ({ height = 180 }: { height?: number }) => (
+const EmptyChart = ({ height = 180, text = "No data yet" }: { height?: number; text?: string }) => (
     <div style={{
         height, display: "flex", alignItems: "center",
         justifyContent: "center", color: "#cbd5e1", fontSize: 13,
     }}>
-        No data yet
+        {text}
     </div>
 );
 
@@ -135,6 +136,61 @@ const ProjectSprintOverview: React.FC = () => {
     const [sprints, setSprints] = useState<ApiSprint[]>([]);
     const [selectedSprintId, setSelectedSprintId] = useState<number | null>(null);
     const [loading, setLoading] = useState(true);
+    const [targetLanguage, setTargetLanguage] = useState("en");
+
+    useEffect(() => {
+        if (typeof window !== "undefined") {
+            const savedLang = localStorage.getItem("language");
+            if (savedLang) {
+                try { setTargetLanguage(JSON.parse(savedLang)); }
+                catch { setTargetLanguage(savedLang); }
+            }
+        }
+    }, []);
+
+    const uiText = useMemo(() => ({
+        backToBoard: getSprintOverviewTranslation("Back to board", targetLanguage),
+        sprintOverview: getSprintOverviewTranslation("Sprint Overview", targetLanguage),
+        membersLabel: getSprintOverviewTranslation("members", targetLanguage),
+        sprintsLabel: getSprintOverviewTranslation("sprints", targetLanguage),
+        sprintSingleLabel: getSprintOverviewTranslation("sprint", targetLanguage),
+        tasksTotalLabel: getSprintOverviewTranslation("tasks total", targetLanguage),
+        viewingSprint: getSprintOverviewTranslation("Viewing Sprint", targetLanguage),
+        selectSprint: getSprintOverviewTranslation("Select sprint", targetLanguage),
+        noSprintsText: getSprintOverviewTranslation("No sprints text", targetLanguage),
+        createSidebarText: getSprintOverviewTranslation("Create sidebar text", targetLanguage),
+        sprintEnded: getSprintOverviewTranslation("Sprint ended", targetLanguage),
+        remainingLabel: getSprintOverviewTranslation("remaining", targetLanguage),
+        leftLabel: getSprintOverviewTranslation("left", targetLanguage),
+        dayLabel: getSprintOverviewTranslation("day", targetLanguage),
+        daysLabel: getSprintOverviewTranslation("days", targetLanguage),
+        completionCard: getSprintOverviewTranslation("Completion", targetLanguage),
+        tasksDoneLabel: getSprintOverviewTranslation("tasks done", targetLanguage),
+        notStartedLabel: getSprintOverviewTranslation("not started", targetLanguage),
+        inFlightLabel: getSprintOverviewTranslation("tasks in progress", targetLanguage),
+        elapsedLabel: getSprintOverviewTranslation("elapsed", targetLanguage),
+        noSprintSelected: getSprintOverviewTranslation("No sprint selected", targetLanguage),
+        sprintTimeline: getSprintOverviewTranslation("Sprint timeline", targetLanguage),
+        elapsedTitle: getSprintOverviewTranslation("elapsed", targetLanguage),
+        burndownTitle: getSprintOverviewTranslation("Burndown Chart", targetLanguage),
+        idealLegend: getSprintOverviewTranslation("Ideal", targetLanguage),
+        actualLegend: getSprintOverviewTranslation("Actual", targetLanguage),
+        priorityTitle: getSprintOverviewTranslation("Priority Breakdown", targetLanguage),
+        statusTitle: getSprintOverviewTranslation("Task Status Distribution", targetLanguage),
+        workloadTitle: getSprintOverviewTranslation("Member Workload", targetLanguage),
+        allSprintsTitle: getSprintOverviewTranslation("All Sprints in This Project", targetLanguage),
+        allTasksTitle: getSprintOverviewTranslation("All Tasks in Project", targetLanguage),
+        noSprintsYet: getSprintOverviewTranslation("No sprints yet.", targetLanguage),
+        noTasksYet: getSprintOverviewTranslation("No tasks yet.", targetLanguage),
+        unassigned: getSprintOverviewTranslation("Unassigned", targetLanguage),
+        noDataYet: getSprintOverviewTranslation("No data yet", targetLanguage),
+        daysLeftCardLabel: getSprintOverviewTranslation("Days Left", targetLanguage),
+        
+        // Exact card and chart headers
+        todoStatus: getSprintOverviewTranslation("To Do", targetLanguage),
+        inProgressStatus: getSprintOverviewTranslation("In Progress", targetLanguage),
+        doneStatus: getSprintOverviewTranslation("Done", targetLanguage)
+    }), [targetLanguage]);
 
     useEffect(() => {
         if (!projectId) return;
@@ -151,7 +207,6 @@ const ProjectSprintOverview: React.FC = () => {
                 setProject(projectData);
                 setSprints(allSprints);
 
-                // Default: active sprint → else most recent → else first
                 const active = allSprints.find(s => s.sprintStatus === "ACTIVE");
                 const sorted = [...allSprints].sort(
                     (a, b) => dayjs(b.startTime).valueOf() - dayjs(a.startTime).valueOf()
@@ -194,11 +249,12 @@ const ProjectSprintOverview: React.FC = () => {
         { name: "Low",    value: allTasks.filter(t => t.priority === "LOW").length,    fill: PRIORITY_COLOR.LOW },
     ].filter(d => d.value > 0), [allTasks]);
 
+    // Feed Recharts components dynamic translated keys
     const statusBarData = useMemo(() => [
-        { name: "To Do",       count: todo,       fill: "#f04000" },
-        { name: "In Progress", count: inProgress, fill: "#f0b100" },
-        { name: "Done",        count: done,       fill: "#00c950" },
-    ], [todo, inProgress, done]);
+        { name: uiText.todoStatus,       count: todo,       fill: "#f04000" },
+        { name: uiText.inProgressStatus, count: inProgress, fill: "#f0b100" },
+        { name: uiText.doneStatus,        count: done,       fill: "#00c950" },
+    ], [todo, inProgress, done, uiText]);
 
     const memberWorkload = useMemo(() => {
         const map: Record<string, number> = {};
@@ -211,17 +267,6 @@ const ProjectSprintOverview: React.FC = () => {
             .map(([name, count]) => ({ name, count }))
             .sort((a, b) => b.count - a.count);
     }, [allTasks]);
-
-    const velocityData = useMemo(() =>
-            [...sprints]
-                .sort((a, b) => dayjs(a.startTime).valueOf() - dayjs(b.startTime).valueOf())
-                .map(s => ({
-                    name: s.name,
-                    completed: s.id === selectedSprintId ? done : 0, // only accurate for selected sprint without per-sprint task history
-                    status: s.sprintStatus,
-                })),
-        [sprints, selectedSprintId, done]
-    );
 
     if (loading) {
         return (
@@ -255,13 +300,13 @@ const ProjectSprintOverview: React.FC = () => {
                         onClick={() => router.push(`/projects/${projectId}`)}
                         style={{ marginBottom: 20, color: "#64748b", paddingLeft: 0 }}
                     >
-                        Back to board
+                        {uiText.backToBoard}
                     </Button>
 
                     <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 24 }}>
                         <div>
                             <div style={{ fontSize: 24, fontWeight: 800, color: "#0f172a", letterSpacing: "-0.02em" }}>
-                                {project?.name ?? "Project"} — Sprint Overview
+                                {project?.name ?? "Project"} — {uiText.sprintOverview}
                             </div>
                             {project?.description && (
                                 <div style={{ fontSize: 13, color: "#94a3b8", marginTop: 4, maxWidth: 520 }}>
@@ -270,13 +315,13 @@ const ProjectSprintOverview: React.FC = () => {
                             )}
                             <div style={{ display: "flex", gap: 16, marginTop: 10 }}>
                 <span style={{ fontSize: 12, color: "#64748b" }}>
-                  <b style={{ color: "#334155" }}>{project?.members?.length ?? 0}</b> members
+                  <b style={{ color: "#334155" }}>{project?.members?.length ?? 0}</b> {uiText.membersLabel}
                 </span>
                                 <span style={{ fontSize: 12, color: "#64748b" }}>
-                  <b style={{ color: "#334155" }}>{sprints.length}</b> sprint{sprints.length !== 1 ? "s" : ""}
+                  <b style={{ color: "#334155" }}>{sprints.length}</b> {sprints.length === 1 ? uiText.sprintSingleLabel : uiText.sprintsLabel}
                 </span>
                                 <span style={{ fontSize: 12, color: "#64748b" }}>
-                  <b style={{ color: "#334155" }}>{total}</b> tasks total
+                  <b style={{ color: "#334155" }}>{total}</b> {uiText.tasksTotalLabel}
                 </span>
                             </div>
                         </div>
@@ -284,13 +329,13 @@ const ProjectSprintOverview: React.FC = () => {
                         {sprints.length > 0 && (
                             <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 6 }}>
                 <span style={{ fontSize: 11, color: "#94a3b8", fontWeight: 600, letterSpacing: "0.05em", textTransform: "uppercase" }}>
-                  Viewing Sprint
+                  {uiText.viewingSprint}
                 </span>
                                 <Select
                                     style={{ width: 260 }}
                                     value={selectedSprintId ?? undefined}
                                     onChange={setSelectedSprintId}
-                                    placeholder="Select sprint"
+                                    placeholder={uiText.selectSprint}
                                     options={sprints
                                         .sort((a, b) => dayjs(b.startTime).valueOf() - dayjs(a.startTime).valueOf())
                                         .map(s => ({
@@ -319,8 +364,8 @@ const ProjectSprintOverview: React.FC = () => {
                             textAlign: "center", color: "#94a3b8", marginTop: 80,
                             fontSize: 15, lineHeight: 2,
                         }}>
-                            No sprints found for this project.<br />
-                            <span style={{ fontSize: 13 }}>Create one from the sidebar Sprint Management.</span>
+                            {uiText.noSprintsText}<br />
+                            <span style={{ fontSize: 13 }}>{uiText.createSidebarText}</span>
                         </div>
                     ) : (
                         <>
@@ -337,7 +382,7 @@ const ProjectSprintOverview: React.FC = () => {
                       borderRadius: 20, padding: "3px 14px",
                       fontSize: 11, fontWeight: 700, letterSpacing: "0.05em",
                   }}>
-                    {sprint.sprintStatus}
+                    {getSprintOverviewTranslation(sprint.sprintStatus, targetLanguage)}
                   </span>
                                     <span style={{ fontSize: 13, color: "#64748b" }}>
                     {dayjs(sprint.startTime).format("MMM D, YYYY")} → {dayjs(sprint.endTime).format("MMM D, YYYY")}
@@ -347,26 +392,26 @@ const ProjectSprintOverview: React.FC = () => {
                                         color: timeLeft <= 3 ? "#ef4444" : "#64748b",
                                         marginLeft: "auto",
                                     }}>
-                    {timeLeft === 0 ? "Sprint ended" : `${timeLeft} day${timeLeft !== 1 ? "s" : ""} remaining`}
+                    {timeLeft === 0 ? uiText.sprintEnded : `${timeLeft} ${timeLeft === 1 ? uiText.dayLabel : uiText.daysLabel} ${uiText.remainingLabel}`}
                   </span>
                                 </div>
                             )}
 
                             <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 16, marginBottom: 24 }}>
-                                <StatCard label="Completion"  value={`${completion}%`} sub={`${done} of ${total} tasks done`}        accent="#6366f1" />
-                                <StatCard label="To Do"       value={todo}             sub="tasks not started"                        accent="#f04000" />
-                                <StatCard label="In Progress" value={inProgress}       sub="tasks in flight"                          accent="#f0b100" />
-                                <StatCard label="Days Left"   value={sprint ? timeLeft : "–"} sub={sprint ? `${timeProgress}% of sprint elapsed` : "No sprint selected"} accent={timeLeft <= 3 ? "#ef4444" : "#10b981"} />
+                                <StatCard label={uiText.completionCard}  value={`${completion}%`} sub={`${done} ${uiText.tasksDoneLabel}`}        accent="#6366f1" />
+                                <StatCard label={uiText.todoStatus}       value={todo}             sub={uiText.notStartedLabel}                        accent="#f04000" />
+                                <StatCard label={uiText.inProgressStatus} value={inProgress}       sub={uiText.inFlightLabel}                          accent="#f0b100" />
+                                <StatCard label={uiText.daysLeftCardLabel}   value={sprint ? timeLeft : "–"} sub={sprint ? `${timeProgress}% ${uiText.elapsedLabel}` : uiText.noSprintSelected} accent={timeLeft <= 3 ? "#ef4444" : "#10b981"} />
                             </div>
 
                             {sprint && (
                                 <div style={{ marginBottom: 24 }}>
                                     <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
                                         <Text style={{ fontSize: 12, color: "#64748b", fontWeight: 600 }}>
-                                            Sprint timeline — {sprint.name}
+                                            {uiText.sprintTimeline} — {sprint.name}
                                         </Text>
                                         <Text style={{ fontSize: 12, color: "#94a3b8" }}>
-                                            {dayjs(sprint.startTime).format("MMM D")} → {dayjs(sprint.endTime).format("MMM D")} · {timeProgress}% elapsed
+                                            {dayjs(sprint.startTime).format("MMM D")} → {dayjs(sprint.endTime).format("MMM D")} · {timeProgress}% {uiText.elapsedTitle}
                                         </Text>
                                     </div>
                                     <div style={{ background: "#e2e8f0", borderRadius: 99, height: 8, overflow: "hidden" }}>
@@ -382,7 +427,7 @@ const ProjectSprintOverview: React.FC = () => {
                             <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: 20, marginBottom: 20 }}>
 
                                 <div style={{ background: "#fff", borderRadius: 14, padding: 24, border: "1px solid #f1f5f9", boxShadow: "0 1px 3px rgba(0,0,0,0.04)" }}>
-                                    <SectionTitle>Burndown Chart</SectionTitle>
+                                    <SectionTitle>{uiText.burndownTitle}</SectionTitle>
                                     {burndownData.length > 0 ? (
                                         <>
                                             <ResponsiveContainer width="100%" height={220}>
@@ -403,26 +448,26 @@ const ProjectSprintOverview: React.FC = () => {
                                                     <Tooltip
                                                         contentStyle={{ borderRadius: 8, border: "1px solid #e2e8f0", fontSize: 12 }}
                                                     />
-                                                    <Area type="monotone" dataKey="ideal" stroke="#6366f1" strokeWidth={2} strokeDasharray="5 3" fill="url(#idealGrad)" dot={false} name="ideal" />
-                                                    <Area type="monotone" dataKey="actual" stroke="#10b981" strokeWidth={2.5} fill="url(#actualGrad)" dot={false} connectNulls name="actual" />
+                                                    <Area type="monotone" dataKey="ideal" stroke="#6366f1" strokeWidth={2} strokeDasharray="5 3" fill="url(#idealGrad)" dot={false} name={uiText.idealLegend} />
+                                                    <Area type="monotone" dataKey="actual" stroke="#10b981" strokeWidth={2.5} fill="url(#actualGrad)" dot={false} connectNulls name={uiText.actualLegend} />
                                                 </AreaChart>
                                             </ResponsiveContainer>
                                             <div style={{ display: "flex", gap: 20, marginTop: 8, justifyContent: "center" }}>
                                                 <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, color: "#64748b" }}>
                                                     <svg width="24" height="8"><line x1="0" y1="4" x2="24" y2="4" stroke="#6366f1" strokeWidth="2" strokeDasharray="5 3" /></svg>
-                                                    Ideal
+                                                    {uiText.idealLegend}
                                                 </div>
                                                 <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, color: "#64748b" }}>
                                                     <svg width="24" height="8"><line x1="0" y1="4" x2="24" y2="4" stroke="#10b981" strokeWidth="2.5" /></svg>
-                                                    Actual
+                                                    {uiText.actualLegend}
                                                 </div>
                                             </div>
                                         </>
-                                    ) : <EmptyChart height={220} />}
+                                    ) : <EmptyChart height={220} text={uiText.noDataYet} />}
                                 </div>
 
                                 <div style={{ background: "#fff", borderRadius: 14, padding: 24, border: "1px solid #f1f5f9", boxShadow: "0 1px 3px rgba(0,0,0,0.04)" }}>
-                                    <SectionTitle>Priority Breakdown</SectionTitle>
+                                    <SectionTitle>{uiText.priorityTitle}</SectionTitle>
                                     {priorityData.length > 0 ? (
                                         <ResponsiveContainer width="100%" height={220}>
                                             <PieChart>
@@ -433,14 +478,14 @@ const ProjectSprintOverview: React.FC = () => {
                                                 <Legend iconType="circle" iconSize={8} wrapperStyle={{ fontSize: 12 }} />
                                             </PieChart>
                                         </ResponsiveContainer>
-                                    ) : <EmptyChart height={220} />}
+                                    ) : <EmptyChart height={220} text={uiText.noDataYet} />}
                                 </div>
                             </div>
 
                             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20, marginBottom: 20 }}>
 
                                 <div style={{ background: "#fff", borderRadius: 14, padding: 24, border: "1px solid #f1f5f9", boxShadow: "0 1px 3px rgba(0,0,0,0.04)" }}>
-                                    <SectionTitle>Task Status Distribution</SectionTitle>
+                                    <SectionTitle>{uiText.statusTitle}</SectionTitle>
                                     <ResponsiveContainer width="100%" height={180}>
                                         <BarChart data={statusBarData} margin={{ top: 4, right: 8, left: -20, bottom: 0 }}>
                                             <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
@@ -455,7 +500,7 @@ const ProjectSprintOverview: React.FC = () => {
                                 </div>
 
                                 <div style={{ background: "#fff", borderRadius: 14, padding: 24, border: "1px solid #f1f5f9", boxShadow: "0 1px 3px rgba(0,0,0,0.04)" }}>
-                                    <SectionTitle>Member Workload</SectionTitle>
+                                    <SectionTitle>{uiText.workloadTitle}</SectionTitle>
                                     {memberWorkload.length > 0 ? (
                                         <div style={{ display: "flex", flexDirection: "column", gap: 14, marginTop: 4 }}>
                                             {memberWorkload.map((m, i) => {
@@ -465,7 +510,7 @@ const ProjectSprintOverview: React.FC = () => {
                                                     <div key={m.name}>
                                                         <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 5 }}>
                                                             <span style={{ fontSize: 13, fontWeight: 600, color: "#334155" }}>{m.name}</span>
-                                                            <span style={{ fontSize: 12, color: "#94a3b8" }}>{m.count} task{m.count !== 1 ? "s" : ""} · {pct}%</span>
+                                                            <span style={{ fontSize: 12, color: "#94a3b8" }}>{m.count} {uiText.sprintsLabel} · {pct}%</span>
                                                         </div>
                                                         <div style={{ background: "#f1f5f9", borderRadius: 99, height: 6, overflow: "hidden" }}>
                                                             <div style={{
@@ -477,14 +522,14 @@ const ProjectSprintOverview: React.FC = () => {
                                                 );
                                             })}
                                         </div>
-                                    ) : <EmptyChart height={140} />}
+                                    ) : <EmptyChart height={140} text={uiText.noDataYet} />}
                                 </div>
                             </div>
 
                             <div style={{ background: "#fff", borderRadius: 14, padding: 24, border: "1px solid #f1f5f9", boxShadow: "0 1px 3px rgba(0,0,0,0.04)", marginBottom: 20 }}>
-                                <SectionTitle>All Sprints in This Project</SectionTitle>
+                                <SectionTitle>{uiText.allSprintsTitle}</SectionTitle>
                                 {sprints.length === 0 ? (
-                                    <div style={{ color: "#94a3b8", fontSize: 13 }}>No sprints yet.</div>
+                                    <div style={{ color: "#94a3b8", fontSize: 13 }}>{uiText.noSprintsYet}</div>
                                 ) : (
                                     <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
                                         {[...sprints]
@@ -536,11 +581,11 @@ const ProjectSprintOverview: React.FC = () => {
                                                             borderRadius: 20, padding: "2px 10px",
                                                             letterSpacing: "0.04em", minWidth: 80, textAlign: "center",
                                                         }}>
-                              {s.sprintStatus}
+                              {getSprintOverviewTranslation(s.sprintStatus, targetLanguage)}
                             </span>
                                                         {s.sprintStatus === "ACTIVE" && (
                                                             <span style={{ fontSize: 11, color: left <= 3 ? "#ef4444" : "#64748b", minWidth: 60, textAlign: "right" }}>
-                                {left}d left
+                                {left}d {uiText.leftLabel}
                               </span>
                                                         )}
                                                     </div>
@@ -551,9 +596,9 @@ const ProjectSprintOverview: React.FC = () => {
                             </div>
 
                             <div style={{ background: "#fff", borderRadius: 14, padding: 24, border: "1px solid #f1f5f9", boxShadow: "0 1px 3px rgba(0,0,0,0.04)" }}>
-                                <SectionTitle>All Tasks in Project</SectionTitle>
+                                <SectionTitle>{uiText.allTasksTitle}</SectionTitle>
                                 {allTasks.length === 0 ? (
-                                    <div style={{ color: "#94a3b8", fontSize: 13 }}>No tasks yet.</div>
+                                    <div style={{ color: "#94a3b8", fontSize: 13 }}>{uiText.noTasksYet}</div>
                                 ) : (
                                     <div style={{ display: "flex", flexDirection: "column" }}>
                                         {allTasks.map((task, i) => (
@@ -570,7 +615,7 @@ const ProjectSprintOverview: React.FC = () => {
                           {task.name}
                         </span>
                                                 <span style={{ fontSize: 12, color: "#94a3b8", minWidth: 90, textAlign: "right" }}>
-                          {task.assignedUsers?.[0]?.username ?? "Unassigned"}
+                          {task.assignedUsers?.[0]?.username ?? uiText.unassigned}
                         </span>
                                                 {task.dueDate && (
                                                     <span style={{ fontSize: 12, color: "#94a3b8", minWidth: 56, textAlign: "right" }}>
@@ -588,8 +633,8 @@ const ProjectSprintOverview: React.FC = () => {
                                                     background: task.status === "DONE" ? "#dcfce7" : task.status === "IN_PROGRESS" ? "#fef9c3" : "#fee2e2",
                                                     color: task.status === "DONE" ? "#16a34a" : task.status === "IN_PROGRESS" ? "#a16207" : "#b91c1c",
                                                 }}>
-                          {task.status === "IN_PROGRESS" ? "In Progress" : task.status === "DONE" ? "Done" : "To Do"}
-                        </span>
+                          {task.status === "IN_PROGRESS" ? uiText.inProgressStatus : task.status === "DONE" ? uiText.doneStatus : uiText.todoStatus}
+                                                </span>
                                             </div>
                                         ))}
                                     </div>
