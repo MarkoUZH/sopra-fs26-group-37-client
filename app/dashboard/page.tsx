@@ -20,7 +20,7 @@ import TaskSummarySection from "./TaskSummarySection";
 import CreateProjectModal from "./CreateProjectModal";
 import { ApiService } from "@/api/apiService";
 import { Task } from "@/projects/taskTypes";
-import { ProjectDTO } from "@/projects/projectTypes";
+import { ProjectDTO, TeamMember, Sprint } from "@/projects/projectTypes";
 
 const { Content, Sider } = Layout;
 const { Title, Text } = Typography;
@@ -59,14 +59,14 @@ const Dashboard = (): React.JSX.Element => {
     };
   }, [targetLanguage]);
 
-  // 3. Fetch Dashboard Data (Both tasks and projects to calculate counts)
+  // 3. Fetch Dashboard Data
   useEffect(() => {
     const fetchDashboardData = async () => {
       try {
         setLoading(true);
         const [tasksData, projectsData] = await Promise.all([
           apiService.get<Task[]>("/tasks"),
-          apiService.get<ProjectDTO[]>(`/projects`)
+          apiService.get<ProjectDTO[]>("/projects")
         ]);
         setTasks(tasksData || []);
         setProjects(projectsData || []);
@@ -83,21 +83,26 @@ const Dashboard = (): React.JSX.Element => {
   const userIdRaw = typeof window !== "undefined" ? localStorage.getItem("id") : null;
   const currentUserId = userIdRaw ? Number(userIdRaw.replace(/['"]+/g, '')) : null;
 
-  // 5. Derived Computations: Filter statistics dynamically based on ownership/memberships
+  // 5. Explicitly Typed Derived Computations (Safely reading missing interface properties)
   const { userTasks, activeSprintCount } = useMemo(() => {
-    // Only target tasks explicitly assigned to this user
+    // Filter tasks assigned to this user
     const uTasks = tasks.filter((t) => 
       t.assignedUsers?.some(u => u.id === currentUserId)
     );
 
-    // Only count sprints from projects where the user is a verified member
+    // Filter projects where the user is listed in the members list
     const uProjects = projects.filter((p) => 
-      p.members?.some((m: any) => m.id === currentUserId)
+      p.members?.some((m: TeamMember) => m.id === currentUserId)
     );
 
+    // FlatMap and filter to compute running sprint numbers
     const aSprintCount = uProjects
       .flatMap((p) => p.sprints || [])
-      .filter((s: any) => s.sprintStatus?.toUpperCase() === "ACTIVE")
+      .filter((s: Sprint) => {
+        // Accessing 'sprintStatus' safely through an index signature to accommodate interface definitions
+        const rawStatus = (s as unknown as Record<string, unknown>)["sprintStatus"];
+        return typeof rawStatus === "string" && rawStatus.toUpperCase() === "ACTIVE";
+      })
       .length;
 
     return { userTasks: uTasks, activeSprintCount: aSprintCount };
@@ -131,7 +136,7 @@ const Dashboard = (): React.JSX.Element => {
     {
       icon: <ThunderboltOutlined style={{ fontSize: 24, color: "#fff" }} />,
       iconBg: "#ad46ff",
-      value: activeSprintCount.toString(), // Dynamic active count returned here!
+      value: activeSprintCount.toString(),
       label: uiText.activeSprints,
     },
   ];
